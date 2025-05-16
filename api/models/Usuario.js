@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 class Usuario {
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT id, nome, email, cpf, descricao, formacao, area_interesse, foto FROM usuarios');
+      const [rows] = await db.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados FROM usuarios');
       return rows;
     } catch (error) {
       throw error;
@@ -13,12 +13,15 @@ class Usuario {
 
   static async findById(id) {
     try {
+      console.log('Executando findById com ID:', id);
       const [rows] = await db.query(
-        'SELECT id, nome, email, cpf, descricao, formacao, area_interesse, foto FROM usuarios WHERE id = ?', 
-        [id]
+        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados FROM usuarios WHERE id = ?', 
+        [parseInt(id, 10)]
       );
+      console.log('Resultado da consulta:', rows);
       return rows[0];
     } catch (error) {
+      console.error('Erro em findById:', error);
       throw error;
     }
   }
@@ -38,23 +41,33 @@ class Usuario {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.senha, salt);
 
+      // Log para debug
+      console.log('Criando usuário com dados:', {
+        ...userData,
+        senha: '[PROTEGIDA]'
+      });
+
       const [result] = await db.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, descricao, formacao, curriculo, area_interesse, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           userData.nome,
           userData.email,
           hashedPassword,
           userData.cpf,
+          userData.data_nascimento,
+          userData.habilidades || null,
           userData.descricao || null,
           userData.formacao || null,
-          userData.curriculo || null,
           userData.area_interesse || null,
-          userData.foto || null
+          userData.foto || null,
+          userData.certificados || null
         ]
       );
 
+      console.log('Usuário criado com ID:', result.insertId);
       return { id: result.insertId, ...userData, senha: undefined };
     } catch (error) {
+      console.error('Erro ao criar usuário:', error);
       throw error;
     }
   }
@@ -84,6 +97,15 @@ class Usuario {
         updateFields.push('cpf = ?');
         values.push(userData.cpf);
       }
+      if (userData.data_nascimento) {
+        updateFields.push('data_nascimento = ?');
+        values.push(userData.data_nascimento);
+      }
+        if (userData.habilidades !== undefined) {
+        updateFields.push('habilidades = ?');
+        values.push(userData.habilidades);
+        }
+
       if (userData.descricao !== undefined) {
         updateFields.push('descricao = ?');
         values.push(userData.descricao);
@@ -103,6 +125,10 @@ class Usuario {
       if (userData.foto !== undefined) {
         updateFields.push('foto = ?');
         values.push(userData.foto);
+      }
+      if (userData.certificados !== undefined) {
+        updateFields.push('certificados = ?');
+        values.push(userData.certificados);
       }
 
       if (updateFields.length === 0) {

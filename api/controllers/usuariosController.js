@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'jobin_secret_key';
 
 // Gerar token JWT
 const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '15m' });
 };
 
 // Obter todos os usuários
@@ -23,24 +23,29 @@ exports.getUsuarios = async (req, res) => {
 // Obter um usuário pelo ID
 exports.getUsuarioById = async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.params.id);
+    const id = req.params.id;
+    console.log('Buscando usuário com ID:', id);
+    
+    const usuario = await Usuario.findById(id);
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
+    
+    console.log('Usuário encontrado:', usuario);
     res.status(200).json(usuario);
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
-    res.status(500).json({ message: 'Erro ao buscar usuário' });
+    res.status(500).json({ message: 'Erro ao buscar usuário', error: error.message });
   }
 };
 
 // Registrar um novo usuário
 exports.registerUsuario = async (req, res) => {
   try {
-    const { nome, email, senha, cpf } = req.body;
+    const { nome, email, senha, cpf, data_nascimento } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!nome || !email || !senha || !cpf) {
+    if (!nome || !email || !senha || !cpf || !data_nascimento ) {
       return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
     }
 
@@ -130,5 +135,19 @@ exports.deleteUsuario = async (req, res) => {
   } catch (error) {
     console.error('Erro ao excluir usuário:', error);
     res.status(500).json({ message: 'Erro ao excluir usuário' });
+  }
+};
+
+// Obter perfil do usuário autenticado
+exports.getPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.usuario.id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+    res.status(200).json(usuario);
+  } catch (error) {
+    console.error('Erro ao buscar perfil do usuário:', error);
+    res.status(500).json({ message: 'Erro ao buscar perfil do usuário' });
   }
 };

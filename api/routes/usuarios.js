@@ -23,11 +23,12 @@ const authMiddleware = (req, res, next) => {
 // Rotas públicas
 router.post('/register', usuariosController.registerUsuario);
 router.post('/login', usuariosController.loginUsuario);
+router.get('/', usuariosController.getUsuarios);
+router.get('/:id', usuariosController.getUsuarioById);
 
 // Rotas protegidas
-router.get('/', authMiddleware, usuariosController.getUsuarios);
-router.get('/:id', authMiddleware, usuariosController.getUsuarioById);
-router.put('/:id', authMiddleware, usuariosController.updateUsuario);
-router.delete('/:id', authMiddleware, usuariosController.deleteUsuario);
+router.get('/perfil', protect, usuariosController.getPerfil);
+router.put('/:id', protect, usuariosController.updateUsuario);
+router.delete('/:id', protect, usuariosController.deleteUsuario);
 
 module.exports = router;
