@@ -1,16 +1,13 @@
-"use client"
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Geist, Geist_Mono } from "geist/font";
-import { GeistSans, GeistMono } from "geist/font";
-
-
 const Header = () => {
-  const { user, logout } = useAuth();
   return (
     <header>
-        <nav>
+       
+    </header>
+    );
+};
+export default Header;
+
+ {/* <nav>
             <Link to="/">Home</Link>
             {user ? (
                 <><Link to="/dashboard">Dashboard</Link><button onClick={logout}>Logout</button></>
@@ -25,8 +22,4 @@ const Header = () => {
             <Link to="/profile">Profile</Link>
             <Link to="/settings">Settings</Link>
             <Link to="/help">Help</Link>
-        </nav>
-    </header>
-    );
-};
-export default Header;
+        </nav> */}
