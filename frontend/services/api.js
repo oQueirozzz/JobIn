@@ -8,17 +8,11 @@ const api = axios.create({
   }
 });
 
-// Interceptor para adicionar o token JWT em todas as requisições
+// Interceptor para requisições - modificado para funcionar sem token
 api.interceptors.request.use(
   (config) => {
-    // Recupera o token do localStorage
-    const token = localStorage.getItem('token');
-    
-    // Se o token existir, adiciona ao cabeçalho de autorização
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
+    // Versão simplificada que não exige token
+    // Não adiciona cabeçalho de autorização
     return config;
   },
   (error) => {
@@ -26,34 +20,25 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar respostas e erros
+// Interceptor para tratar respostas e erros - simplificado
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
-    // Se o erro for 401 (Não autorizado), pode ser token expirado
-    if (error.response && error.response.status === 401) {
-      // Limpa o token inválido
-      localStorage.removeItem('token');
-      
-      // Redireciona para a página de login se necessário
-      // window.location.href = '/login';
-    }
-    
+    // Tratamento de erro simplificado que não verifica token
+    console.log('Erro na requisição:', error.message);
     return Promise.reject(error);
   }
 );
 
-// Função para salvar o token após login bem-sucedido
+
+// Função para salvar o token - simplificada para funcionar sem autenticação
 export const setAuthToken = (token) => {
-  if (token) {
-    // Salva o token no localStorage
-    localStorage.setItem('token', token);
-  } else {
-    // Remove o token do localStorage
-    localStorage.removeItem('token');
-  }
+  // Versão simplificada que não armazena o token
+  // Mantida para compatibilidade com o código existente
+  console.log('Sistema funcionando sem autenticação por token');
+  return true;
 };
 
 export default api;

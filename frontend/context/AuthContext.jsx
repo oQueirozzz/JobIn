@@ -1,103 +1,102 @@
 
-// import React, { createContext, useState, useContext, useEffect } from 'react';
-// import api, { setAuthToken } from '../services/api';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
 
-// // Criando o contexto de autenticação
-// const AuthContext = createContext();
+// Criando o contexto de autenticação
+const AuthContext = createContext();
 
-// // Hook personalizado para usar o contexto de autenticação
-// export const useAuth = () => useContext(AuthContext);
+// Hook personalizado para usar o contexto de autenticação
+export const useAuth = () => useContext(AuthContext);
 
-// // Provedor do contexto de autenticação
-// export const AuthProvider = ({ children }) => {
-//   const [usuario, setUsuario] = useState(null);
-//   const [carregando, setCarregando] = useState(true);
+// Provedor do contexto de autenticação
+export const AuthProvider = ({ children }) => {
+  const [usuario, setUsuario] = useState(null);
+  const [carregando, setCarregando] = useState(true);
   
-//   // Verificar se o usuário já está autenticado ao carregar a aplicação
-//   useEffect(() => {
-//     const verificarUsuario = async () => {
-//       const token = localStorage.getItem('token');
+  // Verificar se o usuário já está autenticado ao carregar a aplicação
+  useEffect(() => {
+    const verificarUsuario = async () => {
+      const usuarioSalvo = localStorage.getItem('usuario');
       
-//       if (token) {
-//         try {
-//           // O token será adicionado automaticamente pelo interceptor
-//           const resposta = await api.get('/usuarios/perfil');
-//           setUsuario(resposta.data);
-//         } catch (erro) {
-//           // Se houver erro, limpa o token (provavelmente expirado)
-//           localStorage.removeItem('token');
-//         }
-//       }
+      if (usuarioSalvo) {
+        try {
+          // Recupera os dados do usuário do armazenamento local
+          setUsuario(JSON.parse(usuarioSalvo));
+        } catch (erro) {
+          // Se houver erro, limpa os dados do usuário
+          localStorage.removeItem('usuario');
+        }
+      }
       
-//       setCarregando(false);
-//     };
+      setCarregando(false);
+    };
     
-//     verificarUsuario();
-//   }, []);
+    verificarUsuario();
+  }, []);
   
-//   // Função de login
-//   const login = async (email, senha) => {
-//     try {
-//       const resposta = await api.post('/usuarios/login', { email, senha });
-//       const { token, ...dadosUsuario } = resposta.data;
+  // Função de login
+  const login = async (email, senha) => {
+    try {
+      const resposta = await api.post('/usuarios/login', { email, senha });
+      const dadosUsuario = resposta.data;
       
-//       // Salva o token (isso configurará automaticamente o token para todas as requisições futuras)
-//       setAuthToken(token);
+      // Salva os dados do usuário no armazenamento local
+      localStorage.setItem('usuario', JSON.stringify(dadosUsuario));
       
-//       // Atualiza o estado do usuário
-//       setUsuario(dadosUsuario);
+      // Atualiza o estado do usuário
+      setUsuario(dadosUsuario);
       
-//       return dadosUsuario;
-//     } catch (erro) {
-//       console.error('Erro ao fazer login:', erro);
-//       throw erro;
-//     }
-//   };
+      return dadosUsuario;
+    } catch (erro) {
+      console.error('Erro ao fazer login:', erro);
+      throw erro;
+    }
+  };
   
-//   // Função de registro
-//   const register = async (dadosUsuario) => {
-//     try {
-//       const resposta = await api.post('/usuarios/register', dadosUsuario);
-//       const { token, ...novoUsuario } = resposta.data;
+  // Função de registro
+  const register = async (dadosUsuario) => {
+    try {
+      const resposta = await api.post('/usuarios/register', dadosUsuario);
+      const novoUsuario = resposta.data;
       
-//       // Salva o token (isso configurará automaticamente o token para todas as requisições futuras)
-//       setAuthToken(token);
+      // Salva os dados do usuário no armazenamento local
+      localStorage.setItem('usuario', JSON.stringify(novoUsuario));
       
-//       // Atualiza o estado do usuário
-//       setUsuario(novoUsuario);
+      // Atualiza o estado do usuário
+      setUsuario(novoUsuario);
       
-//       return novoUsuario;
-//     } catch (erro) {
-//       console.error('Erro ao registrar usuário:', erro);
-//       throw erro;
-//     }
-//   };
+      return novoUsuario;
+    } catch (erro) {
+      console.error('Erro ao registrar usuário:', erro);
+      throw erro;
+    }
+  };
   
-//   // Função de logout
-//   const logout = () => {
-//     // Remove o token
-//     setAuthToken(null);
+  // Função de logout
+  const logout = () => {
+    // Remove os dados do usuário
+    localStorage.removeItem('usuario');
     
-//     // Limpa o estado do usuário
-//     setUsuario(null);
-//   };
+    // Limpa o estado do usuário
+    setUsuario(null);
+  };
   
-//   // Valores e funções disponibilizados pelo contexto
-//   const value = {
-//     usuario,
-//     carregando,
-//     login,
-//     register,
-//     logout,
-//     isAuthenticated: !!usuario
-//   };
+  // Valores e funções disponibilizados pelo contexto
+  const value = {
+    usuario,
+    carregando,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!usuario
+  };
   
-//   return (
-//     <AuthContext.Provider value={value}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 // Compare this snippet from Login.jsx:
 // import React, { useState } from 'react';

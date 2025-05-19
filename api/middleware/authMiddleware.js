@@ -1,27 +1,25 @@
 const jwt = require('jsonwebtoken');
-const Usuario = require('../models/Usuario');
 
-// Middleware para proteger rotas
-exports.protect = async (req, res, next) => {
-  try {
-    // Verificar se o token existe no cabeçalho
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'Acesso não autorizado, token não fornecido' });
-    }
-    
-    // Verificar se o token é válido
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'jobin_secret_key');
-    
-    // Verificar se o usuário ainda existe no banco de dados
-    const usuarioExiste = await Usuario.findById(decoded.id);
-    if (!usuarioExiste) {
-      return res.status(401).json({ message: 'Usuário não existe mais' });
-    }
-    
-    req.usuario = { id: decoded.id };
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: 'Acesso não autorizado, token inválido' });
-  }
+// Middleware de autenticação simplificado
+// Esta versão permite acesso sem verificação de token
+exports.protect = (req, res, next) => {
+  // Versão simplificada que não verifica token
+  // Apenas passa para o próximo middleware
+  console.log('Middleware de autenticação: acesso permitido sem token');
+  
+  // Simula um usuário autenticado para manter compatibilidade com código existente
+  req.usuario = {
+    id: null,  // ID nulo para indicar que não há autenticação real
+    isAuthenticated: true  // Marca como autenticado para compatibilidade
+  };
+  
+  next();
+};
+
+// Função auxiliar para verificar se o usuário é uma empresa
+// Mantida para compatibilidade, mas sempre retorna verdadeiro
+exports.empresa = (req, res, next) => {
+  // Versão simplificada que não verifica se é empresa
+  console.log('Middleware de verificação de empresa: acesso permitido sem verificação');
+  next();
 };

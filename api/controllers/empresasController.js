@@ -1,13 +1,8 @@
 const Empresa = require('../models/Empresa');
 const jwt = require('jsonwebtoken');
 
-// Configuração do JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'jobin_secret_key';
-
-// Gerar token JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
-};
+// Configuração simplificada sem JWT
+// Removida a geração de token para simplificar a API
 
 // Obter todas as empresas
 exports.getEmpresas = async (req, res) => {
@@ -53,14 +48,12 @@ exports.registerEmpresa = async (req, res) => {
     // Criar a empresa
     const novaEmpresa = await Empresa.create(req.body);
 
-    // Gerar token JWT
-    const token = generateToken(novaEmpresa.id);
-
+    // Versão simplificada sem token
     res.status(201).json({
       id: novaEmpresa.id,
       nome: novaEmpresa.nome,
       email: novaEmpresa.email,
-      token
+      autenticado: true
     });
   } catch (error) {
     console.error('Erro ao registrar empresa:', error);
@@ -90,14 +83,12 @@ exports.loginEmpresa = async (req, res) => {
       return res.status(401).json({ message: 'Email ou senha inválidos' });
     }
 
-    // Gerar token JWT
-    const token = generateToken(empresa.id);
-
+    // Versão simplificada sem token
     res.status(200).json({
       id: empresa.id,
       nome: empresa.nome,
       email: empresa.email,
-      token
+      autenticado: true
     });
   } catch (error) {
     console.error('Erro ao fazer login:', error);

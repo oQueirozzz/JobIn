@@ -10,8 +10,8 @@ router.post('/login', empresasController.loginEmpresa);
 router.get('/', empresasController.getEmpresas);
 router.get('/:id', empresasController.getEmpresaById);
 
-// Rotas protegidas
-router.put('/:id', protect, empresasController.updateEmpresa);
-router.delete('/:id', protect, empresasController.deleteEmpresa);
+// Todas as rotas são públicas
+router.put('/:id', empresasController.updateEmpresa);
+router.delete('/:id', empresasController.deleteEmpresa);
 
 module.exports = router;
