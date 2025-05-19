@@ -6,14 +6,20 @@
     --branco: #F0F3F5; 
 }
 
-.bege{
+.bg-bege{
     background-color: var(--bege);
 }
 
-.vinho{
+.bg-vinho{
     background-color: var(--vinho);
 }
 
-.branco{
+.bg-branco{
     background-color: var(--branco);
+}
+
+/*Temporario*/
+
+body{
+    background-color: #D7C9AA;
 }
