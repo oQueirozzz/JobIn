@@ -139,21 +139,30 @@ exports.deleteNotificacao = async (req, res) => {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
     
+    // Armazenar os IDs antes de excluir a notificação
+    const { usuarios_id, empresas_id } = notificacaoExistente;
+    
+    // Tentar excluir a notificação
     const resultado = await Notificacao.delete(notificacaoId);
     
-    // Registrar log da exclusão
+    // Verificar se a exclusão foi bem-sucedida
+    if (!resultado || resultado.affectedRows === 0) {
+      return res.status(404).json({ message: 'Falha ao excluir notificação' });
+    }
+    
+    // Registrar log da exclusão apenas se a exclusão foi bem-sucedida
     await Log.create({
-      usuario_id: notificacaoExistente.usuarios_id,
-      empresa_id: notificacaoExistente.empresas_id,
+      usuario_id: usuarios_id,
+      empresa_id: empresas_id,
       acao: 'EXCLUIR',
       resourse: 'NOTIFICACAO',
       descricao: 'Notificação excluída',
       detalhes: { notificacao_id: notificacaoId }
     });
     
-    res.status(200).json(resultado);
+    res.status(200).json({ message: 'Notificação excluída com sucesso', ...resultado });
   } catch (error) {
     console.error('Erro ao excluir notificação:', error);
-    res.status(500).json({ message: 'Erro ao excluir notificação' });
+    res.status(500).json({ message: 'Erro ao excluir notificação', error: error.message });
   }
 };

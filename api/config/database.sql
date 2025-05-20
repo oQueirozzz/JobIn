@@ -47,7 +47,8 @@ CREATE TABLE `candidaturas` (
 	`id_usuario` INTEGER NOT NULL,
 	`id_vaga` INTEGER NOT NULL,
 	`curriculo_usuario` VARCHAR(255),
-	`status` VARCHAR(50) DEFAULT 'PENDENTE',
+	`status` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA') DEFAULT 'PENDENTE',
+	`data_atualizacao` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY(`id`)
 );
 
@@ -81,6 +82,9 @@ CREATE TABLE `notificacao` (
     `usuarios_id` INTEGER NOT NULL,
 	`mensagem_usuario` VARCHAR(100),
     `mensagem_empresa` VARCHAR(100),
+	`status_candidatura` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'),
+	`data_notificacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
+	`lida` BOOLEAN DEFAULT FALSE,
 	PRIMARY KEY(`id`)
 );
 
@@ -180,7 +184,40 @@ BEGIN
     DELETE FROM notificacao WHERE candidaturas_id = OLD.id;
 END$$
 
- DELIMITER ;
+-- Trigger para criar notificação quando o status da candidatura for alterado
+CREATE TRIGGER after_update_candidatura_status
+AFTER UPDATE ON candidaturas
+FOR EACH ROW
+BEGIN
+    IF OLD.status <> NEW.status THEN
+        -- Obter o ID da empresa da vaga
+        DECLARE empresa_id INT;
+        SELECT empresa_id INTO empresa_id FROM vagas WHERE id = NEW.id_vaga;
+        
+        -- Criar notificação com mensagens personalizadas baseadas no novo status
+        INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, status_candidatura)
+        VALUES (
+            NEW.id,
+            empresa_id,
+            NEW.id_usuario,
+            CASE 
+                WHEN NEW.status = 'APROVADO' THEN 'Parabéns! Sua candidatura foi aprovada.'
+                WHEN NEW.status = 'REJEITADO' THEN 'Sua candidatura não foi aprovada desta vez.'
+                WHEN NEW.status = 'EM_ESPERA' THEN 'Sua candidatura está em análise.'
+                ELSE 'O status da sua candidatura foi atualizado.'
+            END,
+            CASE 
+                WHEN NEW.status = 'APROVADO' THEN 'Você aprovou uma candidatura.'
+                WHEN NEW.status = 'REJEITADO' THEN 'Você rejeitou uma candidatura.'
+                WHEN NEW.status = 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
+                ELSE 'Você atualizou o status de uma candidatura.'
+            END,
+            NEW.status
+        );
+    END IF;
+END$$
+
+DELIMITER ;
 -- Inserindo dados
 
 INSERT INTO empresas (nome, email, cnpj, senha, descricao, logo) VALUES

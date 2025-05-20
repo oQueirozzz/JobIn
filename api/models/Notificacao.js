@@ -75,8 +75,26 @@ class Notificacao {
 
   // Excluir notificação
   static async delete(id) {
-    const [result] = await pool.query('DELETE FROM notificacao WHERE id = ?', [id]);
-    return { affectedRows: result.affectedRows };
+    try {
+      // Verificar se a notificação existe antes de tentar excluir
+      const notificacao = await this.findById(id);
+      if (!notificacao) {
+        return { affectedRows: 0, error: 'Notificação não encontrada' };
+      }
+      
+      // Executar a exclusão
+      const [result] = await pool.query('DELETE FROM notificacao WHERE id = ?', [id]);
+      
+      // Verificar se a exclusão foi bem-sucedida
+      if (result.affectedRows === 0) {
+        return { affectedRows: 0, error: 'Falha ao excluir notificação' };
+      }
+      
+      return { affectedRows: result.affectedRows, success: true };
+    } catch (error) {
+      console.error('Erro no modelo ao excluir notificação:', error);
+      throw error; // Propagar o erro para ser tratado no controlador
+    }
   }
 }
 
