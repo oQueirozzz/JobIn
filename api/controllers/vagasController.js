@@ -1,4 +1,6 @@
 const Vaga = require('../models/Vaga');
+const Notificacao = require('../models/Notificacao');
+const logsController = require('./logsController');
 
 // Obter todas as vagas
 exports.getVagas = async (req, res) => {
@@ -48,6 +50,18 @@ exports.createVaga = async (req, res) => {
 
     // Criar a vaga
     const novaVaga = await Vaga.create(req.body);
+    
+    // Registrar log de criação de vaga
+    await logsController.logCriacaoVaga(empresa_id, novaVaga.id, nome_vaga);
+    
+    // Criar notificação para a empresa
+    await Notificacao.create({
+      candidaturas_id: 0, // Sem candidatura associada
+      empresas_id: empresa_id,
+      usuarios_id: 0, // Sem usuário específico
+      mensagem_empresa: `Nova vaga criada: ${nome_vaga}`,
+      mensagem_usuario: null
+    });
 
     res.status(201).json(novaVaga);
   } catch (error) {

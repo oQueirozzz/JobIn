@@ -88,6 +88,11 @@ class Candidatura {
         updateFields.push('curriculo_usuario = ?');
         values.push(candidaturaData.curriculo_usuario);
       }
+      
+      if (candidaturaData.status !== undefined) {
+        updateFields.push('status = ?');
+        values.push(candidaturaData.status);
+      }
 
       if (updateFields.length === 0) {
         return { message: 'Nenhum campo para atualizar' };

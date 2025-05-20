@@ -11,6 +11,94 @@ exports.getLogs = async (req, res) => {
   }
 };
 
+// Função utilitária para registrar logs em qualquer parte do sistema
+exports.registrarLog = async (usuarioId, empresaId, acao, resource, descricao, detalhes) => {
+  try {
+    // Garantir que usuarioId e empresaId sejam números válidos ou 0 quando não disponíveis
+    const usuario_id = usuarioId || 0;
+    const empresa_id = empresaId || 0;
+    
+    return await Log.create({
+      usuario_id,
+      empresa_id,
+      acao,
+      resourse: resource,
+      descricao,
+      detalhes
+    });
+  } catch (error) {
+    console.error('Erro ao registrar log:', error);
+    return null;
+  }
+};
+
+// Funções utilitárias para eventos comuns
+exports.logLogin = async (usuarioId, empresaId, tipoUsuario) => {
+  const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
+  const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
+  
+  return this.registrarLog(
+    usuarioId,
+    empresaId,
+    'LOGIN',
+    entidade,
+    `Login realizado: ${entidade} ID ${id}`,
+    { tipo_usuario: tipoUsuario }
+  );
+};
+
+// Log de candidatura
+exports.logCandidatura = async (usuarioId, empresaId, vagaId) => {
+  return this.registrarLog(
+    usuarioId,
+    empresaId,
+    'CANDIDATURA',
+    'VAGA',
+    `Candidatura realizada: Usuário ID ${usuarioId} para Vaga ID ${vagaId}`,
+    { vaga_id: vagaId }
+  );
+};
+
+// Log de atualização de perfil
+exports.logAtualizacaoPerfil = async (usuarioId, empresaId, tipoUsuario) => {
+  const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
+  const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
+  
+  return this.registrarLog(
+    usuarioId,
+    empresaId,
+    'ATUALIZAR',
+    entidade,
+    `Perfil atualizado: ${entidade} ID ${id}`,
+    { tipo_usuario: tipoUsuario }
+  );
+};
+
+// Log de criação de vaga
+exports.logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
+  return this.registrarLog(
+    0,
+    empresaId,
+    'CRIAR',
+    'VAGA',
+    `Vaga criada: ${nomeVaga}`,
+    { vaga_id: vagaId }
+  );
+};
+
+// Log de mensagem no chat
+exports.logMensagemChat = async (usuarioId, empresaId, vagaId) => {
+  return this.registrarLog(
+    usuarioId,
+    empresaId,
+    'MENSAGEM',
+    'CHAT',
+    `Nova mensagem no chat: Usuário ID ${usuarioId} e Empresa ID ${empresaId}`,
+    { vaga_id: vagaId }
+  );
+};
+
+
 // Obter log por ID
 exports.getLogById = async (req, res) => {
   try {

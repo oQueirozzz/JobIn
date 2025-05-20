@@ -6,8 +6,8 @@ CREATE TABLE `usuarios` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`nome` VARCHAR(100) NOT NULL,
 	`email` VARCHAR(100) NOT NULL,
-	`senha` VARCHAR(255) NOT NULL,
-	`cpf` VARCHAR(11) NOT NULL,
+	`senha` VARCHAR(100) NOT NULL,
+	`cpf` VARCHAR(11) NOT NULL UNIQUE,
 	`data_nascimento` VARCHAR(100) NOT NULL,
 	`habilidades` VARCHAR(50),
 	`descricao` TEXT(200),
@@ -23,8 +23,8 @@ CREATE TABLE `empresas` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`nome` VARCHAR(50) NOT NULL,
 	`email` VARCHAR(100) NOT NULL,
-	`cnpj` VARCHAR(14) NOT NULL,
-	`senha` VARCHAR(255) NOT NULL,
+	`cnpj` VARCHAR(14) NOT NULL UNIQUE,
+	`senha` VARCHAR(100) NOT NULL,
 	`descricao` TEXT,
 	`logo` VARCHAR(255),
 	PRIMARY KEY(`id`)
@@ -47,6 +47,7 @@ CREATE TABLE `candidaturas` (
 	`id_usuario` INTEGER NOT NULL,
 	`id_vaga` INTEGER NOT NULL,
 	`curriculo_usuario` VARCHAR(255),
+	`status` VARCHAR(50) DEFAULT 'PENDENTE',
 	PRIMARY KEY(`id`)
 );
 
@@ -243,3 +244,7 @@ INSERT INTO candidaturas (id_usuario, id_vaga, curriculo_usuario) VALUES
 (1, 1, 'curriculo_joao.pdf'),  -- João se candidatou para Desenvolvedor Frontend
 (2, 3, 'curriculo_maria.pdf'), -- Maria se candidatou para Designer Gráfico
 (3, 2, 'curriculo_carlos.pdf'); -- Carlos se candidatou para Auxiliar de Mecânica
+
+select * from usuarios;
+select * from logs;
+select * from candidaturas;

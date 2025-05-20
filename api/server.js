@@ -7,6 +7,7 @@ const vagasRoutes = require('./routes/vagas');
 const candidaturasRoutes = require('./routes/candidaturas');
 const chatRoutes = require('./routes/chat');
 const logsRoutes = require('./routes/logs');
+const notificacoesRoutes = require('./routes/notificacoes');
 const rotasRoutes = require('./routes/rotas');
 const pontosRotasRoutes = require('./routes/pontosRotas');
 
@@ -24,6 +25,7 @@ app.use('/api/vagas', vagasRoutes);
 app.use('/api/candidaturas', candidaturasRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/logs', logsRoutes);
+app.use('/api/notificacoes', notificacoesRoutes);
 app.use('/api/rotas', rotasRoutes);
 app.use('/api/pontos-rotas', pontosRotasRoutes);
 

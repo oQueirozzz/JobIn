@@ -1,5 +1,6 @@
 const Empresa = require('../models/Empresa');
 const jwt = require('jsonwebtoken');
+const logsController = require('./logsController');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -47,6 +48,26 @@ exports.registerEmpresa = async (req, res) => {
 
     // Criar a empresa
     const novaEmpresa = await Empresa.create(req.body);
+    
+    // Registrar log de criação de empresa
+    await logsController.registrarLog(
+      0, // Sem usuário associado
+      novaEmpresa.id,
+      'CRIAR',
+      'EMPRESA',
+      `Nova empresa registrada: ${nome}`,
+      { empresa_id: novaEmpresa.id }
+    );
+    
+    // Criar notificação para a empresa
+    const Notificacao = require('../models/Notificacao');
+    await Notificacao.create({
+      candidaturas_id: 0, // Sem candidatura associada
+      empresas_id: novaEmpresa.id,
+      usuarios_id: 0, // Sem usuário específico
+      mensagem_empresa: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso.`,
+      mensagem_usuario: null
+    });
 
     // Versão simplificada sem token
     res.status(201).json({
@@ -82,6 +103,9 @@ exports.loginEmpresa = async (req, res) => {
     if (!senhaCorreta) {
       return res.status(401).json({ message: 'Email ou senha inválidos' });
     }
+    
+    // Registrar log de login
+    await logsController.logLogin(0, empresa.id, 'empresa');
 
     // Versão simplificada sem token
     res.status(200).json({
@@ -103,6 +127,10 @@ exports.updateEmpresa = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Empresa não encontrada' });
     }
+    
+    // Registrar log de atualização de perfil
+    await logsController.logAtualizacaoPerfil(0, req.params.id, 'empresa');
+    
     res.status(200).json({ message: 'Empresa atualizada com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar empresa:', error);
@@ -113,6 +141,16 @@ exports.updateEmpresa = async (req, res) => {
 // Excluir uma empresa
 exports.deleteEmpresa = async (req, res) => {
   try {
+    // Registrar log antes de excluir a empresa
+    await logsController.registrarLog(
+      0,
+      req.params.id,
+      'EXCLUIR',
+      'EMPRESA',
+      `Empresa excluída: ID ${req.params.id}`,
+      { empresa_id: req.params.id }
+    );
+    
     const result = await Empresa.delete(req.params.id);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Empresa não encontrada' });

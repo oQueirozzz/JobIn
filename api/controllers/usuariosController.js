@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario');
 const jwt = require('jsonwebtoken');
+const logsController = require('./logsController');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -52,6 +53,26 @@ exports.registerUsuario = async (req, res) => {
 
     // Criar o usuário
     const novoUsuario = await Usuario.create(req.body);
+    
+    // Registrar log de criação de usuário
+    await logsController.registrarLog(
+      novoUsuario.id,
+      0, // Sem empresa associada
+      'CRIAR',
+      'USUARIO',
+      `Novo usuário registrado: ${nome}`,
+      { usuario_id: novoUsuario.id }
+    );
+    
+    // Criar notificação para o usuário
+    const Notificacao = require('../models/Notificacao');
+    await Notificacao.create({
+      candidaturas_id: 0, // Sem candidatura associada
+      empresas_id: 0, // Sem empresa associada
+      usuarios_id: novoUsuario.id,
+      mensagem_empresa: null,
+      mensagem_usuario: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso. Comece a buscar vagas agora mesmo!`
+    });
 
     // Versão simplificada sem token
     res.status(201).json({
@@ -93,6 +114,9 @@ exports.loginUsuario = async (req, res) => {
     if (!senhaCorreta) {
       return res.status(401).json({ message: 'Email ou senha inválidos' });
     }
+    
+    // Registrar log de login
+    await logsController.logLogin(usuario.id, 0, 'usuario');
 
     res.status(200).json({
       id: usuario.id,
@@ -113,6 +137,10 @@ exports.updateUsuario = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
+    
+    // Registrar log de atualização de perfil
+    await logsController.logAtualizacaoPerfil(req.params.id, 0, 'usuario');
+    
     res.status(200).json({ message: 'Usuário atualizado com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
@@ -123,6 +151,16 @@ exports.updateUsuario = async (req, res) => {
 // Excluir um usuário
 exports.deleteUsuario = async (req, res) => {
   try {
+    // Registrar log antes de excluir o usuário
+    await logsController.registrarLog(
+      req.params.id,
+      0,
+      'EXCLUIR',
+      'USUARIO',
+      `Usuário excluído: ID ${req.params.id}`,
+      { usuario_id: req.params.id }
+    );
+    
     const result = await Usuario.delete(req.params.id);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
