@@ -25,3 +25,94 @@
 .text-vinho {
     color: var(--vinho);
 }
+
+.footer{
+    background-color: #F0F3F5;
+    color: black;
+    padding: 40px 20px;
+
+}
+
+.footer-container{
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+}
+
+.footer-column{
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 20px;
+    
+}
+
+.footer-column img{
+    width: 110px;
+    margin-top: 10px;
+}
+
+.footer-column h2{
+    margin-bottom: 10px;
+    color: black;
+    font-size: 20px;
+    margin-left: 100px;
+}
+
+.footer-column ul{
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column ul li{
+    margin-bottom: 8px;
+    margin-left: 100px;
+}
+
+.footer-column p{
+    margin-top: 25px;
+}
+
+.footer-column a{
+    color: rgb(110, 110, 110);
+}
+
+.footer-column a:hover{
+    color: black;
+}
+
+.footer-social .bi{
+ margin-top: 25px;
+ display: inline;
+ width: 35px;
+ color: rgb(110, 110, 110);
+}
+
+.footer-social .bi:hover{
+    color: black;
+    cursor: pointer;
+}
+
+.footer-bottom{
+    border-top: 1px solid black;
+    margin-top: 25px;
+    padding-top: 20px;
+    text-align: center;
+
+}
+
+.footer-bottom p{
+ margin-right:40px;
+ margin-left: 20px;
+}
+
+.footer-bottom a{
+  margin-left: 200px;
+  color: rgb(110, 110, 110);
+}
+
+.footer-bottom a:hover{
+    color: black;
+}
