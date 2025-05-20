@@ -16,7 +16,7 @@ async function login(event) {
 
     if (response.ok) {
       setResponseContent('Login realizado com sucesso!');
-      window.location.href = '/';
+      window.location.href = '/';//verificar qual rota deve ser selecionada
     } else {
       alert(data.mensagem || 'Usuário não encontrado ou senha incorreta');
     }
@@ -25,6 +25,7 @@ async function login(event) {
   }
 }
 
+// modelo base do  formulário: flowbite
 
 export default function Login() {
   return (
