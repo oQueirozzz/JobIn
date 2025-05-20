@@ -1,19 +1,27 @@
 @import "tailwindcss";
 
-:root{
+:root {
     --bege: #D7C9AA;
     --vinho: #7B2D26;
-    --branco: #F0F3F5; 
+    --branco: #F0F3F5;
 }
 
-.bg-bege{
+/*background colors tailwind*/
+
+.bg-bege {
     background-color: var(--bege);
 }
 
-.bg-vinho{
+.bg-vinho {
     background-color: var(--vinho);
 }
 
-.bg-branco{
+.bg-branco {
     background-color: var(--branco);
+}
+
+/*text colors tailwind*/
+
+.text-vinho {
+    color: var(--vinho);
 }
