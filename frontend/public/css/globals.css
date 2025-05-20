@@ -28,7 +28,7 @@
 
 .footer{
     background-color: #F0F3F5;
-    color: black;
+    color: rgb(255, 255, 255);
     padding: 40px 20px;
 
 }
@@ -56,7 +56,7 @@
 
 .footer-column h2{
     margin-bottom: 10px;
-    color: black;
+    color: #D7C9AA;
     font-size: 20px;
     margin-left: 100px;
 }
@@ -73,30 +73,36 @@
 
 .footer-column p{
     margin-top: 25px;
+    color: #fff;
 }
 
 .footer-column a{
-    color: rgb(110, 110, 110);
+    color: #fff ;
+    transition: 0.3s;
 }
 
 .footer-column a:hover{
-    color: black;
+    color: #D7C9AA;
+    transition: 0.3s;
 }
+
 
 .footer-social .bi{
  margin-top: 25px;
  display: inline;
  width: 35px;
- color: rgb(110, 110, 110);
+ color: rgb(255, 255, 255);
+ transition: 0.3s;
 }
 
 .footer-social .bi:hover{
-    color: black;
+    color: #D7C9AA;
+    transition: 0.3s;
     cursor: pointer;
 }
 
 .footer-bottom{
-    border-top: 1px solid black;
+    border-top: 1px solid #D7C9AA;
     margin-top: 25px;
     padding-top: 20px;
     text-align: center;
@@ -106,13 +112,14 @@
 .footer-bottom p{
  margin-right:40px;
  margin-left: 20px;
+ color: #fff;
 }
 
 .footer-bottom a{
   margin-left: 200px;
-  color: rgb(110, 110, 110);
+  color: #D7C9AA;
 }
 
 .footer-bottom a:hover{
-    color: black;
+    color: #D7C9AA;
 }
