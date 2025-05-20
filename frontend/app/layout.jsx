@@ -1,6 +1,14 @@
 import "../public/css/globals.css";
 import Header from "../components/Header/Header";
 import Footer from "../components/Footer/Footer"
+import { Inter } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
 
 export const metadata = {
   title: "JobIn",
@@ -13,7 +21,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-br">
-      <body>
+      <body className={inter.variable}>
         <Header />
         {children}
         <Footer />
