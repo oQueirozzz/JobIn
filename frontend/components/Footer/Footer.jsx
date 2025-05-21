@@ -28,7 +28,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-column">
-          <h2>Para Estudantes</h2>
+          <h2>Estudantes</h2>
           <ul>
             <li><Link href="">Buscar Vagas</Link></li>
             <li><Link href="">Criar Perfil</Link></li>
@@ -39,7 +39,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-column">
-          <h2>Para Empresas</h2>
+          <h2>Empresas</h2>
           <ul>
             <li><Link href="">Publicar Vagas</Link></li>
             <li><Link href="">Buscar Talentos</Link></li>
@@ -60,11 +60,10 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2025 JobIn. Todos os direitos reservados. 
-            <Link href="">Termos</Link> 
-            <Link href="">Privacidade</Link> 
-            <Link href="">Cookies</Link>
-          </p>
+          <p>© 2025 JobIn. Todos os direitos reservados. </p>
+          <a href="">Termos</a>
+          <a href="">Privacidade</a>
+          <a href="">Cookies</a>
         </div>
       </div>
     </footer>
