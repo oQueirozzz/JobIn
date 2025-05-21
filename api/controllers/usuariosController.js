@@ -1,5 +1,4 @@
 const Usuario = require('../models/Usuario');
-const jwt = require('jsonwebtoken');
 const logsController = require('./logsController');
 
 // Configuração simplificada sem JWT

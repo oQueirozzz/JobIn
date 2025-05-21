@@ -1,5 +1,4 @@
 const Empresa = require('../models/Empresa');
-const jwt = require('jsonwebtoken');
 const logsController = require('./logsController');
 
 // Configuração simplificada sem JWT
