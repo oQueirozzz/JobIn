@@ -7,7 +7,7 @@ async function cadEmpresa(event) {
 
     try {
         // verifique se a rota está correta pode ser que o localhost não seja 3000
-        const response = await fetch('http://localhost:3000/empresas/register', {
+        const response = await fetch('http://localhost:3001/empresas/register', {
             method: 'POST',
             body: formData,
         });

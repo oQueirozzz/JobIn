@@ -7,7 +7,7 @@ async function login(event) {
 
   try {
     // verifique se a rota está correta pode ser que o localhost não seja 3000
-    const response = await fetch('http://localhost:3000/usuarios/login', {
+    const response = await fetch('http://localhost:3001/usuarios/login', {
       method: 'POST',
       body: formData,
     });

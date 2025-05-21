@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="py-10 bg-[#7B2D26]">
       <div className="footer-container">
         <div className="footer-column">
-          <img src="/img/global/logo_completa.svg" alt="Logo JobIn" />
+          <img className="" src="/img/global/logo_completa_branca.svg" alt="Logo JobIn" />
           <p>Conectando estudantes às melhores oportunidades de estágio desde 2025.</p>
           <div className="footer-social">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi" viewBox="0 0 16 16">

@@ -1,9 +1,14 @@
+footer{
+    width: 100%;
+    height: auto;
+}
+
+
 
 .footer{
     background-color: #F0F3F5;
     color: rgb(255, 255, 255);
     padding: 40px 20px;
-
 }
 
 .footer-container{
@@ -19,7 +24,7 @@
     flex: 1;
     min-width: 200px;
     margin-bottom: 20px;
-    
+    width: 25%;
 }
 
 .footer-column img{
@@ -85,7 +90,9 @@
 .footer-bottom p{
  margin-right:40px;
  margin-left: 20px;
+ font-size: 15.7px;
  color: #fff;
+ width: 25%;
 }
 
 .footer-bottom a{
@@ -95,4 +102,8 @@
 
 .footer-bottom a:hover{
     color: #D7C9AA;
+}
+
+@media screen and (max-width: 1200px) {
+    
 }
