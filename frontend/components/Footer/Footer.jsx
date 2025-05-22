@@ -1,7 +1,16 @@
+'use client';
+
 import Link from "next/link";
 import "../Footer/footer.css"
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/not-found')  || pathname ==='/chat') {
+    return null;
+  }
+
   return (
     <footer className="py-10 bg-[#7B2D26]">
       <div className="footer-container">
