@@ -1,42 +1,111 @@
+'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function HeaderLanding() {
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const navItems = [
+        { label: 'Início', href: '/' },
+        { label: 'Vagas', href: '#vagas' },
+        { label: 'Empresas', href: '#empresas' },
+        { label: 'Sobre', href: '#sobre' }
+    ];
+
     return (
-        <header id="header" className="bg-white shadow-sm fixed w-full z-50">
-            <div className="container mx-auto px-4 py-3">
+        <header className={`fixed w-full z-50 transition-all duration-300 ${
+            isScrolled ? 'bg-white shadow-lg py-2' : 'bg-transparent py-4'
+        }`}>
+            <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                    <img src="./logos/1.png" className="h-[70px] w-[100px] object-contain cursor-pointer " alt="" />
-                        <div className="hidden md:flex ml-10 space-x-6">
-                            <span className="text-gray-700 hover:text-[#8C1C13] font-medium cursor-pointer">Início</span>
-                            <span className="text-gray-700 hover:text-[#8C1C13] font-medium cursor-pointer">Vagas</span>
-                            <span className="text-gray-700 hover:text-[#8C1C13] font-medium cursor-pointer">Empresas</span>
-                            <span className="text-gray-700 hover:text-[#8C1C13] font-medium cursor-pointer">Sobre</span>
-                        </div>
+                        <img 
+                            src="/img/global/logo_completa.svg" 
+                            className="h-16 w-auto object-contain cursor-pointer transition-transform hover:scale-105" 
+                            alt="JobIn Logo" 
+                            onClick={() => router.push('/')}
+                        />
+                        <nav className="hidden md:flex ml-10 space-x-8">
+                            {navItems.map((item) => (
+                                <Link 
+                                    key={item.label}
+                                    href={item.href}
+                                    className="text-gray-700 hover:text-[#8C1C13] font-medium transition-colors duration-300 relative group"
+                                >
+                                    {item.label}
+                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#8C1C13] transition-all duration-300 group-hover:w-full"></span>
+                                </Link>
+                            ))}
+                        </nav>
                     </div>
-                    <div className="hidden md:flex items-center space-x-4">
-                        <span className="text-gray-700 hover:text-[#8C1C13] cursor-pointer">
-                            <i className="text-xl" data-fa-i2svg=""><svg className="svg-inline--fa fa-bell" aria-hidden="true" focusable="false" data-prefix="far" data-icon="bell" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg=""><path fill="currentColor" d="M224 0c-17.7 0-32 14.3-32 32V49.9C119.5 61.4 64 124.2 64 200v33.4c0 45.4-15.5 89.5-43.8 124.9L5.3 377c-5.8 7.2-6.9 17.1-2.9 25.4S14.8 416 24 416H424c9.2 0 17.6-5.3 21.6-13.6s2.9-18.2-2.9-25.4l-14.9-18.6C399.5 322.9 384 278.8 384 233.4V200c0-75.8-55.5-138.6-128-150.1V32c0-17.7-14.3-32-32-32zm0 96h8c57.4 0 104 46.6 104 104v33.4c0 47.9 13.9 94.6 39.7 134.6H72.3C98.1 328 112 281.3 112 233.4V200c0-57.4 46.6-104 104-104h8zm64 352H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7s18.7-28.3 18.7-45.3z"></path></svg></i>
-                        </span>
-                        <span className="text-gray-700 hover:text-[#8C1C13] cursor-pointer">
-                            <i className="text-xl" data-fa-i2svg=""><svg className="svg-inline--fa fa-envelope" aria-hidden="true" focusable="false" data-prefix="far" data-icon="envelope" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"></path></svg></i>
-                        </span>
-                        <div className="relative">
 
-                        </div>
-                        <span className="bg-[#8C1C13] text-white px-4 py-2 rounded-full hover:bg-[#6b150e] transition-colors cursor-pointer">
-                            Publicar Vaga
-                        </span>
-                    </div>
-                    <button className="md:hidden text-gray-700">
-                        <i className="text-xl">
-                            <svg className="svg-inline--fa fa-bars" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="bars" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                <path fill="currentColor" d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path>
+                    <div className="hidden md:flex items-center space-x-6">
+                        <button className="text-gray-700 hover:text-[#8C1C13] transition-colors duration-300">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                             </svg>
-                        </i>
+                        </button>
+                        <button className="text-gray-700 hover:text-[#8C1C13] transition-colors duration-300">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                        <button 
+                            onClick={() => router.push('/cadEmpresas')}
+                            className="bg-[#8C1C13] text-white px-6 py-2.5 rounded-full hover:bg-[#6b150e] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                        >
+                            Publicar Vaga
+                        </button>
+                    </div>
+
+                    <button 
+                        className="md:hidden text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors duration-300"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
                     </button>
+                </div>
+
+                {/* Mobile Menu */}
+                <div className={`md:hidden transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                } overflow-hidden`}>
+                    <nav className="py-4 space-y-4">
+                        {navItems.map((item) => (
+                            <Link 
+                                key={item.label}
+                                href={item.href}
+                                className="block text-gray-700 hover:text-[#8C1C13] font-medium transition-colors duration-300"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                        <button 
+                            onClick={() => {
+                                router.push('/cadEmpresas');
+                                setIsMobileMenuOpen(false);
+                            }}
+                            className="w-full bg-[#8C1C13] text-white px-6 py-2.5 rounded-full hover:bg-[#6b150e] transition-all duration-300"
+                        >
+                            Publicar Vaga
+                        </button>
+                    </nav>
                 </div>
             </div>
         </header>
