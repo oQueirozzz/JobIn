@@ -22,7 +22,7 @@ export default function NovaSenha() {
         setMensagem('');
 
         try {
-            const response = await fetch('http://localhost:3001/api/usuarios/redefinir-senha', {
+            const response = await fetch('http://localhost:3001/api/usuarios/redefinirSenha', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -35,11 +35,11 @@ export default function NovaSenha() {
 
             const data = await response.json();
 
-            if (!data.success) {
+            if (!response.ok) {
                 throw new Error(data.message || 'Erro ao atualizar senha');
             }
 
-            setTipoMensagem('Senha atualizada com sucesso');
+            setTipoMensagem('sucesso');
             setMensagem(data.message);
             setEmail('');
             setNovaSenha('');
@@ -52,6 +52,7 @@ export default function NovaSenha() {
             setCarregando(false);
         }
     }
+
     return (
         <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
             <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">

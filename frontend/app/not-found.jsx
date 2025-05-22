@@ -1,7 +1,7 @@
 export default function () {
     return (
         <section className="bg-gradient-to-b from-[#e8edf1] to-[#ffffff] py-20 px-4">
-            <div className="max-w-screen-xl mx-auto flex flex-col-reverse lg:flex-row items-center justify-center gap-12">
+            <div className="max-w-screen-xl mx-auto flex flex-col-reverse lg:flex-row items-center justify-center gap-12 h-160">
 
                 <div className="flex flex-col lg:block items-center justify-center h-screen lg:h-auto px-4">
                     <div className="text-center lg:text-left max-w-lg">

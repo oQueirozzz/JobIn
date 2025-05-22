@@ -1,7 +1,9 @@
-export default function chat(){
-    return(
-        <>
-        
-        </>
+export default function chat() {
+    return (
+        <section>
+            
+
+
+        </section>
     )
 }
