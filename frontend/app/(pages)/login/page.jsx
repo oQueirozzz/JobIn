@@ -123,9 +123,12 @@ export default function Login() {
         <p className="text-xs text-gray-500 text-center mt-4">Não possui conta?</p>
 
         <p className="text-sm text-center text-gray-700 mt-2">Cadastrar-se como{' '}
-          <a href="/cadAlunos" className="text-vinho">Candidato</a>{' '}ou{' '}
-          <a href="/cadEmpresas" className="text-vinho">Empresa</a>
+          <a href="/cadAlunos" className="text-vinho hover:underline">Candidato</a>{' '}ou{' '}
+          <a href="/cadEmpresas" className="text-vinho hover:underline">Empresa</a>
+          <a href="/novaSenha" className="block text-xs text-gray-500 mt-4 hover:underline">Esqueci a senha</a>
         </p>
+
+        
 
       </div>
     </section>

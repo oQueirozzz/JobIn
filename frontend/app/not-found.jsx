@@ -1,15 +1,39 @@
 export default function () {
     return (
-        <section className="bg-branco h-220 flex items-center justify-center">
-            <div className="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6 ">
-                <div className="mx-auto max-w-screen-sm text-center grid  place-items-center">
-                    <img className="w-100 m-10" src="/img/global/logo_completa.svg" alt="" />
-                    <p className="mb-4 text-4xl tracking-tight font-bold text-white md:text-4xl">Desculpe, algo aconteceu!</p>
-                    <p className="mb-4 text-lg font-light text-gray-500 dark:text-gray-600">Desculpe, não conseguimos encontrar essa página. Você encontrará muito para explorar na página inicial. </p>
-                    <a href="/" className="inline-flex text-vinho hover:underline focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900 my-2">Voltar para a página inicial</a>
+        <section className="bg-gradient-to-b from-[#e8edf1] to-[#ffffff] py-20 px-4">
+            <div className="max-w-screen-xl mx-auto flex flex-col-reverse lg:flex-row items-center justify-center gap-12">
+
+                <div className="flex flex-col lg:block items-center justify-center h-screen lg:h-auto px-4">
+                    <div className="text-center lg:text-left max-w-lg">
+                        <img
+                            className="w-60 mx-auto lg:mx-0 mb-6 drop-shadow-md"
+                            src="/img/global/logo_completa.svg"
+                            alt="Logo da empresa"
+                        />
+                        <h1 className="text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+                            Página não encontrada
+                        </h1>
+                        <p className="text-gray-600 text-base lg:text-lg mb-6">
+                            Desculpe, não conseguimos encontrar a página que você está procurando.<br />
+                            Talvez ela tenha sido movida ou esteja temporariamente indisponível.
+                        </p>
+                        <a
+                            href="/"
+                            className="inline-block text-white bg-[#7A3E3E] hover:bg-[#5e2f2f] focus:ring-4 focus:outline-none focus:ring-[#caa] font-medium rounded-lg text-sm px-6 py-3 transition"
+                        >
+                            Voltar para a página inicial
+                        </a>
+                    </div>
                 </div>
+
+
+                <div className="max-w-sm hidden lg:block">
+                    <img src="/img/404/celular.svg" alt="Celular ilustrativo" className="w-full" />
+                </div>
+
             </div>
         </section>
+
     );
 }
 

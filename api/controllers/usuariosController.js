@@ -192,3 +192,4 @@ exports.getPerfil = async (req, res) => {
     res.status(200).json({ message: 'Usuário de teste', nome: 'Usuário Teste', email: 'teste@exemplo.com' });
   }
 };
+

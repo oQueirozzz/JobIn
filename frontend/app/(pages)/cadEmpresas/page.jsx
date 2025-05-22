@@ -174,7 +174,7 @@ export default function cadEmpresas() {
                 </form>
 
                 <p className="text-xs text-gray-500 text-center mt-4">Já possui conta?</p>
-                <p className="text-sm text-center text-gray-700 mt-2">Fazer <a href="/login" className="text-vinho">Login</a></p>
+                <p className="text-sm text-center text-gray-700 mt-2">Fazer <a href="/login" className="text-vinho hover:underline">Login</a></p>
             </div>
         </section>
 
