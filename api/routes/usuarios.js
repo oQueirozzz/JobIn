@@ -21,7 +21,7 @@ router.put('/:id', usuariosController.updateUsuario);
 router.delete('/:id', usuariosController.deleteUsuario);
 
 // Inicializar o Resend para envio de emails
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 // Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
 const codigosVerificacao = {};
@@ -51,37 +51,6 @@ router.post('/solicitar-codigo', async (req, res) => {
       expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos
     };
 
-    // Enviar email com o código
-    try {
-      await resend.emails.send({
-        from: 'JobIn <noreply@jobin.com.br>',
-        to: email,
-        subject: 'Código de Verificação - JobIn',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #4a6cf7;">JobIn - Recuperação de Senha</h2>
-            <p>Olá ${usuarios[0].nome || 'usuário'},</p>
-            <p>Recebemos uma solicitação para redefinir sua senha. Use o código abaixo para continuar:</p>
-            <div style="background-color: #f4f7ff; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-              ${codigo}
-            </div>
-            <p>Este código expira em 15 minutos.</p>
-            <p>Se você não solicitou esta alteração, ignore este email.</p>
-            <p>Atenciosamente,<br>Equipe JobIn</p>
-          </div>
-        `
-      });
-      
-      return res.status(200).json({ 
-        message: 'Código de verificação enviado com sucesso para o email' 
-      });
-    } catch (emailError) {
-      console.error('Erro ao enviar email:', emailError);
-      return res.status(500).json({ 
-        message: 'Erro ao enviar email de verificação',
-        error: emailError.message
-      });
-    }
   } catch (error) {
     console.error('Erro ao processar solicitação:', error);
     return res.status(500).json({ 
