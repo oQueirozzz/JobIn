@@ -15,10 +15,11 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    const token = localStorage.getItem('token');
+    if (token) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [router]);
 
   // Se estiver carregando, mostra um loading simples
   if (isLoading) {
@@ -78,16 +79,16 @@ export default function DashboardPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link 
-              href="/cadAlunos"
+              href="/login"
               className="px-10 py-4 bg-white text-[#7B2D26] rounded-full hover:bg-[#F5F5DC] transition-all duration-300 text-lg font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Cadastrar-se
+              Entrar
             </Link>
             <Link 
-              href="/cadEmpresas"
+              href="/cadAlunos"
               className="px-10 py-4 border-2 border-white text-white rounded-full hover:bg-white/10 transition-all duration-300 text-lg font-medium"
             >
-              Cadastrar empresa
+              Cadastrar-se
             </Link>
           </div>
         </div>

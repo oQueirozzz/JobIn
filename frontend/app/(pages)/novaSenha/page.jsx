@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-// import emailjs from '@emailjs/browser';
+import { useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
 
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
@@ -13,6 +13,18 @@ export default function NovaSenha() {
     const [tipoMensagem, setTipoMensagem] = useState('');
     const [etapa, setEtapa] = useState(1); // 1: Email, 2: Código de verificação, 3: Nova senha
     const [tempoRestante, setTempoRestante] = useState(0); // Tempo restante em segundos
+    
+    // Initialize EmailJS when component mounts
+    useEffect(() => {
+        try {
+            emailjs.init({
+                publicKey: 'kCTXmfOIgvcDrME1W'
+            });
+            console.log('EmailJS inicializado com sucesso');
+        } catch (error) {
+            console.error('Erro ao inicializar EmailJS:', error);
+        }
+    }, []);
 
     // Função para gerar um código de verificação aleatório de 6 dígitos
     const gerarCodigoVerificacao = () => {
@@ -40,29 +52,22 @@ export default function NovaSenha() {
             
             // Configurar parâmetros para o EmailJS
             const templateParams = {
-                email: email.trim().toLowerCase(),
-                to_name: email.split('@')[0],
-                verification_code: codigo,
-                expiry_time: `${tempoValidade} minutos`,
-                message: `Seu código de verificação é: ${codigo}. Este código é válido por ${tempoValidade} minutos. Utilize-o para redefinir sua senha no JobIn.`
+                user_email: email.trim().toLowerCase(),
+                user_name: email.split('@')[0],
+                code: codigo,
+                time: `${tempoValidade} minutos`
             };
 
+            console.log('Tentando enviar email com parâmetros:', templateParams);
+
             // Enviar email com o código de verificação usando EmailJS
-            // Comentando temporariamente o envio de email para evitar o carregamento infinito
-            // Quando tiver as credenciais do EmailJS, descomente o código abaixo e substitua pelos valores corretos
-            
             const response = await emailjs.send(
-                'service_r9l70po',  // Substitua pelo seu SERVICE_ID do EmailJS
-                'template_0t894rd',  // Substitua pelo seu TEMPLATE_ID do EmailJS
-                templateParams,
-                'kCTXmfOIgvcDrME1W'    // Substitua pela sua PUBLIC_KEY do EmailJS
+                'service_r9l70po',
+                'template_0t894rd',
+                templateParams
             );
-            
-            
-            // Simulando envio bem-sucedido para fins de teste
-            console.log('Código de verificação gerado:', codigo);
-            // Simular um pequeno atraso como se estivesse enviando o email
-            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            console.log('Resposta do EmailJS:', response);
 
             // Definir temporizador para expiração do código (15 minutos = 900 segundos)
             setTempoRestante(900);
@@ -72,7 +77,6 @@ export default function NovaSenha() {
                 setTempoRestante(tempo => {
                     if (tempo <= 1) {
                         clearInterval(intervalo);
-                        // Se o usuário ainda estiver na etapa de verificação, invalidar o código
                         if (etapa === 2) {
                             setCodigoGerado('');
                             setTipoMensagem('erro');
@@ -88,9 +92,10 @@ export default function NovaSenha() {
             setMensagem('Código de verificação enviado para seu email');
             setEtapa(2); // Avançar para a etapa de verificação de código
         } catch (error) {
+            console.error('Erro detalhado:', error);
+            console.error('Stack trace:', error.stack);
             setTipoMensagem('erro');
-            setMensagem(error.message || 'Erro ao enviar código de verificação');
-            console.error('Envio de código falhou:', error);
+            setMensagem('Erro ao enviar código de verificação. Por favor, tente novamente mais tarde.');
         } finally {
             setCarregando(false);
         }
@@ -168,14 +173,12 @@ export default function NovaSenha() {
                 message: 'Sua senha foi redefinida com sucesso no JobIn.'
             };
             
-            // Comentando temporariamente o envio de email para evitar o carregamento infinito
-            // Quando tiver as credenciais do EmailJS, descomente o código abaixo e substitua pelos valores corretos
-            
+            // Usando o padrão correto para EmailJS v4.4.1
             await emailjs.send(
-                'service_r9l70po',  // Substitua pelo seu SERVICE_ID do EmailJS
-                'template_0t894rd',  // Substitua pelo seu TEMPLATE_ID do EmailJS
-                templateParams,
-                'kCTXmfOIgvcDrME1W'    // Substitua pela sua PUBLIC_KEY do EmailJS
+                'service_r9l70po',  // SERVICE_ID do EmailJS
+                'template_0t894rd',  // TEMPLATE_ID do EmailJS
+                templateParams
+                // Não é necessário passar a publicKey aqui pois já foi inicializada no useEffect
             );
            
             

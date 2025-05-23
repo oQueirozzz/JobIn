@@ -1,38 +1,46 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-  const token = request.cookies.get('token');
-  const { pathname } = request.nextUrl;
+    const token = request.cookies.get('token')?.value;
+    const { pathname } = request.nextUrl;
 
-  // Se estiver na página inicial (/) e não estiver autenticado, redireciona para /dashboard
-  if (pathname === '/' && !token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+    // Lista de rotas públicas que não precisam de autenticação
+    const publicRoutes = ['/dashboard', '/login', '/novaSenha', '/cadAlunos', '/cadEmpresas'];
+    const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Se estiver na página inicial (/) e estiver autenticado, permite o acesso
-  if (pathname === '/' && token) {
+    // Se não estiver autenticado
+    if (!token) {
+        // Se tentar acessar uma rota protegida, redireciona para /dashboard
+        if (!isPublicRoute) {
+            const url = new URL('/dashboard', request.url);
+            return NextResponse.redirect(url);
+        }
+        // Se já estiver em uma rota pública, permite o acesso
+        return NextResponse.next();
+    }
+
+    // Se estiver autenticado
+    // Se tentar acessar rotas de login/cadastro, redireciona para a página principal
+    if (publicRoutes.includes(pathname)) {
+        const url = new URL('/', request.url);
+        return NextResponse.redirect(url);
+    }
+
+    // Para todas as outras rotas, permite o acesso
     return NextResponse.next();
-  }
-
-  // Se estiver em /dashboard e estiver autenticado, redireciona para /
-  if (pathname === '/dashboard' && token) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // Se estiver em uma rota protegida e não estiver autenticado, redireciona para /dashboard
-  if ((pathname.startsWith('/feed') || pathname.startsWith('/perfil') || pathname.startsWith('/vagas')) && !token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  return NextResponse.next();
 }
 
+// Configurar quais caminhos o middleware deve ser executado
 export const config = {
-  matcher: [
-    '/',
-    '/dashboard',
-    '/feed/:path*',
-    '/perfil/:path*',
-    '/vagas/:path*'
-  ],
+    matcher: [
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - public folder
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    ],
 }; 
