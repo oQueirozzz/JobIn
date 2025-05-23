@@ -12,6 +12,8 @@ const inter = Inter({
   display: 'swap',
 })
 
+
+
 function ClientLayout({ children }) {
   const pathname = usePathname()
 
