@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Cookies from 'js-cookie';
 
 export default function Login() {
   const [mensagem, setMensagem] = useState('');
@@ -43,9 +44,12 @@ export default function Login() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         
+        // Armazenar token nos cookies para o middleware
+        Cookies.set('token', data.token, { expires: 7 }); // expira em 7 dias
+        
         // Redirecionar após um breve delay para mostrar a mensagem de sucesso
         setTimeout(() => {
-          window.location.href = '/feed';
+          window.location.href = '/';
         }, 1500);
       } else {
         setTipoMensagem('erro');

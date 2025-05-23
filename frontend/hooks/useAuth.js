@@ -30,7 +30,7 @@ export function useAuth() {
     localStorage.setItem('token', token);
     Cookies.set('token', token);
     setIsAuthenticated(true);
-    router.push('/feed');
+    router.push('/');
   };
 
   const logout = () => {
