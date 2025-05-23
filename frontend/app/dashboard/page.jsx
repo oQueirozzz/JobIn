@@ -7,11 +7,20 @@ import Empresas from "../../components/landingPage/Empresas";
 import Funcionamento from "../../components/landingPage/Funcionamento";
 import HeaderLanding from "../../components/landingPage/HeaderLanding";
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
-  // Mostra um loading enquanto verifica a autenticação
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/feed');
+    }
+  }, [isAuthenticated, router]);
+
+  // Se estiver carregando, mostra um loading simples
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -20,51 +29,14 @@ export default function DashboardPage() {
     );
   }
 
-  // Se estiver autenticado, não renderiza nada (o middleware cuidará do redirecionamento)
-  if (isAuthenticated) {
-    return null;
-  }
-
+  // Se não estiver autenticado, mostra a landing page
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <HeaderLanding />
       <HeroSection />
-
-      {/* Seção de Benefícios */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Por que escolher o JobIn?</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎓</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Focado em Estudantes</h3>
-              <p className="text-gray-600">Plataforma especializada em conectar estudantes com oportunidades de estágio e primeiro emprego</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🔍</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Vagas Personalizadas</h3>
-              <p className="text-gray-600">Encontre vagas que combinam com seu perfil e área de estudo</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🤝</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Conexão Direta</h3>
-              <p className="text-gray-600">Comunique-se diretamente com recrutadores e empresas</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <Jobs />
       <Empresas />
       <Funcionamento />
-
-      {/* CTA Final */}
       <section className="py-20 px-4 bg-[#7B2D26] text-white">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6">Comece sua jornada profissional hoje</h2>

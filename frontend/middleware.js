@@ -14,9 +14,9 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  // Se estiver em /dashboard e estiver autenticado, redireciona para /
+  // Se estiver em /dashboard e estiver autenticado, redireciona para /feed
   if (pathname === '/dashboard' && token) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/feed', request.url));
   }
 
   // Se estiver em uma rota protegida e não estiver autenticado, redireciona para /dashboard
