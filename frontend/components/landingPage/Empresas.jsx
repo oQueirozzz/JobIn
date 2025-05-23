@@ -1,117 +1,123 @@
+import Link from 'next/link'
+
 export default function Empresas() {
     return (
-        <>
-            <section id="companies" className="py-16 bg-[#F0F3F5]">
-                <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-10">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-24 after:h-1 after:bg-[#7B2D26]">Empresas em Destaque</h2>
-                        <span className="text-[#7B2D26] hover:underline font-medium flex items-center cursor-pointer group transition-all duration-300">
-                            Ver todas
-                            <svg className="svg-inline--fa fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
-                            </svg>
-                        </span>
+        <section id="empresas" className="py-16 bg-white">
+            <div className="container mx-auto px-4">
+                <div className="flex justify-between items-center mb-10">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-24 after:h-1 after:bg-[#7B2D26]">Empresas Parceiras</h2>
+                    <Link 
+                        href="/empresas"
+                        className="text-[#7B2D26] hover:underline font-medium flex items-center cursor-pointer group transition-all duration-300"
+                    >
+                        Ver todas
+                        <svg className="svg-inline--fa fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                            <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
+                        </svg>
+                    </Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="p-6">
+                            <div className="flex items-start mb-4">
+                                <div className="w-12 h-12 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mr-4">
+                                    <svg className="text-[#7B2D26] w-6 h-6" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="building" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                        <path fill="currentColor" d="M48 0C21.5 0 0 21.5 0 48V464c0 26.5 21.5 48 48 48h96V432c0-26.5 21.5-48 48-48s48 21.5 48 48v80h96c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zM64 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V240zm112-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240zM80 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V112zM272 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-gray-800">TechCorp Brasil</h3>
+                                    <p className="text-gray-600">Tecnologia</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">São Paulo, SP</span>
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">500+ funcionários</span>
+                            </div>
+                            <p className="text-gray-600 mb-4">Empresa líder em desenvolvimento de software com foco em inovação e tecnologia de ponta.</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">15 vagas abertas</span>
+                                <Link 
+                                    href="/empresas/1"
+                                    className="text-[#7B2D26] font-medium hover:underline cursor-pointer group flex items-center"
+                                >
+                                    Ver perfil
+                                    <svg className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div id="company-1" className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                            <div className="h-32 bg-[#D7C9AA] bg-opacity-50 flex items-center justify-center">
-                                <svg className="text-[#7B2D26] w-16 h-16" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="laptop" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                                    <path fill="currentColor" d="M128 32C92.7 32 64 60.7 64 96V352h64V96H512V352h64V96c0-35.3-28.7-64-64-64H128zM19.2 384C8.6 384 0 392.6 0 403.2C0 445.6 34.4 480 76.8 480H563.2c42.4 0 76.8-34.4 76.8-76.8c0-10.6-8.6-19.2-19.2-19.2H19.2z"></path>
-                                </svg>
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-lg text-gray-800 mb-2">TechCorp Brasil</h3>
-                                <p className="text-gray-600 mb-4">Empresa líder em soluções tecnológicas para diversos segmentos.</p>
-                                <div className="flex items-center mb-4">
-                                    <svg className="text-gray-500 w-4 h-4 mr-2" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="location-dot" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                        <path fill="currentColor" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"></path>
+
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="p-6">
+                            <div className="flex items-start mb-4">
+                                <div className="w-12 h-12 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mr-4">
+                                    <svg className="text-[#7B2D26] w-6 h-6" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chart-line" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <path fill="currentColor" d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64V400c0 44.2 35.8 80 80 80H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H80c-8.8 0-16-7.2-16-16V64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7l-57.4-57.4c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L240 221.3l57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z"></path>
                                     </svg>
-                                    <span className="text-gray-600">São Paulo, SP</span>
                                 </div>
-                                <span className="text-[#7B2D26] font-medium hover:underline flex items-center cursor-pointer group">
-                                    8 vagas abertas
-                                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                        <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
+                                <div>
+                                    <h3 className="font-bold text-lg text-gray-800">Agência Impulso</h3>
+                                    <p className="text-gray-600">Marketing</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">Rio de Janeiro, RJ</span>
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">100+ funcionários</span>
+                            </div>
+                            <p className="text-gray-600 mb-4">Agência de marketing digital especializada em estratégias de crescimento e engajamento.</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">8 vagas abertas</span>
+                                <Link 
+                                    href="/empresas/2"
+                                    className="text-[#7B2D26] font-medium hover:underline cursor-pointer group flex items-center"
+                                >
+                                    Ver perfil
+                                    <svg className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                     </svg>
-                                </span>
+                                </Link>
                             </div>
                         </div>
-                        
-                        <div id="company-2" className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                            <div className="h-32 bg-[#D7C9AA] bg-opacity-50 flex items-center justify-center">
-                                <svg className="text-[#7B2D26] w-16 h-16" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chart-line" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                    <path fill="currentColor" d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64V400c0 44.2 35.8 80 80 80H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H80c-8.8 0-16-7.2-16-16V64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7l-57.4-57.4c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L240 221.3l57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z"></path>
-                                </svg>
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-lg text-gray-800 mb-2">Agência Impulso</h3>
-                                <p className="text-gray-600 mb-4">Agência de marketing digital focada em resultados e inovação.</p>
-                                <div className="flex items-center mb-4">
-                                    <svg className="text-gray-500 w-4 h-4 mr-2" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="location-dot" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                        <path fill="currentColor" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"></path>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div className="p-6">
+                            <div className="flex items-start mb-4">
+                                <div className="w-12 h-12 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mr-4">
+                                    <svg className="text-[#7B2D26] w-6 h-6" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="building" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                        <path fill="currentColor" d="M48 0C21.5 0 0 21.5 0 48V464c0 26.5 21.5 48 48 48h96V432c0-26.5 21.5-48 48-48s48 21.5 48 48v80h96c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zM64 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V240zm112-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240zM80 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V112zM272 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16z"></path>
                                     </svg>
-                                    <span className="text-gray-600">Rio de Janeiro, RJ</span>
                                 </div>
-                                <span className="text-[#7B2D26] font-medium hover:underline flex items-center cursor-pointer group">
-                                    5 vagas abertas
-                                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                        <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
-                                    </svg>
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div id="company-3" className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                            <div className="h-32 bg-[#D7C9AA] bg-opacity-50 flex items-center justify-center">
-                                <svg className="text-[#7B2D26] w-16 h-16" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="building" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                    <path fill="currentColor" d="M48 0C21.5 0 0 21.5 0 48V464c0 26.5 21.5 48 48 48h96V432c0-26.5 21.5-48 48-48s48 21.5 48 48v80h96c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zM64 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V240zm112-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V240c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V240zM80 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16zm80 16c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16V112zM272 96h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16H272c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16z"></path>
-                                </svg>
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-lg text-gray-800 mb-2">Grupo Empresarial Nexus</h3>
-                                <p className="text-gray-600 mb-4">Conglomerado empresarial com atuação em diversos setores.</p>
-                                <div className="flex items-center mb-4">
-                                    <svg className="text-gray-500 w-4 h-4 mr-2" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="location-dot" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                        <path fill="currentColor" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"></path>
-                                    </svg>
-                                    <span className="text-gray-600">Belo Horizonte, MG</span>
+                                <div>
+                                    <h3 className="font-bold text-lg text-gray-800">Grupo Empresarial Nexus</h3>
+                                    <p className="text-gray-600">Administração</p>
                                 </div>
-                                <span className="text-[#7B2D26] font-medium hover:underline flex items-center cursor-pointer group">
-                                    12 vagas abertas
-                                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                        <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
-                                    </svg>
-                                </span>
                             </div>
-                        </div>
-                        
-                        <div id="company-4" className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                            <div className="h-32 bg-[#D7C9AA] bg-opacity-50 flex items-center justify-center">
-                                <svg className="text-[#7B2D26] w-16 h-16" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="pencil" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                    <path fill="currentColor" d="M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z"></path>
-                                </svg>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">Belo Horizonte, MG</span>
+                                <span className="bg-[#7B2D26]/10 text-[#7B2D26] text-sm px-3 py-1 rounded-full font-medium">1000+ funcionários</span>
                             </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-lg text-gray-800 mb-2">Studio Design</h3>
-                                <p className="text-gray-600 mb-4">Estúdio criativo especializado em design gráfico e UX/UI.</p>
-                                <div className="flex items-center mb-4">
-                                    <svg className="text-gray-500 w-4 h-4 mr-2" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="location-dot" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                        <path fill="currentColor" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"></path>
+                            <p className="text-gray-600 mb-4">Conglomerado empresarial com atuação em diversos setores da economia.</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">12 vagas abertas</span>
+                                <Link 
+                                    href="/empresas/3"
+                                    className="text-[#7B2D26] font-medium hover:underline cursor-pointer group flex items-center"
+                                >
+                                    Ver perfil
+                                    <svg className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100 transform group-hover:translate-x-1 transition-all duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                     </svg>
-                                    <span className="text-gray-600">Curitiba, PR</span>
-                                </div>
-                                <span className="text-[#7B2D26] font-medium hover:underline flex items-center cursor-pointer group">
-                                    6 vagas abertas
-                                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="arrow-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                        <path fill="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path>
-                                    </svg>
-                                </span>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </>
+            </div>
+        </section>
     );
 }

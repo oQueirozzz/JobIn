@@ -1,43 +1,82 @@
+import Link from 'next/link'
+
 export default function Funcionamento() {
     return (
-        <>
-        <section id="how-it-works" className="py-16 bg-[#D7C9AA] bg-opacity-30">
+        <section id="como-funciona" className="py-20 bg-[#F0F3F5]">
             <div className="container mx-auto px-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-12 text-center relative pb-3 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-24 after:h-1 after:bg-[#7B2D26]">Como Funciona</h2>
-                
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Como Funciona</h2>
+                    <div className="w-20 h-1 bg-[#7B2D26] mx-auto"></div>
+                    <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+                        Conectamos estudantes talentosos às melhores oportunidades de estágio. Veja como é fácil começar sua jornada profissional.
+                    </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div id="step-1" className="text-center bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="w-20 h-20 bg-[#D7C9AA] rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
-                            <svg className="text-[#7B2D26] w-8 h-8" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="user-plus" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                                <path fill="currentColor" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H552v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"></path>
+                    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 p-8">
+                        <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mb-6">
+                            <svg className="w-8 h-8 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3">Crie seu Perfil</h3>
-                        <p className="text-gray-600">Cadastre-se gratuitamente, preencha seu perfil com suas habilidades, formação e interesses profissionais.</p>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Crie seu Perfil</h3>
+                        <p className="text-gray-600 mb-6">
+                            Cadastre-se como estudante e preencha seu perfil com suas habilidades, experiências e objetivos profissionais.
+                        </p>
+                        <Link 
+                            href="/cadAlunos"
+                            className="inline-flex items-center text-[#7B2D26] font-medium hover:text-[#7B2D26]/80 transition-colors duration-300 group"
+                        >
+                            Criar perfil
+                            <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </Link>
                     </div>
                     
-                    <div id="step-2" className="text-center bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="w-20 h-20 bg-[#D7C9AA] rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
-                            <svg className="text-[#7B2D26] w-8 h-8" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="magnifying-glass" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path fill="currentColor" d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
+                    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 p-8">
+                        <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mb-6">
+                            <svg className="w-8 h-8 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3">Encontre Vagas</h3>
-                        <p className="text-gray-600">Busque vagas de estágio que correspondam ao seu perfil, filtrando por área, localização e modalidade.</p>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Busque Vagas</h3>
+                        <p className="text-gray-600 mb-6">
+                            Explore oportunidades de estágio em diversas áreas e empresas. Filtre por localização, área de atuação e mais.
+                        </p>
+                        <Link 
+                            href="/vagas"
+                            className="inline-flex items-center text-[#7B2D26] font-medium hover:text-[#7B2D26]/80 transition-colors duration-300 group"
+                        >
+                            Buscar vagas
+                            <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </Link>
                     </div>
                     
-                    <div id="step-3" className="text-center bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                        <div className="w-20 h-20 bg-[#D7C9AA] rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
-                            <svg className="text-[#7B2D26] w-8 h-8" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="paper-plane" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path fill="currentColor" d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480V396.4c0-4 1.5-7.8 4.2-10.7L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"></path>
+                    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 p-8">
+                        <div className="w-16 h-16 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center mb-6">
+                            <svg className="w-8 h-8 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3">Candidate-se</h3>
-                        <p className="text-gray-600">Envie sua candidatura com apenas um clique e acompanhe o status do processo seletivo em tempo real.</p>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-4">Candidate-se</h3>
+                        <p className="text-gray-600 mb-6">
+                            Envie sua candidatura para as vagas que mais combinam com seu perfil e acompanhe o status das suas aplicações.
+                        </p>
+                        <Link 
+                            href="/cadAlunos"
+                            className="inline-flex items-center text-[#7B2D26] font-medium hover:text-[#7B2D26]/80 transition-colors duration-300 group"
+                        >
+                            Começar agora
+                            <svg className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </Link>
                     </div>
                 </div>
             </div>
         </section>
-        </>
     );
 }

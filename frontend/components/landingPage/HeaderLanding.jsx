@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function HeaderLanding() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -18,11 +19,20 @@ export default function HeaderLanding() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const handleNavClick = (e, href) => {
+        e.preventDefault();
+        const element = document.querySelector(href);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+            setIsMobileMenuOpen(false);
+        }
+    };
+
     const navItems = [
-        { label: 'Início', href: '/' },
-        { label: 'Vagas', href: '#vagas' },
+        { label: 'Início', href: '#hero' },
+        { label: 'Vagas', href: '#jobs' },
         { label: 'Empresas', href: '#empresas' },
-        { label: 'Sobre', href: '#sobre' }
+        { label: 'Como Funciona', href: '#como-funciona' }
     ];
 
     return (
@@ -32,43 +42,45 @@ export default function HeaderLanding() {
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                        <img 
-                            src="/img/global/logo_completa.svg" 
-                            className="h-16 w-auto object-contain cursor-pointer transition-transform hover:scale-105" 
-                            alt="JobIn Logo" 
-                            onClick={() => router.push('/')}
-                        />
+                        <Link href="/dashboard" className="flex items-center">
+                            <Image
+                                src="/img/global/logo_completa.svg"
+                                alt="JobIn Logo"
+                                width={120}
+                                height={40}
+                                className="h-8 w-auto"
+                            />
+                        </Link>
                         <nav className="hidden md:flex ml-10 space-x-8">
                             {navItems.map((item) => (
-                                <Link 
+                                <a 
                                     key={item.label}
                                     href={item.href}
-                                    className="text-gray-700 hover:text-[#8C1C13] font-medium transition-colors duration-300 relative group"
+                                    onClick={(e) => handleNavClick(e, item.href)}
+                                    className="text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300 relative group cursor-pointer"
                                 >
                                     {item.label}
-                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#8C1C13] transition-all duration-300 group-hover:w-full"></span>
-                                </Link>
+                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#7B2D26] transition-all duration-300 group-hover:w-full"></span>
+                                </a>
                             ))}
                         </nav>
                     </div>
 
                     <div className="hidden md:flex items-center space-x-6">
-                        <button className="text-gray-700 hover:text-[#8C1C13] transition-colors duration-300">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                        </button>
-                        <button className="text-gray-700 hover:text-[#8C1C13] transition-colors duration-300">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </button>
-                        <button 
-                            onClick={() => router.push('/cadEmpresas')}
-                            className="bg-[#8C1C13] text-white px-6 py-2.5 rounded-full hover:bg-[#6b150e] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                        <Link 
+                            href="/login"
+                            className="text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300 relative group"
                         >
-                            Publicar Vaga
-                        </button>
+                            Entrar
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#7B2D26] transition-all duration-300 group-hover:w-full"></span>
+                        </Link>
+                        <Link 
+                            href="/cadAlunos"
+                            className="text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300 relative group"
+                        >
+                            Cadastrar-se
+                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#7B2D26] transition-all duration-300 group-hover:w-full"></span>
+                        </Link>
                     </div>
 
                     <button 
@@ -87,24 +99,38 @@ export default function HeaderLanding() {
                 } overflow-hidden`}>
                     <nav className="py-4 space-y-4">
                         {navItems.map((item) => (
-                            <Link 
+                            <a 
                                 key={item.label}
                                 href={item.href}
-                                className="block text-gray-700 hover:text-[#8C1C13] font-medium transition-colors duration-300"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                                onClick={(e) => handleNavClick(e, item.href)}
+                                className="block text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300 cursor-pointer"
                             >
                                 {item.label}
-                            </Link>
+                            </a>
                         ))}
-                        <button 
-                            onClick={() => {
-                                router.push('/cadEmpresas');
-                                setIsMobileMenuOpen(false);
-                            }}
-                            className="w-full bg-[#8C1C13] text-white px-6 py-2.5 rounded-full hover:bg-[#6b150e] transition-all duration-300"
-                        >
-                            Publicar Vaga
-                        </button>
+                        <div className="pt-4 space-y-3">
+                            <Link 
+                                href="/login"
+                                className="block text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Entrar
+                            </Link>
+                            <Link 
+                                href="/cadAlunos"
+                                className="block text-gray-700 hover:text-[#7B2D26] font-medium transition-colors duration-300"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Sou Aluno
+                            </Link>
+                            <Link 
+                                href="/cadEmpresas"
+                                className="block w-full bg-[#7B2D26] text-white px-6 py-2.5 rounded-full hover:bg-opacity-90 transition-all duration-300 text-center"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Publicar Vaga
+                            </Link>
+                        </div>
                     </nav>
                 </div>
             </div>

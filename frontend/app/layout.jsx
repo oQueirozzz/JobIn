@@ -12,13 +12,11 @@ const inter = Inter({
   display: 'swap',
 })
 
-
-
 function ClientLayout({ children }) {
   const pathname = usePathname()
 
-  // Rota onde o header global NÃO deve aparecer
-  const hideHeaderRoutes = ['/app', '/']
+  // Rotas onde o header global NÃO deve aparecer
+  const hideHeaderRoutes = ['/dashboard', '/']
 
   const shouldHideHeader = hideHeaderRoutes.includes(pathname)
 
