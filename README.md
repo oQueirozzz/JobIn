@@ -1,5 +1,6 @@
-# JobIn - Plataforma de Estágios
+![](./frontend/public/img/global/logo_completa.svg)
 
+# Plataforma de Estágios
 ## Estrutura do Projeto
 - `frontend/`: Aplicação Next.js
 - `backend/`: API Node.js/Express
