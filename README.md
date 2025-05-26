@@ -1,6 +1,5 @@
 ![](./frontend/public/img/global/logo_completa.svg)
 
-# Plataforma de Estágios
 ## Estrutura do Projeto
 - `frontend/`: Aplicação Next.js
 - `backend/`: API Node.js/Express
@@ -35,7 +34,7 @@
 ```bash
 cd backend
 npm install
-npm run dev
+node server.js
 ```
 
 ### Frontend
