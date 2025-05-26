@@ -4,18 +4,23 @@ export default function Perfil() {
 
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl flex flex-col md:flex-row p-6 space-y-6 md:space-y-0 md:space-x-6">
                 <div className="flex justify-center items-center">
-                    <img className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-red-900" src="/img/chat/contact.svg" alt="Foto de Perfil" />
+                    <img className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-red-900" src="/img/perfil/profile.svg" alt="Foto de Perfil" />
                 </div>
                 <div className="flex flex-col justify-between flex-1">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold">Nome do usuário</h1>
-                        <h2 className="flex items-center text-gray-700 text-sm mt-1">
+                        <h2 className="flex items-center text-gray-700 text-sm mt-2">
                             <img className="h-5 pr-2" src="/img/perfil/email.svg" alt="Email" />
                             teste@email.com
                         </h2>
+                        <h2 className="flex items-center text-gray-700 text-sm mt-2">
+                            <img className="h-5 pr-2" src="/img/perfil/phone.svg" alt="phone" />
+                            9999-9999
+                        </h2>
                     </div>
                     <div className="mt-4 md:mt-0 md:self-end">
-                        <button className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-5 py-2 rounded-3xl shadow transition-colors duration-300">
+                        <button className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-5 py-2 rounded-3xl shadow transition-colors duration-300 flex items-center">
+                        <img className="h-5 pr-2" src="/img/perfil/pencil.svg" alt="pencil" />
                             Editar Perfil
                         </button>
                     </div>
