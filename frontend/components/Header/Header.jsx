@@ -101,9 +101,9 @@ export default function Header() {
 
         <nav className="flex items-center">
           <div className="flex items-center space-x-1">
-            <NavItem icon={<Home className="h-5 w-5" />} label="Início" />
-            <NavItem icon={<Briefcase className="h-5 w-5" />} label="Vagas" />
-            <NavItem icon={<MessageSquare className="h-5 w-5" />} label="Mensagens" />
+            <NavItem icon={<Home className="h-5 w-5 cursor-pointer" />} label="Início" />
+            <NavItem  icon={<Briefcase className="h-5 w-5 cursor-pointer" />} label="Vagas" />
+            <NavItem icon={<MessageSquare className="h-5 w-5 cursor-pointer" />} label="Mensagens" />
             
             {/* Notificações */}
             <div className="relative">
