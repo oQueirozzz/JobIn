@@ -29,6 +29,8 @@ export default function Vagas() {
     fetchVagas();
   }, []);
 
+  
+
   return (
     <section className="bg-gray-50 flex flex-col items-center min-h-screen">
       {/* Filtros */}

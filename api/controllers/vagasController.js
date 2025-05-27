@@ -41,10 +41,10 @@ exports.getVagasByEmpresa = async (req, res) => {
 // Criar uma nova vaga
 exports.createVaga = async (req, res) => {
   try {
-    const { empresa_id, nome_vaga, nome_empresa } = req.body;
+    const { empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria} = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!empresa_id || !nome_vaga || !nome_empresa) {
+    if (!empresa_id || !nome_vaga || !nome_empresa || descricao || tipo_vaga || local_vaga || categoria) {
       return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
     }
 
