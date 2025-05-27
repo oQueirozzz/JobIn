@@ -117,11 +117,24 @@ exports.loginUsuario = async (req, res) => {
     // Registrar log de login
     await logsController.logLogin(usuario.id, 0, 'usuario');
 
-    res.status(200).json({
+    // Montar objeto de usuário para o frontend
+    const usuarioFrontend = {
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
+      telefone: usuario.telefone || '',
+      formacao: usuario.formacao || '',
+      area_interesse: usuario.area_interesse || '',
+      habilidades: usuario.habilidades || '',
+      descricao: usuario.descricao || '',
+      curriculo: usuario.curriculo || '',
+      foto: usuario.foto || usuario.foto_perfil || '',
       autenticado: true
+    };
+
+    res.status(200).json({
+      token: 'fake-token',
+      usuario: usuarioFrontend
     });
   } catch (error) {
     console.error('Erro ao fazer login:', error);

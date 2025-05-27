@@ -6,6 +6,7 @@ import emailjs from '@emailjs/browser';
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
+    const [confirmarSenha, setConfirmarSenha] = useState('');
     const [codigoVerificacao, setCodigoVerificacao] = useState('');
     const [codigoGerado, setCodigoGerado] = useState('');
     const [mensagem, setMensagem] = useState('');
@@ -13,6 +14,8 @@ export default function NovaSenha() {
     const [tipoMensagem, setTipoMensagem] = useState('');
     const [etapa, setEtapa] = useState(1); // 1: Email, 2: Código de verificação, 3: Nova senha
     const [tempoRestante, setTempoRestante] = useState(0); // Tempo restante em segundos
+    const [tokenRedefinicao, setTokenRedefinicao] = useState('')
+    const [intervaloId, setIntervaloId] = useState(null); // Novo estado para armazenar o ID do intervalo
     
     // Initialize EmailJS when component mounts
     useEffect(() => {
@@ -24,12 +27,108 @@ export default function NovaSenha() {
         } catch (error) {
             console.error('Erro ao inicializar EmailJS:', error);
         }
-    }, []);
 
-    // Função para gerar um código de verificação aleatório de 6 dígitos
-    const gerarCodigoVerificacao = () => {
-        return Math.floor(100000 + Math.random() * 900000).toString();
+        // Cleanup function para limpar o intervalo quando o componente for desmontado
+        return () => {
+            if (intervaloId) {
+                clearInterval(intervaloId);
+            }
+        };
+    }, [intervaloId]);
+
+    // Função para validar email
+    const validarEmail = (email) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
     };
+
+    // Função para gerar um código de verificação alfanumérico de 6 caracteres
+    const gerarCodigoVerificacao = () => {
+        const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluindo caracteres ambíguos como I, O, 0, 1
+        let codigo = '';
+        for (let i = 0; i < 6; i++) {
+            codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+        }
+        return codigo;
+    };
+
+    // Função para verificar o código de verificação
+    async function verificarCodigo(event) {
+        event.preventDefault();
+
+        if (!codigoVerificacao) {
+            setTipoMensagem('erro');
+            setMensagem('Por favor, informe o código de verificação');
+            return;
+        }
+
+        // Verificar se o código expirou
+        if (tempoRestante <= 0) {
+            setTipoMensagem('erro');
+            setMensagem('O código de verificação expirou. Por favor, solicite um novo código.');
+            return;
+        }
+
+        // Verificar se há um código gerado
+        if (!codigoGerado) {
+            setTipoMensagem('erro');
+            setMensagem('Nenhum código foi solicitado. Por favor, solicite um novo código.');
+            return;
+        }
+
+        setCarregando(true);
+        setMensagem('');
+
+        try {
+            const codigoDigitado = codigoVerificacao.toUpperCase().trim();
+            const codigoCorreto = codigoGerado.toUpperCase().trim();
+
+            // Primeiro verificar se o código está correto localmente
+            if (codigoDigitado !== codigoCorreto) {
+                setTipoMensagem('erro');
+                setMensagem('Código inválido. Por favor, verifique e tente novamente.');
+                setCarregando(false);
+                return;
+            }
+
+            // Se o código estiver correto localmente, prosseguir com a verificação no backend
+            const response = await fetch('http://localhost:3001/api/usuarios/verificar-codigo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    codigo: codigoDigitado,
+                    codigoGerado: codigoCorreto // Enviando o código gerado para comparação no backend
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setTipoMensagem('sucesso');
+                setMensagem('Código verificado com sucesso');
+                setTokenRedefinicao(data.token); // Salvar o token para usar na redefinição
+                setEtapa(3); // Avançar para a etapa de definição de nova senha
+                
+                // Limpar o intervalo quando o código for verificado com sucesso
+                if (intervaloId) {
+                    clearInterval(intervaloId);
+                    setIntervaloId(null);
+                }
+            } else {
+                setTipoMensagem('erro');
+                setMensagem(data.message || 'Erro ao verificar código. Tente novamente.');
+            }
+        } catch (error) {
+            console.error('Erro na verificação:', error);
+            setTipoMensagem('erro');
+            setMensagem('Erro ao verificar código. Tente novamente.');
+        } finally {
+            setCarregando(false);
+        }
+    }
 
     // Função para solicitar código de verificação
     async function enviarCodigoVerificacao() {
@@ -39,44 +138,92 @@ export default function NovaSenha() {
             return;
         }
 
+        if (!validarEmail(email)) {
+            setTipoMensagem('erro');
+            setMensagem('Informe um e-mail válido.');
+            return;
+        }
+
         setCarregando(true);
         setMensagem('');
 
         try {
+            // Limpar intervalo anterior se existir
+            if (intervaloId) {
+                clearInterval(intervaloId);
+            }
+
+            // Verificar se o email existe na API - apenas verificação
+            const response = await fetch(`http://localhost:3001/api/usuarios/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    email: email.trim().toLowerCase(),
+                    senha: 'verificacao-apenas' // Senha fictícia apenas para verificação
+                })
+            });
+
+            const data = await response.json();
+            
+            // Se a resposta contém uma mensagem específica de email não encontrado
+            if (data.message && (data.message.includes('não encontrado') || data.message.includes('não cadastrado'))) {
+                setTipoMensagem('erro');
+                setMensagem('Este e-mail não está cadastrado em nossa base.');
+                setCarregando(false);
+                return;
+            }
+            
             // Gerar código de verificação
             const codigo = gerarCodigoVerificacao();
             setCodigoGerado(codigo);
             
-            // Definir tempo de validade (15 minutos)
-            const tempoValidade = 15;
+            // Enviar o código para o backend para armazenamento
+            const solicitarCodigoResponse = await fetch('http://localhost:3001/api/usuarios/solicitar-codigo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    codigo: codigo // Enviar o código gerado para o backend
+                }),
+            });
+
+            // Verificar se o código foi armazenado com sucesso no backend
+            const solicitarCodigoData = await solicitarCodigoResponse.json();
+            
+            if (!solicitarCodigoResponse.ok) {
+                setTipoMensagem('erro');
+                setMensagem(solicitarCodigoData.message || 'Erro ao gerar código de verificação. Tente novamente.');
+                setCarregando(false);
+                return;
+            }
             
             // Configurar parâmetros para o EmailJS
             const templateParams = {
-                user_email: email.trim().toLowerCase(),
-                user_name: email.split('@')[0],
-                code: codigo,
-                time: `${tempoValidade} minutos`
+                to_email: email.trim().toLowerCase(),
+                token: codigo,
+                name: 'JobIn Support',
+                from_email: 'suporte@jobin.com'
             };
 
-            console.log('Tentando enviar email com parâmetros:', templateParams);
-
             // Enviar email com o código de verificação usando EmailJS
-            const response = await emailjs.send(
+            await emailjs.send(
                 'service_r9l70po',
                 'template_0t894rd',
                 templateParams
             );
 
-            console.log('Resposta do EmailJS:', response);
-
             // Definir temporizador para expiração do código (15 minutos = 900 segundos)
             setTempoRestante(900);
             
             // Iniciar contador regressivo
-            const intervalo = setInterval(() => {
+            const novoIntervalo = setInterval(() => {
                 setTempoRestante(tempo => {
                     if (tempo <= 1) {
-                        clearInterval(intervalo);
+                        clearInterval(novoIntervalo);
                         if (etapa === 2) {
                             setCodigoGerado('');
                             setTipoMensagem('erro');
@@ -87,54 +234,16 @@ export default function NovaSenha() {
                     return tempo - 1;
                 });
             }, 1000);
+
+            setIntervaloId(novoIntervalo);
             
             setTipoMensagem('sucesso');
-            setMensagem('Código de verificação enviado para seu email');
+            setMensagem('Token enviado para seu email!');
             setEtapa(2); // Avançar para a etapa de verificação de código
         } catch (error) {
             console.error('Erro detalhado:', error);
-            console.error('Stack trace:', error.stack);
             setTipoMensagem('erro');
-            setMensagem('Erro ao enviar código de verificação. Por favor, tente novamente mais tarde.');
-        } finally {
-            setCarregando(false);
-        }
-    }
-
-    // Função para verificar o código informado pelo usuário
-    function verificarCodigo(event) {
-        event.preventDefault();
-
-        if (!codigoVerificacao) {
-            setTipoMensagem('erro');
-            setMensagem('Por favor, informe o código de verificação');
-            return;
-        }
-
-        // Verificar se o código expirou
-        if (tempoRestante <= 0 || codigoGerado === '') {
-            setTipoMensagem('erro');
-            setMensagem('O código de verificação expirou. Por favor, solicite um novo código.');
-            return;
-        }
-
-        setCarregando(true);
-        setMensagem('');
-
-        try {
-            // Verificar se o código informado corresponde ao código gerado
-            if (codigoVerificacao === codigoGerado) {
-                setTipoMensagem('sucesso');
-                setMensagem('Código verificado com sucesso');
-                setEtapa(3); // Avançar para a etapa de definição de nova senha
-            } else {
-                setTipoMensagem('erro');
-                setMensagem('Código inválido');
-            }
-        } catch (error) {
-            setTipoMensagem('erro');
-            setMensagem(error.message || 'Erro ao verificar código');
-            console.error('Verificação de código falhou:', error);
+            setMensagem('Erro ao processar sua solicitação. Tente novamente.');
         } finally {
             setCarregando(false);
         }
@@ -156,46 +265,72 @@ export default function NovaSenha() {
             return;
         }
 
+        if (!confirmarSenha) {
+            setTipoMensagem('erro');
+            setMensagem('Por favor, confirme a nova senha');
+            return;
+        }
+
+        if (novaSenha !== confirmarSenha) {
+            setTipoMensagem('erro');
+            setMensagem('As senhas não coincidem');
+            return;
+        }
+
         setCarregando(true);
         setMensagem('');
 
         try {
-            // Aqui você pode implementar a lógica para atualizar a senha no backend
-            // Por enquanto, vamos apenas simular uma resposta bem-sucedida
-            
-            // Simulação de uma chamada de API bem-sucedida
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Enviar email de confirmação
-            const templateParams = {
-                to_email: email.trim().toLowerCase(),
-                to_name: email.split('@')[0],
-                message: 'Sua senha foi redefinida com sucesso no JobIn.'
-            };
-            
-            // Usando o padrão correto para EmailJS v4.4.1
-            await emailjs.send(
-                'service_r9l70po',  // SERVICE_ID do EmailJS
-                'template_0t894rd',  // TEMPLATE_ID do EmailJS
-                templateParams
-                // Não é necessário passar a publicKey aqui pois já foi inicializada no useEffect
-            );
-           
-            
-            // Simulando envio bem-sucedido para fins de teste
-            console.log('Email de confirmação simulado para:', email);
+            // Chamar a API para atualizar a senha no backend
+            const response = await fetch('http://localhost:3001/api/usuarios/redefinir-senha', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    token: tokenRedefinicao,
+                    novaSenha: novaSenha
+                }),
+            });
 
-            setTipoMensagem('sucesso');
-            setMensagem('Senha atualizada com sucesso!');
-            
-            // Limpar campos e voltar para a etapa inicial após 3 segundos
-            setTimeout(() => {
-                setEmail('');
-                setNovaSenha('');
-                setCodigoVerificacao('');
-                setCodigoGerado('');
-                window.location.href = '/login';
-            }, 3000);
+            const data = await response.json();
+
+            if (response.ok) {
+                // Enviar email de confirmação
+                const templateParams = {
+                    to_email: email.trim().toLowerCase(),
+                    name: 'JobIn Support',
+                    from_email: 'suporte@jobin.com',
+                    message: 'Sua senha foi redefinida com sucesso no JobIn.'
+                };
+                
+                // Usando o padrão correto para EmailJS
+                await emailjs.send(
+                    'service_r9l70po',
+                'template_0t894rd',  // TEMPLATE_ID do EmailJS
+                    templateParams
+                );
+               
+                console.log('Email de confirmação enviado para:', email);
+
+                setTipoMensagem('sucesso');
+                setMensagem('Senha atualizada com sucesso!');
+                
+                // Limpar campos e voltar para a etapa inicial após 3 segundos
+                setTimeout(() => {
+                    setEmail('');
+                    setNovaSenha('');
+                    setConfirmarSenha('');
+                    setCodigoVerificacao('');
+                    setCodigoGerado('');
+                    setTokenRedefinicao('');
+                    window.location.href = '/login';
+                }, 3000);
+            } else {
+                setTipoMensagem('erro');
+                setMensagem(data.message || 'Erro ao atualizar senha');
+            }
 
         } catch (error) {
             setTipoMensagem('erro');
@@ -267,7 +402,7 @@ export default function NovaSenha() {
                                 Código de Verificação
                             </label>
                             <p className="mt-1 text-xs text-gray-500">
-                                Digite o código de 6 caracteres enviado para seu email
+                                Digite o código alfanumérico de 6 caracteres enviado para seu email
                                 {tempoRestante > 0 && (
                                     <span className="ml-1 font-medium text-vinho">
                                         (Expira em: {Math.floor(tempoRestante / 60)}:{(tempoRestante % 60).toString().padStart(2, '0')})
@@ -279,16 +414,14 @@ export default function NovaSenha() {
                                     </span>
                                 )}
                             </p>
-                            {tempoRestante <= 0 && (
-                                <button 
-                                    type="button" 
-                                    onClick={enviarCodigoVerificacao}
-                                    className="mt-2 text-vinho hover:underline text-sm"
-                                    disabled={carregando}
-                                >
-                                    Reenviar código de verificação
-                                </button>
-                            )}
+                            <button 
+                                type="button" 
+                                onClick={enviarCodigoVerificacao}
+                                className="mt-2 text-vinho hover:underline text-sm"
+                                disabled={carregando}
+                            >
+                                {tempoRestante <= 0 ? 'Reenviar código de verificação' : 'Não recebeu o código? Reenviar'}
+                            </button>
                         </div>
 
                         <button 
@@ -329,6 +462,24 @@ export default function NovaSenha() {
                                 Nova Senha
                             </label>
                             <p className="mt-1 text-xs text-gray-500">Mínimo de 6 caracteres</p>
+                        </div>
+
+                        <div className="relative z-0 w-full mb-5 group">
+                            <input 
+                                type="password" 
+                                name="confirmarSenha" 
+                                id="confirmarSenha" 
+                                value={confirmarSenha} 
+                                onChange={(e) => setConfirmarSenha(e.target.value)} 
+                                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" 
+                                placeholder=" " 
+                                required 
+                                disabled={carregando} 
+                                minLength={6}
+                            />
+                            <label htmlFor="confirmarSenha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+                                Confirmar Nova Senha
+                            </label>
                         </div>
 
                         <button 

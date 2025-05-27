@@ -1,36 +1,32 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import Jobs from "../../components/landingPage/Jobs";
 import HeroSection from "../../components/landingPage/HeroSection";
 import Empresas from "../../components/landingPage/Empresas";
 import Funcionamento from "../../components/landingPage/Funcionamento";
 import HeaderLanding from "../../components/landingPage/HeaderLanding";
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/');
-    }
-  }, [router]);
-
-  // Se estiver carregando, mostra um loading simples
+  // Removendo o redirecionamento para login, pois o dashboard deve ser acessível para usuários não autenticados
+  
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#7B2D26]"></div>
+      <div className="min-h-screen flex items-center justify-center bg-branco">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vinho mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  // Se não estiver autenticado, mostra a landing page
   return (
     <div className="min-h-screen bg-white">
       <HeaderLanding />
@@ -95,4 +91,4 @@ export default function DashboardPage() {
       </section>
     </div>
   );
-} 
+}

@@ -36,9 +36,12 @@ class Log {
     const { usuario_id, empresa_id, acao, resourse, descricao, detalhes } = logData;
     const created_at = new Date();
     
+    // Garantir que empresa_id seja NULL quando for 0
+    const empresaId = empresa_id === 0 ? null : empresa_id;
+    
     const [result] = await pool.query(
       'INSERT INTO logs (usuario_id, empresa_id, acao, resourse, descricao, detalhes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [usuario_id, empresa_id, acao, resourse, descricao, JSON.stringify(detalhes), created_at]
+      [usuario_id, empresaId, acao, resourse, descricao, JSON.stringify(detalhes), created_at]
     );
     
     return { id: result.insertId, ...logData, created_at };

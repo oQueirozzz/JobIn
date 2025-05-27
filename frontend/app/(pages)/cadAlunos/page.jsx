@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
 
 export default function cadAlunos() {
     const [mensagem, setMensagem] = useState('');
     const [carregando, setCarregando] = useState(false);
     const [tipoMensagem, setTipoMensagem] = useState(''); // 'sucesso' ou 'erro'
+    const { login } = useAuth();
 
     async function cadAluno(event) {
         event.preventDefault();
@@ -73,15 +75,18 @@ export default function cadAlunos() {
                 setTipoMensagem('sucesso');
                 setMensagem('Cadastro realizado com sucesso!');
                 
-                // Armazenar informações do usuário
-                // O backend retorna diretamente os dados do usuário, não dentro de um objeto 'usuario'
-                console.log('Dados do usuário para armazenar:', data);
-                localStorage.setItem('usuario', JSON.stringify(data));
-                
-                // Redirecionar após um breve delay para mostrar a mensagem de sucesso
-                setTimeout(() => {
-                    window.location.href = '/feed';
-                }, 1500);
+                // Fazer login automaticamente após o cadastro bem-sucedido
+                try {
+                    await login(dadosCadastro.email, dadosCadastro.senha, 'user');
+                    // O redirecionamento será feito pela função login
+                } catch (loginError) {
+                    console.error('Erro ao fazer login após cadastro:', loginError);
+                    // Mesmo que o login falhe, o cadastro foi bem-sucedido
+                    // Redirecionar para a página de login após um breve delay
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1500);
+                }
             } else {
                 setTipoMensagem('erro');
                 console.error('Erro no cadastro do aluno:', data);
@@ -98,11 +103,7 @@ export default function cadAlunos() {
             setTipoMensagem('erro');
             console.error('Exceção durante o cadastro do aluno:', error);
             // Melhorar a mensagem de erro para o usuário
-            if (error.message) {
-                setMensagem(`Erro ao conectar com o servidor: ${error.message}`);
-            } else {
-                setMensagem('Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.');
-            }
+            setMensagem('Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.');
         } finally {
             setCarregando(false);
         }

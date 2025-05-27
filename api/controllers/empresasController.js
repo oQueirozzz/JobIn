@@ -106,12 +106,21 @@ exports.loginEmpresa = async (req, res) => {
     // Registrar log de login
     await logsController.logLogin(0, empresa.id, 'empresa');
 
-    // Versão simplificada sem token
-    res.status(200).json({
+    // Montar objeto de empresa para o frontend
+    const empresaFrontend = {
       id: empresa.id,
       nome: empresa.nome,
       email: empresa.email,
+      cnpj: empresa.cnpj,
+      descricao: empresa.descricao || '',
+      logo: empresa.logo || '',
       autenticado: true
+    };
+
+    // Retornar token e objeto empresa
+    res.status(200).json({
+      token: 'fake-company-token', // Token fake para empresas
+      empresa: empresaFrontend
     });
   } catch (error) {
     console.error('Erro ao fazer login:', error);

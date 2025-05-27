@@ -8,11 +8,19 @@ const api = axios.create({
   }
 });
 
-// Interceptor para requisições - modificado para funcionar sem token
+// Interceptor para requisições - adiciona o token de autenticação
 api.interceptors.request.use(
   (config) => {
-    // Versão simplificada que não exige token
-    // Não adiciona cabeçalho de autorização
+    // Verificar se estamos no navegador
+    if (typeof window !== 'undefined') {
+      // Obter o token do localStorage
+      const token = localStorage.getItem('authToken');
+      
+      // Se o token existir, adicionar ao cabeçalho de autorização
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error) => {
@@ -20,25 +28,38 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar respostas e erros - simplificado
+// Interceptor para tratar respostas e erros
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
-    // Tratamento de erro simplificado que não verifica token
-    console.log('Erro na requisição:', error.message);
+    // Se o erro for 401 (Não autorizado), pode significar que o token expirou
+    if (error.response && error.response.status === 401) {
+      // Limpar dados de autenticação
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authEntity');
+        localStorage.removeItem('authType');
+        
+        // Redirecionar para a página de login
+        window.location.href = '/dashboard';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
 
-
-// Função para salvar o token - simplificada para funcionar sem autenticação
+// Função para salvar o token
 export const setAuthToken = (token) => {
-  // Versão simplificada que não armazena o token
-  // Mantida para compatibilidade com o código existente
-  console.log('Sistema funcionando sem autenticação por token');
-  return true;
+  if (token) {
+    localStorage.setItem('authToken', token);
+    return true;
+  } else {
+    localStorage.removeItem('authToken');
+    return false;
+  }
 };
 
 export default api;

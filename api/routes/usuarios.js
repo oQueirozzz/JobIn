@@ -28,8 +28,8 @@ const codigosVerificacao = {};
 
 // Rota para solicitar código de verificação
 router.post('/solicitar-codigo', async (req, res) => {
-  const { email } = req.body;
-  console.log('Solicitação de código para:', email);
+  const { email, codigo } = req.body;
+  console.log('Solicitação de código para:', email, 'Código:', codigo);
 
   try {
     // Verificar se o email existe no banco de dados
@@ -42,14 +42,22 @@ router.post('/solicitar-codigo', async (req, res) => {
       return res.status(404).json({ message: 'Email não cadastrado no sistema' });
     }
 
-    // Gerar código de verificação (6 dígitos)
-    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+    // Usar o código enviado pelo frontend ou gerar um novo se não for fornecido
+    const codigoVerificacao = codigo || Math.floor(100000 + Math.random() * 900000).toString();
     
     // Armazenar o código (em produção, salvar no banco com tempo de expiração)
     codigosVerificacao[email] = {
-      codigo,
-      expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos
+      codigo: codigoVerificacao,
+      expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos (900 segundos)
     };
+
+    console.log('Código armazenado para', email, ':', codigosVerificacao[email]);
+
+    // Retornar resposta de sucesso
+    return res.status(200).json({ 
+      message: 'Código de verificação gerado com sucesso',
+      success: true
+    });
 
   } catch (error) {
     console.error('Erro ao processar solicitação:', error);

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-    const token = request.cookies.get('token')?.value;
+    const authToken = request.cookies.get('authToken')?.value;
     const { pathname } = request.nextUrl;
 
     // Lista de rotas públicas que não precisam de autenticação
@@ -9,7 +9,7 @@ export function middleware(request) {
     const isPublicRoute = publicRoutes.includes(pathname);
 
     // Se não estiver autenticado
-    if (!token) {
+    if (!authToken) {
         // Se tentar acessar uma rota protegida, redireciona para /dashboard
         if (!isPublicRoute) {
             const url = new URL('/dashboard', request.url);
@@ -21,7 +21,7 @@ export function middleware(request) {
 
     // Se estiver autenticado
     // Se tentar acessar rotas de login/cadastro, redireciona para a página principal
-    if (publicRoutes.includes(pathname)) {
+    if (isPublicRoute) {
         const url = new URL('/', request.url);
         return NextResponse.redirect(url);
     }
@@ -43,4 +43,4 @@ export const config = {
          */
         '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
     ],
-}; 
+};

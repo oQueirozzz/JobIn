@@ -1,14 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import Cookies from 'js-cookie';
+import { useAuth } from '../../../hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const [mensagem, setMensagem] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [tipoMensagem, setTipoMensagem] = useState(''); // 'sucesso' ou 'erro'
+  const [tipoMensagem, setTipoMensagem] = useState('');
+  const [authType, setAuthType] = useState('user');
+  const { login } = useAuth();
+  const router = useRouter();
 
-  async function login(event) {
+  async function handleLogin(event) {
     event.preventDefault();
     setCarregando(true);
     setMensagem('');
@@ -20,46 +24,13 @@ export default function Login() {
     };
 
     try {
-      console.log('Enviando dados de login:', dadosLogin);
-      
-      const response = await fetch('http://localhost:3001/api/usuarios/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dadosLogin),
-      });
-
-      console.log('Status da resposta:', response.status);
-      console.log('Headers da resposta:', Object.fromEntries(response.headers));
-      
-      const data = await response.json();
-      console.log('Dados da resposta:', data);
-
-      if (response.ok) {
-        setTipoMensagem('sucesso');
-        setMensagem('Login realizado com sucesso!');
-        
-        // Armazenar token e informações do usuário
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('usuario', JSON.stringify(data.usuario));
-        
-        // Armazenar token nos cookies para o middleware
-        Cookies.set('token', data.token, { expires: 7 }); // expira em 7 dias
-        
-        // Redirecionar após um breve delay para mostrar a mensagem de sucesso
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
-      } else {
-        setTipoMensagem('erro');
-        console.error('Erro no login:', data);
-        setMensagem(data.mensagem || 'Usuário não encontrado ou senha incorreta');
-      }
+      await login(dadosLogin.email, dadosLogin.senha, authType);
+      setTipoMensagem('sucesso');
+      setMensagem(`Login de ${authType === 'user' ? 'usuário' : 'empresa'} realizado com sucesso!`);
+      router.push('/');
     } catch (error) {
       setTipoMensagem('erro');
-      console.error('Exceção durante o login:', error);
-      setMensagem('Erro ao conectar com o servidor.');
+      setMensagem(error.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setCarregando(false);
     }
@@ -73,14 +44,41 @@ export default function Login() {
           <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
         </div>
 
+        {/* Botões para selecionar tipo de login */}
+        <div className="flex justify-center mb-6 space-x-4">
+            <button
+                type="button"
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                    authType === 'user' 
+                        ? 'bg-[#7B2D26] text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setAuthType('user')}
+                disabled={carregando}
+            >
+                Sou Candidato
+            </button>
+            <button
+                type="button"
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                    authType === 'company' 
+                        ? 'bg-[#7B2D26] text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                onClick={() => setAuthType('company')}
+                 disabled={carregando}
+            >
+                Sou Empresa
+            </button>
+        </div>
+
         {mensagem && (
           <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {mensagem}
           </div>
         )}
 
-        <form className="w-full" id="loginForm" onSubmit={login}>
-
+        <form className="w-full" id="loginForm" onSubmit={handleLogin}>
           <div className="relative z-0 w-full mb-5 group">
             <input 
               type="email" 
@@ -120,14 +118,15 @@ export default function Login() {
                 </svg>
                 Processando...
               </>
-            ) : 'Login'}
+            ) : `Login como ${authType === 'user' ? 'Candidato' : 'Empresa'}`}
           </button>
         </form>
 
         <p className="text-xs text-gray-500 text-center mt-4">Não possui conta?</p>
 
         <p className="text-sm text-center text-gray-700 mt-2">Cadastrar-se como{' '}
-          <a href="/cadAlunos" className="text-vinho hover:underline">Candidato</a>{' '}ou{' '}
+          <a href="/cadAlunos" className="text-vinho hover:underline">Candidato</a>{' '}
+          ou{' '}
           <a href="/cadEmpresas" className="text-vinho hover:underline">Empresa</a>
         </p>
         
