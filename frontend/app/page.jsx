@@ -26,17 +26,13 @@ import { useAuth } from '../hooks/useAuth';
 import { useLoading } from './ClientLayout';
 
 export default function Feed() {
-  // Usar estados e informações do hook useAuth
   const { logout, isAuthenticated, authInfo } = useAuth();
   const { isLoading, setIsLoading } = useLoading();
   const router = useRouter();
 
-  console.log('Feed Render: Início da renderização', { isLoading, isAuthenticated, authInfo: !!authInfo });
-
-  // Estados locais para o Feed
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [vagasRecomendadas, setVagasRecomendadas] = useState([]);
-  const [perfilCompleto, setPerfilCompleto] = useState(true); // Assumir completo inicialmente
+  const [perfilCompleto, setPerfilCompleto] = useState(true);
   const [camposFaltantes, setCamposFaltantes] = useState([]);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState('');
@@ -58,33 +54,21 @@ export default function Feed() {
     { id: 6, title: 'Tendências de trabalho remoto em 2024', info: 'há 4h • 3.245 leitores', trending: false },
   ]);
 
-  // Estado para controlar a visibilidade do card "Complete seu perfil"
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
 
-  // Efeito para lidar com o redirecionamento se não autenticado APÓS o carregamento
   useEffect(() => {
-    console.log('Feed useEffect [isLoading, isAuthenticated]: Executando', { isLoading, isAuthenticated });
-    // Se o usuário NÃO está autenticado, ativar o loader e redirecionar
     if (!isAuthenticated) {
-      console.log('Feed - Usuário não autenticado, ativando loader e redirecionando para /dashboard');
-      setIsLoading(true); // Ativar o loader global
+      setIsLoading(true);
       router.push('/dashboard');
     } else {
-      // Se estiver autenticado, garantir que o loader está desativado
       setIsLoading(false);
     }
-  }, [isAuthenticated, router, setIsLoading]); // Dependências atualizadas
+  }, [isAuthenticated, router, setIsLoading]);
 
-  // Efeito para carregar dados do feed APENAS QUANDO autenticado E authInfo está disponível
   useEffect(() => {
-    console.log('Feed useEffect [isAuthenticated, authInfo]: Executando', { isAuthenticated, authInfo: !!authInfo });
-    // Carrega dados apenas se estiver autenticado e authInfo.entity for válido
     if (isAuthenticated && authInfo?.entity) {
-      console.log('Feed - Usuário autenticado e dados disponíveis, carregando conteúdo do feed...');
-      const usuario = authInfo.entity; // Usar os dados do usuário do authInfo
+      const usuario = authInfo.entity;
 
-      // --- Lógica de verificação de perfil completo (para candidatos) --- //
-      // Só verifica se for candidato
       if (authInfo.entity.tipo !== 'empresa') {
         const camposObrigatorios = {
           nome: 'Nome',
@@ -100,35 +84,15 @@ export default function Feed() {
           .filter(([campo]) => !usuario[campo])
           .map(([_, label]) => label);
 
-        console.log('Feed - Campos incompletos para candidato:', camposIncompletos);
         setCamposFaltantes(camposIncompletos);
         setPerfilCompleto(camposIncompletos.length === 0);
         setShowCompleteProfile(camposIncompletos.length > 0);
       } else {
-         // Se for empresa, o perfil é considerado completo para este card
-         setPerfilCompleto(true);
-         setCamposFaltantes([]);
-         setShowCompleteProfile(false);
+        setPerfilCompleto(true);
+        setCamposFaltantes([]);
+        setShowCompleteProfile(false);
       }
 
-      // --- Fim da lógica de verificação de perfil completo --- //
-
-      // --- Lógica de Carregamento de Posts (simulado) --- //
-      const carregarPosts = async () => {
-        try {
-          const postsSimulados = [
-            { id: 1, empresa: 'TechSolutions', logo: '/placeholder.svg?height=48&width=48', nome: 'TechSolutions', conteudo: 'Estamos contratando desenvolvedores full stack! Venha fazer parte do nosso time.', imagem: '/placeholder.svg?height=300&width=500', data: '2h atrás', likes: 42, comentarios: 5, compartilhamentos: 3 },
-            { id: 2, empresa: 'Inovação Digital', logo: '/placeholder.svg?height=48&width=48', nome: 'Inovação Digital', conteudo: 'Nova vaga de UX/UI Designer disponível! Remoto, horário flexível e ótimos benefícios.', imagem: '/placeholder.svg?height=300&width=500', data: '5h atrás', likes: 28, comentarios: 3, compartilhamentos: 1 }
-          ];
-          setPosts(postsSimulados);
-        } catch (error) {
-          console.error('Erro ao carregar posts simulados:', error);
-        }
-      };
-      // --- Fim Lógica de Carregamento de Posts --- //
-
-      // --- Lógica de Carregamento de Vagas Recomendadas (simulado) --- //
-      // Só carrega vagas recomendadas se for candidato
       if (authInfo.entity.tipo !== 'empresa') {
         const carregarVagasRecomendadas = async () => {
           try {
@@ -143,21 +107,10 @@ export default function Feed() {
         };
         carregarVagasRecomendadas();
       } else {
-         // Se for empresa, limpar vagas recomendadas (ou carregar vagas da empresa, se aplicável)
-         setVagasRecomendadas([]);
+        setVagasRecomendadas([]);
       }
-      // --- Fim Lógica de Carregamento de Vagas Recomendadas --- //
-
-      // Chamar a função de carregamento de posts (sempre carrega posts, mas a lógica de exibição pode variar)
-      carregarPosts();
-
-    } else if (!isLoading && !isAuthenticated) {
-      // Este caso deve ser pego pelo primeiro useEffect e redirecionar
-      console.log('Feed useEffect [isLoading, isAuthenticated, authInfo]: Não autenticado e loading terminou. Redirecionamento pendente.');
     }
-    // Se isLoading for true, não faz nada aqui, o componente mostrará o loading state
-
-  }, [isLoading, isAuthenticated, authInfo]); // Dependências: isLoading, isAuthenticated, authInfo
+  }, [isLoading, isAuthenticated, authInfo]);
 
   const handleLogout = () => {
     logout();
@@ -176,402 +129,252 @@ export default function Feed() {
     setShowCompleteProfile(false);
   };
 
-  // --- Lógica de Renderização Condicional Principal --- //
-  
-  console.log('Feed Render: Verificando estado para renderização...', { isLoading, isAuthenticated, authInfo: !!authInfo });
-
-  // 1. Se não estiver autenticado, o loader global será mostrado pelo ClientLayout
   if (!isAuthenticated) {
-    console.log('Feed Render: Não autenticado, o loader global será mostrado');
     return null;
   }
 
-  // 2. Se o useAuth terminou de carregar E NÃO está autenticado,
-  //    retorna null. O useEffect de redirecionamento cuidará de enviar para /dashboard.
-  if (!isAuthenticated) {
-     console.log('Feed Render: Não autenticado após loading, retornando null (redirecionamento para dashboard em andamento)...');
-     return null; 
-  }
-
-  // 3. Se o useAuth terminou de carregar E está autenticado,
-  //    verifica se os dados do usuário estão disponíveis para renderizar o Feed.
   if (isAuthenticated && authInfo?.entity) {
-     console.log('Feed Render: Autenticado e dados disponíveis, renderizando Feed...');
-     const usuario = authInfo.entity; // Use os dados do usuário do authInfo
-     const isCompany = usuario.tipo === 'empresa'; // Determinar se é uma conta de empresa
+    const usuario = authInfo.entity;
+    const isCompany = usuario.tipo === 'empresa';
 
-     // --- Conteúdo do Feed a ser renderizado --- //
-     return (
-       <div className="min-h-screen bg-gray-50">
-         {/* Main Content */}
-         <main className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
-           {/* Left Sidebar - Perfil Resumido */}
-           <div className="w-full md:w-[300px] flex-shrink-0">
-             {/* Completar Perfil - Mostrar apenas se for candidato E perfil incompleto */}
-             {/* Verifica se authInfo existe antes de acessar entity?.tipo */} 
-             {!isLoading && isAuthenticated && authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && showCompleteProfile && (
-               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
-                 <div className="p-4">
-                   <div className="flex justify-between items-center mb-3">
-                     <h2 className="font-semibold">Complete seu perfil</h2>
-                     <button 
-                       className="text-gray-400 hover:text-gray-600"
-                       onClick={handleCloseCompleteProfile}
-                     >
-                       <X className="h-4 w-4" />
-                     </button>
-                   </div>
-                   
-                   <div className="w-full bg-gray-200 rounded-full h-2">
-                     <div 
-                       className="bg-[#7B2D26] h-2 rounded-full transition-all duration-300" 
-                       style={{ width: `${((7 - camposFaltantes.length) / 7) * 100}%` }} // Assume 7 campos obrigatórios para candidatos
-                     ></div>
-                   </div>
-                   
-                   <p className="text-sm text-gray-600 mt-3">
-                     Um perfil completo aumenta suas chances de ser encontrado por recrutadores.
-                   </p>
-                   
-                   <Link href="/perfil" className="mt-4 block text-center bg-[#7B2D26] text-white rounded-lg py-2 text-sm font-medium hover:bg-[#7B2D26]/90 transition-colors">
-                     Completar perfil
-                   </Link>
-                 </div>
-               </div>
-             )}
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <main className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
+          {/* Left Sidebar - Perfil Resumido */}
+          <div className="w-full md:w-[300px] flex-shrink-0">
+            {showCompleteProfile && (
+              <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h2 className="font-semibold text-lg">Complete seu perfil</h2>
+                      <p className="text-sm text-gray-500 mt-1">Aumente suas chances de conseguir uma vaga</p>
+                    </div>
+                    <button 
+                      onClick={handleCloseCompleteProfile}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {camposFaltantes.map((campo, index) => (
+                      <div key={index} className="flex items-center text-sm text-gray-600">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-2"></div>
+                        {campo}
+                      </div>
+                    ))}
+                  </div>
+                  <Link 
+                    href="/perfil"
+                    className="mt-4 block text-center px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
+                  >
+                    Completar perfil
+                  </Link>
+                </div>
+              </div>
+            )}
 
-             
+            {/* Vagas Recomendadas - Apenas para candidatos */}
+            {!isCompany && vagasRecomendadas.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
+                <div className="p-4">
+                  <h2 className="font-semibold mb-3">Vagas recomendadas</h2>
+                  <div className="space-y-4">
+                    {vagasRecomendadas.map(vaga => (
+                      <div key={vaga.id} className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors">
+                        <div className="flex items-start">
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
+                            <Image
+                              src={vaga.logo}
+                              alt={vaga.empresa}
+                              width={32}
+                              height={32}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm hover:text-[#7B2D26] transition-colors cursor-pointer">{vaga.titulo}</h3>
+                            <p className="text-xs text-gray-500 mt-1">{vaga.empresa}</p>
+                            <div className="flex items-center text-xs text-gray-500 mt-2">
+                              <span>{vaga.local}</span>
+                              <span className="mx-2">•</span>
+                              <span>{vaga.salario}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {vaga.requisitos.map((req, index) => (
+                                <span 
+                                  key={index}
+                                  className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                                >
+                                  {req}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Link 
+                    href="/vagas"
+                    className="mt-4 block text-center text-sm text-[#7B2D26] hover:underline"
+                  >
+                    Ver todas as vagas
+                  </Link>
+                </div>
+              </div>
+            )}
 
-             {/* Vagas Recomendadas - Mostrar apenas para candidatos */}
-             {/* Verifica se authInfo existe antes de acessar entity?.tipo */} 
-             {!isLoading && isAuthenticated && authInfo?.entity?.tipo !== 'empresa' && (
-               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
-                 <div className="p-4 border-b border-gray-100">
-                   <h2 className="font-semibold text-lg">Vagas recomendadas</h2>
-                 </div>
-                 
-                 {vagasRecomendadas.map(vaga => (
-                   <div key={vaga.id} className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                     <div className="flex items-start">
-                       <Image 
-                         src={vaga.logo} 
-                         alt={vaga.empresa} 
-                         width={48} 
-                         height={48} 
-                         className="rounded-lg mr-3" 
-                       />
-                       <div className="flex-1">
-                         <h3 className="font-medium text-base hover:text-[#7B2D26] transition-colors cursor-pointer">{vaga.titulo}</h3>
-                         <p className="text-sm text-gray-600">{vaga.empresa}</p>
-                         <p className="text-xs text-gray-500">{vaga.local}</p>
-                         <p className="text-xs text-gray-500 mt-1">{vaga.salario}</p>
-                         
-                         <div className="flex flex-wrap gap-1 mt-2">
-                           {vaga.requisitos.map((req, index) => (
-                             <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full hover:bg-gray-200 transition-colors">
-                               {req} 
-                             </span>
-                           ))}
-                         </div>
-                         
-                         <div className="flex justify-between items-center mt-3">
-                           <span className="text-xs text-gray-400">{vaga.dataPublicacao}</span>
-                           <button className="text-[#7B2D26] text-sm font-medium hover:underline">
-                             Ver vaga
-                           </button>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 ))}
-                 
-                 <div className="p-4 text-center">
-                   <Link href="/vagas" className="text-[#7B2D26] text-sm font-medium hover:underline flex items-center justify-center">
-                     Ver todas as vagas <ChevronRight className="h-4 w-4 ml-1" />
-                   </Link>
-                 </div>
-               </div>
-             )}
+            {/* Notícias do Mercado */}
+            <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="font-semibold">Notícias do mercado</h2>
+                  <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
+                    i
+                  </div>
+                </div>
 
-             {/* Notícias */}
-             <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
-               <div className="p-4">
-                 <div className="flex justify-between items-center mb-3">
-                   <h2 className="font-semibold">Notícias do mercado</h2>
-                   <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
-                     i
-                   </div>
-                 </div>
+                {news.slice(0, showMoreNews ? news.length : 3).map(item => (
+                  <NewsItem 
+                    key={item.id}
+                    title={item.title}
+                    info={item.info}
+                    trending={item.trending}
+                  />
+                ))}
 
-                 {news.slice(0, showMoreNews ? news.length : 3).map(item => (
-                   <NewsItem 
-                     key={item.id}
-                     title={item.title}
-                     info={item.info}
-                     trending={item.trending}
-                   />
-                 ))}
+                <button 
+                  onClick={() => setShowMoreNews(!showMoreNews)}
+                  className="text-gray-500 text-sm mt-3 flex items-center hover:text-[#7B2D26] transition-colors"
+                >
+                  {showMoreNews ? 'Mostrar menos' : 'Exibir mais'} <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${showMoreNews ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            </div>
+          </div>
 
-                 <button 
-                   onClick={() => setShowMoreNews(!showMoreNews)}
-                   className="text-gray-500 text-sm mt-3 flex items-center hover:text-[#7B2D26] transition-colors"
-                 >
-                   {showMoreNews ? 'Mostrar menos' : 'Exibir mais'} <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${showMoreNews ? 'rotate-180' : ''}`} />
-                 </button>
-               </div>
-             </div>
-           </div>
-           
+          {/* Center Content - Feed */}
+          <div className="flex-1 max-w-full md:max-w-[600px]">
+            {/* Create Post - Mostrar apenas para empresas */}
+            {isCompany && (
+              <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
+                <div className="p-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
+                      {getInitials(usuario.nome)}
+                    </div>
+                    <button 
+                      onClick={() => setShowCreatePost(true)}
+                      className="flex-1 text-left px-4 py-3 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+                    >
+                      Compartilhe uma atualização
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-           {/* Center Content - Feed */}
-           <div className="flex-1 max-w-full md:max-w-[600px]">
-             {/* Create Post - Mostrar apenas para empresas */}
-             {/* Verifica se authInfo existe antes de acessar entity?.tipo */} 
-             {!isLoading && isAuthenticated && authInfo?.entity?.tipo === 'empresa' && ( /* Renderiza apenas se for empresa */
-               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
-                 <div className="p-4">
-                   <div className="flex items-center">
-                     <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
-                       {/* Mostrar iniciais do usuário logado (ou empresa) */} 
-                       {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
-                     </div>
-                     <button 
-                       onClick={() => setShowCreatePost(true)}
-                       className="flex-1 text-left px-4 py-3 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
-                     >
-                       Compartilhe uma atualização
-                     </button>
-                   </div>
-                 </div>
-               </div>
-             )}
+            {/* Modal de Criar Post */}
+            {showCreatePost && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl w-full max-w-2xl mx-4">
+                  <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 className="font-semibold">Criar publicação</h3>
+                    <button 
+                      onClick={() => setShowCreatePost(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    <textarea
+                      value={postContent}
+                      onChange={(e) => setPostContent(e.target.value)}
+                      placeholder="O que você gostaria de compartilhar?"
+                      className="w-full h-32 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26]/20 resize-none"
+                    />
+                  </div>
+                  <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
+                    <button 
+                      onClick={() => setShowCreatePost(false)}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowCreatePost(false);
+                        setPostContent('');
+                      }}
+                      className="px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
+                    >
+                      Publicar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-             {/* Modal de Criar Post */}
-             {showCreatePost && ( /* Renderiza modal apenas se showCreatePost for true */
-               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                 <div className="bg-white rounded-xl w-full max-w-2xl mx-4">
-                   <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                     <h3 className="font-semibold">Criar publicação</h3>
-                     <button 
-                       onClick={() => setShowCreatePost(false)}
-                       className="text-gray-500 hover:text-gray-700"
-                     >
-                       <X className="h-5 w-5" />
-                     </button>
-                   </div>
-                   <div className="p-4">
-                     <textarea
-                       value={postContent}
-                       onChange={(e) => setPostContent(e.target.value)}
-                       placeholder="O que você gostaria de compartilhar?"
-                       className="w-full h-32 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26]/20 resize-none"
-                     />
-                   </div>
-                   <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
-                     <button 
-                       onClick={() => setShowCreatePost(false)}
-                       className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                     >
-                       Cancelar
-                     </button>
-                     <button 
-                       onClick={() => {
-                         setShowCreatePost(false);
-                         setPostContent('');
-                       }}
-                       className="px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
-                     >
-                       Publicar
-                     </button>
-                   </div>
-                 </div>
-               </div>
-             )}
+            {/* Feed de Posts */}
+            <div className="space-y-6">
+              {posts.length === 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+                  <p className="text-gray-500">Nenhum post encontrado</p>
+                </div>
+              )}
+            </div>
+          </div>
 
-             {/* Feed de Posts */}
-             <div className="space-y-6">
-               {posts.map(post => (
-                 <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100">
-                   <div className="p-4">
-                     <div className="flex items-start">
-                       {/* Usar avatar do usuário ou logo da empresa */}                  
-                       <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3 flex-shrink-0">
-                          {getInitials(post.nome)} 
-                       </div>
-                       <div className="flex-1">
-                         <div className="flex justify-between">
-                           <div>
-                             <h3 className="font-medium hover:text-[#7B2D26] transition-colors cursor-pointer">{post.nome}</h3>
-                             <p className="text-xs text-gray-500">{post.empresa}</p>
-                             <div className="flex items-center text-xs text-gray-500 mt-1">
-                               <span>{post.data} • </span>
-                               <span className="ml-1">🌎</span>
-                             </div>
-                           </div>
-                           <button className="text-gray-400 hover:text-gray-600">
-                             <MoreHorizontal className="h-5 w-5" />
-                           </button>
-                         </div>
-                       </div>
-                     </div>
-
-                     <div className="mt-3">
-                       <p className="text-sm">{post.conteudo}</p>
-                     </div>
-
-                     {post.imagem && (
-                       <div className="mt-4">
-                         <Image
-                           src={post.imagem}
-                           alt="Imagem do post"
-                           width={500}
-                           height={300}
-                           className="w-full rounded-lg"
-                         />
-                       </div>
-                     )}
-
-                     <div className="mt-4 flex items-center text-xs text-gray-500">
-                       <div className="flex items-center">
-                         <span className="flex">
-                           <span className="inline-block w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></span>
-                           <span className="inline-block w-4 h-4 rounded-full bg-green-500 border-2 border-white -ml-1"></span>
-                           <span className="inline-block w-4 h-4 rounded-full bg-red-500 border-2 border-white -ml-1"></span>
-                         </span>
-                         <span className="ml-1">{post.likes}</span>
-                       </div>
-                       <div className="ml-auto">
-                         <span>{post.comentarios} comentários • {post.compartilhamentos} compartilhamentos</span>
-                       </div>
-                     </div>
-
-                     <div className="mt-2 pt-2 border-t border-gray-100 flex justify-between">
-                       <button 
-                         onClick={() => handleLikePost(post.id)}
-                         className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                           likedPosts[post.id] ? 'text-[#7B2D26] bg-[#7B2D26]/5' : 'text-gray-600 hover:bg-gray-50'
-                         }`}
-                       >
-                         <ThumbsUp className="h-5 w-5 mr-1" />
-                         <span className="text-sm">Gostei</span>
-                       </button>
-                       <button className="flex items-center text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors">
-                         <MessageCircle className="h-5 w-5 mr-1" />
-                         <span className="text-sm">Comentar</span>
-                       </button>
-                       <button className="flex items-center text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors">
-                         <Share2 className="h-5 w-5 mr-1" />
-                         <span className="text-sm">Compartilhar</span>
-                       </button>
-                       <button className="flex items-center text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors">
-                         <Send className="h-5 w-5 mr-1" />
-                         <span className="text-sm">Enviar</span>
-                       </button>
-                     </div>
-                   </div>
-                 </div>
-               ))}
-             </div>
-           </div>
-
-           {/* Right Sidebar */}
-           <div className="w-full md:w-[280px] flex-shrink-0">
-             <div className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden border border-gray-100">
-               <div className="text-center px-4 pt-8 pb-4">
-                 {/* Usar dados do usuário do authInfo para a foto e nome */}            
-                 <div className="inline-block rounded-full bg-white p-1 shadow-md mx-auto mb-4">
-                   <div className="w-20 h-20 rounded-full bg-[#7B2D26] text-white text-center text-2xl font-bold leading-[5rem]">
-                     {/* Mostrar iniciais do usuário logado */}                
-                     {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
-                   </div>
-                 </div>
-                 {/* Mostrar nome e formação do usuário logado */}            
-                 <h2 className="font-semibold text-lg mt-3">{authInfo?.entity?.nome || 'Usuário'}</h2>
-                 <p className="text-sm text-gray-600 mt-1">{authInfo?.entity?.formacao || 'Adicione sua formação'}</p>
-                 
-                 {/* Card de Perfil Incompleto - Mostrar apenas se for candidato E perfil incompleto */}            
-                 {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && ( 
-                   <div className="mt-4 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 border border-amber-100 text-left">
-                     <div className="flex items-center justify-between mb-2">
-                       <span className="font-medium">Perfil Incompleto</span>
-                       <span className="text-amber-600">
-                         {/* Calcula porcentagem baseado nos campos faltantes para candidato */}                    
-                         {Math.round(((7 - camposFaltantes.length) / 7) * 100)}%
-                       </span>
-                     </div>
-                     <div className="w-full bg-amber-200 rounded-full h-1.5">
-                       <div 
-                         className="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
-                         style={{ width: `${((7 - camposFaltantes.length) / 7) * 100}%` }} // Assume 7 campos obrigatórios para candidatos
-                       ></div>
-                     </div>
-                     <Link href="/perfil" className="text-[#7B2D26] font-medium mt-2 block hover:underline">
-                       Complete seu perfil
-                     </Link>
-                   </div>
-                 )}
-               </div>
-             </div>
-
-             {/* Links Úteis - Exemplo de como adaptar conteúdo para empresa ou candidato */}        
-             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-               <div className="py-2">
-                 {authInfo?.entity?.tipo === 'empresa' ? (
-                   // Links úteis para Empresa
-                   <>
-                      <SidebarItem 
-                         icon={<div className="w-5 h-5 text-[#7B2D26]">📄</div>} 
-                         label="Gerenciar Vagas" 
-                       />
-                       <SidebarItem 
-                         icon={<div className="w-5 h-5 text-[#7B2D26]">⭐</div>} 
-                         label="Candidatos Salvos" 
-                       />
-                      <SidebarItem 
-                         icon={<div className="w-5 h-5 text-[#7B2D26]">📊</div>} 
-                         label="Estatísticas da Empresa" 
-                       />
-                   </>
-                 ) : (
-                   // Links úteis para Candidato
-                   <>
-                     <SidebarItem 
-                       icon={<div className="w-5 h-5 text-[#7B2D26]">🔖</div>} 
-                       label="Itens salvos" 
-                       count="12"
-                     />
-                     <SidebarItem 
-                       icon={<div className="w-5 h-5 text-[#7B2D26]">📝</div>} 
-                       label="Candidaturas" 
-                       count="5"
-                     />
-                     <SidebarItem 
-                       icon={<div className="w-5 h-5 text-[#7B2D26]">📊</div>} 
-                       label="Estatísticas" 
-                     />
-                   </>
-                 )}
-               </div>
-             </div>
-           </div>
-
+          {/* Right Sidebar */}
+          <div className="w-full md:w-[280px] flex-shrink-0">
+            <div className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden border border-gray-100">
+              <div className="text-center px-4 pt-8 pb-4">
+                <div className="inline-block rounded-full bg-white p-1 shadow-md mx-auto mb-4">
+                  <div className="w-20 h-20 rounded-full bg-[#7B2D26] text-white text-center text-2xl font-bold leading-[5rem]">
+                    {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
+                  </div>
+                </div>
+                <h2 className="font-semibold text-lg mt-3">{authInfo?.entity?.nome || 'Usuário'}</h2>
+                <p className="text-sm text-gray-600 mt-1">{authInfo?.entity?.formacao || 'Adicione sua formação'}</p>
+                
+                {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && ( 
+                  <div className="mt-4 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 border border-amber-100 text-left">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">Perfil Incompleto</span>
+                      <span className="text-amber-600">
+                        {Math.round(((7 - camposFaltantes.length) / 7) * 100)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-amber-200 rounded-full h-1.5">
+                      <div 
+                        className="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
+                        style={{ width: `${((7 - camposFaltantes.length) / 7) * 100}%` }}
+                      ></div>
+                    </div>
+                    <Link href="/perfil" className="text-[#7B2D26] font-medium mt-2 block hover:underline">
+                      Complete seu perfil
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
 
            
-         </main>
-       </div>
-     );
+          </div>
+        </main>
+      </div>
+    );
   }
 
-  // 4. Se chegou até aqui (isAuthenticated é true, mas authInfo?.entity é false)
-  //    algo deu errado ou os dados do usuário ainda não estão disponíveis após a autenticação.
-  //    Neste caso, vamos ativar o loader global e redirecionar para /dashboard
-   console.log('Feed Render: Estado inesperado ou dados do usuário indisponíveis. Ativando loader global.', { isAuthenticated, authInfo: !!authInfo });
-   setIsLoading(true); // Ativar o loader global
-   router.push('/dashboard');
-   return null;
+  setIsLoading(true);
+  router.push('/dashboard');
+  return null;
 }
 
-// Components (Não alterados)
+// Components
 function NavItem({ icon, label, active = false, count = null }) {
   return (
     <div
@@ -591,7 +394,7 @@ function NavItem({ icon, label, active = false, count = null }) {
       </div>
       <span className="text-xs mt-1">{label}</span>
     </div>
-  )
+  );
 }
 
 function SidebarItem({ icon, label, count = null }) {
@@ -605,7 +408,7 @@ function SidebarItem({ icon, label, count = null }) {
         <span className="text-xs text-gray-500">{count}</span>
       )}
     </div>
-  )
+  );
 }
 
 function NewsItem({ title, info, trending = false }) {
@@ -621,5 +424,5 @@ function NewsItem({ title, info, trending = false }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

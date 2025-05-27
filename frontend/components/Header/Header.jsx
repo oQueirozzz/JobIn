@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Search,
@@ -17,9 +18,9 @@ import {
 } from "lucide-react";
 
 // Componente NavItem
-function NavItem({ icon, label, count = null }) {
+function NavItem({ icon, label, count = null, href }) {
   return (
-    <div className="flex flex-col items-center px-3 h-14 relative group text-gray-200 hover:text-white transition-colors">
+    <Link href={href} className="flex flex-col items-center px-3 h-14 relative group text-gray-200 hover:text-white transition-colors">
       <div className="relative mt-2">
         {icon}
         {count && (
@@ -32,14 +33,13 @@ function NavItem({ icon, label, count = null }) {
       
       {/* Barra animada */}
       <div className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform origin-left scale-x-0 transition-all duration-200 group-hover:scale-x-100" />
-    </div>
+    </Link>
   )
 }
 
 export default function Header() {
   const pathname = usePathname();
-  const { logout } = useAuth();
-  const [usuario, setUsuario] = useState(null);
+  const { logout, authInfo } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -47,21 +47,6 @@ export default function Header() {
     { id: 2, type: 'mensagem', message: 'Nova mensagem de Tech Solutions', time: 'Há 5 horas' },
     { id: 3, type: 'sistema', message: 'Complete seu perfil para aumentar suas chances', time: 'Há 1 dia' }
   ]);
-
-  useEffect(() => {
-    // Carregar dados do usuário do localStorage
-    const usuarioData = localStorage.getItem('usuario');
-    if (usuarioData && usuarioData !== 'undefined') {
-      try {
-        setUsuario(JSON.parse(usuarioData));
-      } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
-        setUsuario(null);
-      }
-    } else {
-      setUsuario(null);
-    }
-  }, []);
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -80,8 +65,11 @@ export default function Header() {
   if (pathname === '') {
     return null;
   }
-    return (
-      <header className="sticky top-0 z-50 bg-[#7B2D26] shadow-md">
+
+  const usuario = authInfo?.entity;
+
+  return (
+    <header className="sticky top-0 z-50 bg-[#7B2D26] shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center space-x-4">
           <Link href="/" className="transform hover:scale-105 transition-transform duration-200">
@@ -101,9 +89,21 @@ export default function Header() {
 
         <nav className="flex items-center">
           <div className="flex items-center space-x-1">
-            <NavItem icon={<Home className="h-5 w-5 cursor-pointer" />} label="Início" />
-            <NavItem  icon={<Briefcase className="h-5 w-5 cursor-pointer" />} label="Vagas" />
-            <NavItem icon={<MessageSquare className="h-5 w-5 cursor-pointer" />} label="Mensagens" />
+            <NavItem 
+              icon={<Home className="h-5 w-5" />} 
+              label="Início" 
+              href="/dashboard"
+            />
+            <NavItem 
+              icon={<Briefcase className="h-5 w-5" />} 
+              label="Vagas" 
+              href="/vagas"
+            />
+            <NavItem 
+              icon={<MessageSquare className="h-5 w-5" />} 
+              label="Mensagens" 
+              href="/mensagens"
+            />
             
             {/* Notificações */}
             <div className="relative">
@@ -141,9 +141,9 @@ export default function Header() {
                     </div>
                   ))}
                   <div className="px-4 py-2 border-t border-gray-100">
-                    <button className="text-[#7B2D26] text-sm font-medium hover:underline w-full text-center">
+                    <Link href="/notificacoes" className="text-[#7B2D26] text-sm font-medium hover:underline w-full text-center block">
                       Ver todas as notificações
-                    </button>
+                    </Link>
                   </div>
                 </div>
               )}
@@ -155,8 +155,20 @@ export default function Header() {
                 className="flex flex-col items-center px-3 text-gray-200 cursor-pointer hover:text-white transition-colors"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
               >
-                <div className="w-8 h-8 rounded-full bg-white text-[#7B2D26] text-center text-sm font-bold leading-8 mt-2 hover:ring-2 hover:ring-white/20 transition-all">
-                  {usuario ? getInitials(usuario.nome) : 'U'}
+                <div className="relative w-8 h-8 rounded-full overflow-hidden mt-2 hover:ring-2 hover:ring-white/20 transition-all">
+                  {usuario?.foto_perfil ? (
+                    <Image
+                      src={usuario.foto_perfil}
+                      alt={usuario.nome}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white text-[#7B2D26] text-center text-sm font-bold leading-8">
+                      {getInitials(usuario?.nome || 'U')}
+                    </div>
+                  )}
                 </div>
                 <div className="text-xs mt-1 flex items-center">
                   Eu <ChevronDown className="h-3 w-3 ml-0.5" />
@@ -166,8 +178,27 @@ export default function Header() {
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
                   <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="font-medium text-sm">{usuario?.nome || 'Usuário'}</p>
-                    <p className="text-xs text-gray-500">{usuario?.email || ''}</p>
+                    <div className="flex items-center space-x-3">
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                        {usuario?.foto_perfil ? (
+                          <Image
+                            src={usuario.foto_perfil}
+                            alt={usuario.nome}
+                            width={40}
+                            height={40}
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[#7B2D26] text-white text-center text-sm font-bold leading-10">
+                            {getInitials(usuario?.nome || 'U')}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{usuario?.nome || 'Usuário'}</p>
+                        <p className="text-xs text-gray-500">{usuario?.email || ''}</p>
+                      </div>
+                    </div>
                   </div>
                   <Link href="/perfil" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
                     <User className="h-4 w-4 mr-2" /> Ver perfil
@@ -188,8 +219,8 @@ export default function Header() {
         </nav>
       </div>
     </header>
-    )
-  }
+  );
+}
 
 
 

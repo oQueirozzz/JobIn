@@ -145,15 +145,49 @@ exports.loginUsuario = async (req, res) => {
 // Atualizar um usuário
 exports.updateUsuario = async (req, res) => {
   try {
-    const result = await Usuario.update(req.params.id, req.body);
+    // Determinar o ID do usuário
+    let userId;
+    
+    // Se estamos na rota /atualizar, extrair o ID do token de autenticação
+    if (!req.params.id) {
+      // Verificar se há um token de autenticação
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ message: 'Token de autenticação não fornecido' });
+      }
+      
+      // Extrair o token
+      const token = authHeader.split(' ')[1];
+      
+      // Em um sistema real, você decodificaria o token JWT para obter o ID do usuário
+      // Como estamos usando um sistema simplificado, vamos extrair o ID do usuário do corpo da requisição
+      if (!req.body.id) {
+        return res.status(400).json({ message: 'ID do usuário não fornecido no corpo da requisição' });
+      }
+      
+      userId = req.body.id;
+    } else {
+      // Se estamos na rota /:id, usar o ID dos parâmetros
+      userId = req.params.id;
+    }
+    
+    // Atualizar o usuário
+    const result = await Usuario.update(userId, req.body);
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     
-    // Registrar log de atualização de perfil
-    await logsController.logAtualizacaoPerfil(req.params.id, 0, 'usuario');
+    // Buscar os dados atualizados do usuário para retornar ao cliente
+    const usuarioAtualizado = await Usuario.findById(userId);
+    if (!usuarioAtualizado) {
+      return res.status(404).json({ message: 'Erro ao buscar dados atualizados do usuário' });
+    }
     
-    res.status(200).json({ message: 'Usuário atualizado com sucesso' });
+    // Registrar log de atualização de perfil
+    await logsController.logAtualizacaoPerfil(userId, 0, 'usuario');
+    
+    // Retornar os dados atualizados do usuário
+    res.status(200).json(usuarioAtualizado);
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
     res.status(500).json({ message: 'Erro ao atualizar usuário' });

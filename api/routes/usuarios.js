@@ -17,6 +17,7 @@ router.get('/:id', usuariosController.getUsuarioById);
 
 // Rotas de perfil
 router.get('/perfil', usuariosController.getPerfil);
+router.put('/atualizar', usuariosController.updateUsuario); // Nova rota para atualização de perfil
 router.put('/:id', usuariosController.updateUsuario);
 router.delete('/:id', usuariosController.deleteUsuario);
 
