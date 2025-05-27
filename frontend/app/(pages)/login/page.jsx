@@ -16,18 +16,36 @@ export default function Login() {
     event.preventDefault();
     setCarregando(true);
     setMensagem('');
+    setTipoMensagem('');
 
     const formData = new FormData(event.target);
     const dadosLogin = {
       email: formData.get('email'),
-      senha: formData.get('senha')
+      senha: formData.get('senha'),
     };
 
     try {
-      await login(dadosLogin.email, dadosLogin.senha, authType);
+      // Chama o método login do seu hook useAuth
+      const userData = await login(dadosLogin.email, dadosLogin.senha, authType);
+
+      if (!userData) {
+        throw new Error('Dados de login inválidos');
+      }
+
+      // Salva o id no localStorage dependendo do tipo de login
+      if (authType === 'company' && userData.empresa_id) {
+        localStorage.setItem('empresa_id', userData.empresa_id);
+      } else if (authType === 'user' && userData.usuario_id) {
+        localStorage.setItem('usuario_id', userData.usuario_id);
+      }
+
       setTipoMensagem('sucesso');
       setMensagem(`Login de ${authType === 'user' ? 'usuário' : 'empresa'} realizado com sucesso!`);
-      router.push('/');
+
+      // Redireciona após breve delay para o usuário ver a mensagem
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
     } catch (error) {
       setTipoMensagem('erro');
       setMensagem(error.message || 'Erro ao fazer login. Tente novamente.');
@@ -42,34 +60,38 @@ export default function Login() {
 
         {/* Botões para selecionar tipo de login */}
         <div className="flex justify-center mb-6 space-x-4">
-            <button
-                type="button"
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                    authType === 'user' 
-                        ? 'bg-[#7B2D26] text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                onClick={() => setAuthType('user')}
-                disabled={carregando}
-            >
-                Sou Candidato
-            </button>
-            <button
-                type="button"
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                    authType === 'company' 
-                        ? 'bg-[#7B2D26] text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                onClick={() => setAuthType('company')}
-                 disabled={carregando}
-            >
-                Sou Empresa
-            </button>
+          <button
+            type="button"
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+              authType === 'user' 
+                ? 'bg-[#7B2D26] text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setAuthType('user')}
+            disabled={carregando}
+          >
+            Sou Candidato
+          </button>
+          <button
+            type="button"
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+              authType === 'company' 
+                ? 'bg-[#7B2D26] text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setAuthType('company')}
+            disabled={carregando}
+          >
+            Sou Empresa
+          </button>
         </div>
 
         {mensagem && (
-          <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div
+            className={`mb-4 p-3 rounded-md text-center ${
+              tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}
+          >
             {mensagem}
           </div>
         )}
@@ -85,7 +107,12 @@ export default function Login() {
               required 
               disabled={carregando}
             />
-            <label htmlFor="email" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email</label>
+            <label
+              htmlFor="email"
+              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+            >
+              Email
+            </label>
           </div>
 
           <div className="relative z-0 w-full mb-5 group">
@@ -98,19 +125,40 @@ export default function Login() {
               required 
               disabled={carregando}
             />
-            <label htmlFor="senha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Senha</label>
+            <label
+              htmlFor="senha"
+              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+            >
+              Senha
+            </label>
           </div>
 
-          <button 
-            type="submit" 
-            className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center" 
+          <button
+            type="submit"
+            className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center"
             disabled={carregando}
           >
             {carregando ? (
               <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Processando...
               </>
@@ -120,16 +168,22 @@ export default function Login() {
 
         <p className="text-xs text-gray-500 text-center mt-4">Não possui conta?</p>
 
-        <p className="text-sm text-center text-gray-700 mt-2">Cadastrar-se como{' '}
-          <a href="/cadAlunos" className="text-vinho hover:underline">Candidato</a>{' '}
+        <p className="text-sm text-center text-gray-700 mt-2">
+          Cadastrar-se como{' '}
+          <a href="/cadAlunos" className="text-vinho hover:underline">
+            Candidato
+          </a>{' '}
           ou{' '}
-          <a href="/cadEmpresas" className="text-vinho hover:underline">Empresa</a>
-        </p>
-        
-        <p className="text-center mt-4">
-          <a href="/novaSenha" className="text-xs text-vinho hover:underline">Esqueci a senha</a>
+          <a href="/cadEmpresas" className="text-vinho hover:underline">
+            Empresa
+          </a>
         </p>
 
+        <p className="text-center mt-4">
+          <a href="/novaSenha" className="text-xs text-vinho hover:underline">
+            Esqueci a senha
+          </a>
+        </p>
       </div>
     </section>
   );

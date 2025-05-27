@@ -38,35 +38,44 @@ exports.getVagasByEmpresa = async (req, res) => {
   }
 };
 
+
 // Criar uma nova vaga
 exports.createVaga = async (req, res) => {
   try {
-    const { empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria} = req.body;
+    const {
+      empresa_id,
+      nome_vaga,
+      nome_empresa,
+      descricao,
+      tipo_vaga,
+      local_vaga,
+      categoria
+    } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!empresa_id || !nome_vaga || !nome_empresa || descricao || tipo_vaga || local_vaga || categoria) {
-      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
+    if (!empresa_id || !nome_vaga || !nome_empresa || !descricao || !tipo_vaga || !local_vaga || !categoria) {
+      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios.' });
     }
 
     // Criar a vaga
     const novaVaga = await Vaga.create(req.body);
-    
+
     // Registrar log de criação de vaga
     await logsController.logCriacaoVaga(empresa_id, novaVaga.id, nome_vaga);
-    
-    // Criar notificação para a empresa
+
+    // Criar notificação
     await Notificacao.create({
-      candidaturas_id: 0, // Sem candidatura associada
+      candidaturas_id: 0,
       empresas_id: empresa_id,
-      usuarios_id: 0, // Sem usuário específico
+      usuarios_id: 0,
       mensagem_empresa: `Nova vaga criada: ${nome_vaga}`,
       mensagem_usuario: null
     });
 
-    res.status(201).json(novaVaga);
+    return res.status(201).json(novaVaga);
   } catch (error) {
     console.error('Erro ao criar vaga:', error);
-    res.status(500).json({ message: 'Erro ao criar vaga' });
+    return res.status(500).json({ message: 'Erro ao criar vaga.' });
   }
 };
 
