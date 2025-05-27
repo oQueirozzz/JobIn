@@ -113,7 +113,6 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-base font-semibold">Resumo Profissional</h2>
-                    <button className="cursor-pointer text-sm text-red-900">Editar</button>
                 </div>
                 <p className="text-gray-700 text-sm">
                     {usuario.descricao || 'Nenhum resumo profissional informado.'}
@@ -124,7 +123,6 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-base font-semibold">Formação Acadêmica</h2>
-                    <button className="cursor-pointer text-sm text-red-900">Editar</button>
                 </div>
                 <p className="text-gray-700 text-sm">
                     {usuario.formacao || 'Nenhuma formação acadêmica informada.'}
@@ -135,8 +133,7 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-base font-semibold">Habilidades</h2>
-                    <button className="cursor-pointer text-sm text-red-900">Editar</button>
-                </div>
+                    </div>
                 <div className="flex flex-wrap gap-2">
                     {usuario.habilidades ? (
                         usuario.habilidades.split(',').map((habilidade, index) => (

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Header from "../components/Header/Header";
 import {
   Search,
   Home,
@@ -24,10 +23,12 @@ import {
 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
+import { useLoading } from './ClientLayout';
 
 export default function Feed() {
   // Usar estados e informações do hook useAuth
-  const { logout, isLoading, isAuthenticated, authInfo } = useAuth();
+  const { logout, isAuthenticated, authInfo } = useAuth();
+  const { isLoading, setIsLoading } = useLoading();
   const router = useRouter();
 
   console.log('Feed Render: Início da renderização', { isLoading, isAuthenticated, authInfo: !!authInfo });
@@ -63,19 +64,22 @@ export default function Feed() {
   // Efeito para lidar com o redirecionamento se não autenticado APÓS o carregamento
   useEffect(() => {
     console.log('Feed useEffect [isLoading, isAuthenticated]: Executando', { isLoading, isAuthenticated });
-    // Se o useAuth terminou de carregar E o usuário NÃO está autenticado,
-    // redireciona para a dashboard.
-    if (!isLoading && !isAuthenticated) {
-      console.log('Feed - Usuário não autenticado após loading, redirecionando para /dashboard');
+    // Se o usuário NÃO está autenticado, ativar o loader e redirecionar
+    if (!isAuthenticated) {
+      console.log('Feed - Usuário não autenticado, ativando loader e redirecionando para /dashboard');
+      setIsLoading(true); // Ativar o loader global
       router.push('/dashboard');
+    } else {
+      // Se estiver autenticado, garantir que o loader está desativado
+      setIsLoading(false);
     }
-  }, [isLoading, isAuthenticated, router]); // Dependências: isLoading, isAuthenticated e router
+  }, [isAuthenticated, router, setIsLoading]); // Dependências atualizadas
 
-  // Efeito para carregar dados do feed APENAS QUANDO autenticado E loading terminou E authInfo está disponível
+  // Efeito para carregar dados do feed APENAS QUANDO autenticado E authInfo está disponível
   useEffect(() => {
-    console.log('Feed useEffect [isLoading, isAuthenticated, authInfo]: Executando', { isLoading, isAuthenticated, authInfo: !!authInfo });
-    // Carrega dados apenas se não estiver carregando, estiver autenticado e authInfo.entity for válido
-    if (!isLoading && isAuthenticated && authInfo?.entity) {
+    console.log('Feed useEffect [isAuthenticated, authInfo]: Executando', { isAuthenticated, authInfo: !!authInfo });
+    // Carrega dados apenas se estiver autenticado e authInfo.entity for válido
+    if (isAuthenticated && authInfo?.entity) {
       console.log('Feed - Usuário autenticado e dados disponíveis, carregando conteúdo do feed...');
       const usuario = authInfo.entity; // Usar os dados do usuário do authInfo
 
@@ -176,17 +180,10 @@ export default function Feed() {
   
   console.log('Feed Render: Verificando estado para renderização...', { isLoading, isAuthenticated, authInfo: !!authInfo });
 
-  // 1. Enquanto o useAuth está carregando, sempre mostra o loading
-  if (isLoading) {
-    console.log('Feed Render: isLoading é true, mostrando loading...');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F0F3F5]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2D26] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Verificando autenticação...</p>
-        </div>
-      </div>
-    );
+  // 1. Se não estiver autenticado, o loader global será mostrado pelo ClientLayout
+  if (!isAuthenticated) {
+    console.log('Feed Render: Não autenticado, o loader global será mostrado');
+    return null;
   }
 
   // 2. Se o useAuth terminou de carregar E NÃO está autenticado,
@@ -206,7 +203,6 @@ export default function Feed() {
      // --- Conteúdo do Feed a ser renderizado --- //
      return (
        <div className="min-h-screen bg-gray-50">
-         <Header />
          {/* Main Content */}
          <main className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
            {/* Left Sidebar - Perfil Resumido */}
@@ -566,11 +562,12 @@ export default function Feed() {
      );
   }
 
-  // 4. Se chegou até aqui (isLoading é false, isAuthenticated pode ser true, mas authInfo?.entity é false)
+  // 4. Se chegou até aqui (isAuthenticated é true, mas authInfo?.entity é false)
   //    algo deu errado ou os dados do usuário ainda não estão disponíveis após a autenticação.
-  //    Neste caso, vamos retornar um loading ou null. O useEffect de redirecionamento já deve ter
-  //    lidado com o caso !isAuthenticated.
-   console.log('Feed Render: Estado inesperado ou dados do usuário indisponíveis após loading. Retornando null.', { isLoading, isAuthenticated, authInfo: !!authInfo });
+  //    Neste caso, vamos ativar o loader global e redirecionar para /dashboard
+   console.log('Feed Render: Estado inesperado ou dados do usuário indisponíveis. Ativando loader global.', { isAuthenticated, authInfo: !!authInfo });
+   setIsLoading(true); // Ativar o loader global
+   router.push('/dashboard');
    return null;
 }
 

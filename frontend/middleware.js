@@ -5,7 +5,7 @@ export function middleware(request) {
     const { pathname } = request.nextUrl;
 
     // Lista de rotas públicas que não precisam de autenticação
-    const publicRoutes = ['/dashboard', '/login', '/novaSenha', '/cadAlunos', '/cadEmpresas'];
+    const publicRoutes = ['/dashboard', '/login', '/novaSenha', '/cadAlunos', '/cadEmpresas', '/vagas'];
     const isPublicRoute = publicRoutes.includes(pathname);
 
     // Se não estiver autenticado
@@ -20,8 +20,8 @@ export function middleware(request) {
     }
 
     // Se estiver autenticado
-    // Se tentar acessar rotas de login/cadastro, redireciona para a página principal
-    if (isPublicRoute) {
+    // Se tentar acessar rotas de login/cadastro (exceto /vagas), redireciona para a página principal
+    if (isPublicRoute && pathname !== '/vagas') {
         const url = new URL('/', request.url);
         return NextResponse.redirect(url);
     }

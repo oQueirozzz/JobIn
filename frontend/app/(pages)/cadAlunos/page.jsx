@@ -111,9 +111,6 @@ export default function cadAlunos() {
     return (
         <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
             <div className="w-full max-w-3xl bg-white rounded-lg shadow-xl p-6 sm:p-10 my-20 sm:my-20">
-                <div className="flex justify-center mb-6">
-                    <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
-                </div>
 
                 {mensagem && (
                     <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

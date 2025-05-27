@@ -3,6 +3,7 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
+import { useLoading } from '../app/ClientLayout';
 
 // Criando o contexto de autenticação
 const AuthContext = createContext(null);
@@ -34,24 +35,31 @@ function getInitialAuthInfo() {
 // Componente Provider
 export function AuthProvider({ children }) {
   const [authInfo, setAuthInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const { setIsLoading } = useLoading();
   const router = useRouter();
 
   // Efeito para verificar autenticação inicial
   useEffect(() => {
     try {
+      // Ativar o loader global durante a verificação de autenticação
+      setIsLoading(true);
       const initialAuth = getInitialAuthInfo();
       setAuthInfo(initialAuth);
     } catch (error) {
       console.error('Erro ao verificar autenticação inicial:', error);
       setAuthInfo(null);
     } finally {
-      setIsLoading(false);
+      setIsAuthLoading(false);
+      // O loader global será controlado pelos componentes individuais
     }
-  }, []);
+  }, [setIsLoading]);
 
   const login = async (email, senha, authType = 'user') => {
     try {
+      // Ativar o loader global durante o processo de login
+      setIsLoading(true);
+      
       const apiUrl = authType === 'user' 
         ? 'http://localhost:3001/api/usuarios/login'
         : 'http://localhost:3001/api/empresas/login';
@@ -89,11 +97,16 @@ export function AuthProvider({ children }) {
       router.push('/');
     } catch (error) {
       console.error('Erro durante o login:', error);
+      // Desativar o loader global em caso de erro
+      setIsLoading(false);
       throw error;
     }
   };
 
   const logout = () => {
+    // Ativar o loader global durante o processo de logout
+    setIsLoading(true);
+    
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
       localStorage.removeItem('authEntity');
@@ -109,7 +122,7 @@ export function AuthProvider({ children }) {
   // Valor do contexto
   const value = {
     isAuthenticated,
-    isLoading,
+    isLoading: isAuthLoading,
     authInfo,
     login,
     logout

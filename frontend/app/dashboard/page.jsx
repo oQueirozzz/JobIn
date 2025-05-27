@@ -9,23 +9,17 @@ import Empresas from "../../components/landingPage/Empresas";
 import Funcionamento from "../../components/landingPage/Funcionamento";
 import HeaderLanding from "../../components/landingPage/HeaderLanding";
 import Link from 'next/link';
+import { useLoading } from '../ClientLayout';
 
 export default function DashboardPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { setIsLoading } = useLoading();
   const router = useRouter();
 
-  // Removendo o redirecionamento para login, pois o dashboard deve ser acessível para usuários não autenticados
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-branco">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vinho mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+  // Desativar o loader global quando a página de dashboard for carregada
+  useEffect(() => {
+    setIsLoading(false);
+  }, [setIsLoading]);
 
   return (
     <div className="min-h-screen bg-white">

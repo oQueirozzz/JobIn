@@ -40,10 +40,6 @@ export default function Login() {
     <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
       <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">
 
-        <div className="flex justify-center mb-6">
-          <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
-        </div>
-
         {/* Botões para selecionar tipo de login */}
         <div className="flex justify-center mb-6 space-x-4">
             <button

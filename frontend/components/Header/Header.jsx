@@ -86,7 +86,7 @@ export default function Header() {
         <div className="flex items-center space-x-4">
           <Link href="/" className="transform hover:scale-105 transition-transform duration-200">
             <div className="w-30 h-30">
-              <img src="./img/global/logo_completa_branca.svg" alt="JobIn" className="w-full h-full" />
+              <img src="/img/global/logo_completa_branca.svg" alt="JobIn" className="w-full h-full" />
             </div>
           </Link>
           <div className="relative group">

@@ -20,7 +20,7 @@ export default function HeroSection() {
   return (
     <section id="hero" className="relative bg-gradient-to-b from-[#7B2D26]/5 to-white py-20">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center mb-12">
+        <div className="max-w-4xl mx-auto text-center mb-12 mt-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
             Encontre o Estágio Ideal para sua Carreira
           </h1>
