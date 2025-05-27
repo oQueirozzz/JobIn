@@ -19,7 +19,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-br">
-      <body className={inter.variable}>
+      <body className={inter.variable}   cz-shortcut-listen="true">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
