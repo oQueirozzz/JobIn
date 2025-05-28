@@ -51,9 +51,12 @@ export default function cadAlunos() {
                 formacao: formData.get('formacao'),
                 area_interesse: formData.get('area_interesse'),
                 habilidades: formData.get('habilidades'),
-                descricao: formData.get('descricao')
+                descricao: formData.get('descricao'),
+                tipo: 'usuario'
                 // Arquivos serão tratados separadamente em uma implementação futura
             };
+
+            
             
             console.log('Enviando dados de cadastro do aluno:', dadosCadastro);
             

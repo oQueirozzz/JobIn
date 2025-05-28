@@ -11,21 +11,46 @@ export default function Vagas() {
   const [vagaSelecionada, setVagaSelecionada] = useState(null);
 
   const detalhesRef = useRef(null);
-
   useEffect(() => {
     async function fetchVagas() {
       setLoading(true);
+  
       try {
         const res = await fetch('http://localhost:3001/api/vagas');
         const data = await res.json();
-        setVagas(data);
-        if (data.length > 0) setVagaSelecionada(data[0]);
+  
+        // Recupera e processa os dados de autenticação
+        const authData = localStorage.getItem('authEntity');
+        let empresaId = null;
+  
+        if (authData) {
+          try {
+            const parsed = JSON.parse(authData);
+            if (parsed?.id) {
+              empresaId = parsed.id;
+            } else {
+              console.warn('ID da empresa não encontrado nos dados de autenticação.');
+            }
+          } catch (error) {
+            console.error('Erro ao interpretar os dados de autenticação.', error);
+          }
+        }
+  
+        // Se empresa logada, filtra pelas vagas da empresa
+        const vagasFiltradas = empresaId
+          ? data.filter((vaga) => vaga.empresa_id === empresaId)
+          : data;
+  
+        setVagas(vagasFiltradas);
+        setVagaSelecionada(vagasFiltradas.length > 0 ? vagasFiltradas[0] : null);
+  
       } catch (err) {
         console.error('Erro ao buscar vagas:', err);
       } finally {
         setLoading(false);
       }
     }
+  
     fetchVagas();
   }, []);
 

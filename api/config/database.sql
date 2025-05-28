@@ -16,6 +16,7 @@ CREATE TABLE `usuarios` (
 	`area_interesse` VARCHAR(50),
 	`foto` VARCHAR(255),
 	`certificados` VARCHAR(255),
+    `tipo` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE `empresas` (
 	`senha` VARCHAR(100) NOT NULL,
 	`descricao` TEXT,
 	`logo` VARCHAR(255),
+    `tipo` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
 

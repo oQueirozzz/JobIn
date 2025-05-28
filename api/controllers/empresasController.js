@@ -33,6 +33,7 @@ exports.getEmpresaById = async (req, res) => {
 exports.registerEmpresa = async (req, res) => {
   try {
     const { nome, email, senha, cnpj } = req.body;
+    
 
     // Verificar se todos os campos obrigatórios foram fornecidos
     if (!nome || !email || !senha || !cnpj) {
@@ -66,6 +67,7 @@ exports.registerEmpresa = async (req, res) => {
       usuarios_id: 0, // Sem usuário específico
       mensagem_empresa: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso.`,
       mensagem_usuario: null
+      
     });
 
     // Versão simplificada sem token
@@ -73,7 +75,8 @@ exports.registerEmpresa = async (req, res) => {
       id: novaEmpresa.id,
       nome: novaEmpresa.nome,
       email: novaEmpresa.email,
-      autenticado: true
+      autenticado: true,
+      tipo: 'empresa'
     });
   } catch (error) {
     console.error('Erro ao registrar empresa:', error);
