@@ -29,8 +29,6 @@ export default function Vagas() {
     fetchVagas();
   }, []);
 
-  
-
   return (
     <section className="bg-gray-50 flex flex-col items-center min-h-screen">
       {/* Filtros */}
@@ -80,7 +78,7 @@ export default function Vagas() {
 
       <div className="h-auto flex flex-col-reverse lg:flex-row justify-center w-full px-4 md:px-10 mt-8 gap-6">
         {/* Lista de vagas */}
-        <div className="w-full lg:w-2/3 flex flex-col items-center">
+        <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-center">
           {loading ? (
             <p>Carregando vagas...</p>
           ) : vagas.length === 0 ? (
