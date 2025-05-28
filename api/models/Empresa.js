@@ -39,14 +39,15 @@ class Empresa {
       const hashedPassword = await bcrypt.hash(empresaData.senha, salt);
 
       const [result] = await db.query(
-        'INSERT INTO empresas (nome, email, cnpj, senha, descricao, logo) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO empresas (nome, email, cnpj, senha, descricao, logo,tipo) VALUES (?, ?, ?, ?, ?, ?,?)',
         [
           empresaData.nome,
           empresaData.email,
           empresaData.cnpj,
           hashedPassword,
           empresaData.descricao || null,
-          empresaData.logo || null
+          empresaData.logo || null,
+          empresaData.tipo
         ]
       );
 

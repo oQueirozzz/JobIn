@@ -53,7 +53,8 @@ export default function cadEmpresas() {
                 email: formData.get('email'),
                 senha: senha,
                 cnpj: formData.get('cnpj'),
-                descricao: formData.get('descricao')
+                descricao: formData.get('descricao'),
+                tipo: 'empresa'
                 // Arquivos serão tratados separadamente em uma implementação futura
             };
             

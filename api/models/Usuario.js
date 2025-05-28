@@ -24,7 +24,7 @@ class Usuario {
 
       const [rows] = await db.query(
         'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados FROM usuarios WHERE id = ?', 
-        [userId]
+        [parseInt(id, 10)]
       );
       console.log('Resultado da consulta:', rows);
       return rows[0];
@@ -56,7 +56,7 @@ class Usuario {
       });
 
       const [result] = await db.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados,tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)',
         [
           userData.nome,
           userData.email,
@@ -68,9 +68,12 @@ class Usuario {
           userData.formacao || null,
           userData.area_interesse || null,
           userData.foto || null,
-          userData.certificados || null
+          userData.certificados || null,
+          userData.tipo
         ]
       );
+
+      
 
       console.log('Usuário criado com ID:', result.insertId);
       return { id: result.insertId, ...userData, senha: undefined };
@@ -112,11 +115,12 @@ class Usuario {
         updateFields.push('data_nascimento = ?');
         values.push(userData.data_nascimento);
       }
-      if ('habilidades' in userData) {
+        if (userData.habilidades !== undefined) {
         updateFields.push('habilidades = ?');
         values.push(userData.habilidades);
-      }
-      if ('descricao' in userData) {
+        }
+
+      if (userData.descricao !== undefined) {
         updateFields.push('descricao = ?');
         values.push(userData.descricao);
       }

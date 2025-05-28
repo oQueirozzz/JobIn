@@ -38,7 +38,6 @@ exports.getUsuarioById = async (req, res) => {
 exports.registerUsuario = async (req, res) => {
   try {
     const { nome, email, senha, cpf, data_nascimento } = req.body;
-
     // Verificar se todos os campos obrigatórios foram fornecidos
     if (!nome || !email || !senha || !cpf || !data_nascimento ) {
       return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
@@ -78,7 +77,8 @@ exports.registerUsuario = async (req, res) => {
       id: novoUsuario.id,
       nome: novoUsuario.nome,
       email: novoUsuario.email,
-      autenticado: true
+      autenticado: true,
+      tipo: 'usuario'
     });
   } catch (error) {
     console.error('Erro ao registrar usuário:', error);

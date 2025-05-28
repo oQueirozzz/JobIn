@@ -17,6 +17,7 @@ CREATE TABLE `usuarios` (
     `tipo` varchar(50),
 	`foto` VARCHAR(255),
 	`certificados` VARCHAR(255),
+    `tipo` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
 
@@ -30,6 +31,7 @@ CREATE TABLE `empresas` (
     `local` varchar(100),
     `tipo` varchar(50),
 	`logo` VARCHAR(255),
+    `tipo` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
 
