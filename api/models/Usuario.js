@@ -65,6 +65,8 @@ class Usuario {
         ]
       );
 
+      
+
       console.log('Usuário criado com ID:', result.insertId);
       return { id: result.insertId, ...userData, senha: undefined };
     } catch (error) {

@@ -32,11 +32,16 @@ export default function Login() {
         throw new Error('Dados de login inválidos');
       }
 
-      // Salva o id no localStorage dependendo do tipo de login
       if (authType === 'company' && userData.empresa_id) {
-        localStorage.setItem('empresa_id', userData.empresa_id);
+        localStorage.setItem('authEntity', JSON.stringify({
+          id: userData.empresa_id,
+          tipo: 'empresa'
+        }));
       } else if (authType === 'user' && userData.usuario_id) {
-        localStorage.setItem('usuario_id', userData.usuario_id);
+        localStorage.setItem('authEntity', JSON.stringify({
+          id: userData.usuario_id,
+          tipo: 'usuario'
+        }));
       }
 
       setTipoMensagem('sucesso');

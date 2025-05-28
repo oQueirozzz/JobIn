@@ -217,7 +217,7 @@ export default function CriarVaga() {
             <textarea
               name="descricao"
               id="descricao"
-              maxLength="200"
+              maxLength="500"
               rows="3"
               required
               className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
