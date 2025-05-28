@@ -27,7 +27,7 @@ export default function Loader({ fullScreen = true }) {
             <div className="absolute inset-0 bg-[#7B2D26]/5 rounded-full blur-sm"></div>
             <div className="relative z-10 flex items-center justify-center w-full h-full">
               <Image 
-                src="/img/global/logo_icon.svg" 
+                src="/img/global/favicon.svg" 
                 alt="JobIn" 
                 width={64} 
                 height={64}

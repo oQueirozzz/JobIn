@@ -14,6 +14,7 @@ CREATE TABLE `usuarios` (
 	`formacao` VARCHAR(50),
 	`curriculo` VARCHAR(255),
 	`area_interesse` VARCHAR(50),
+    `tipo` varchar(50),
 	`foto` VARCHAR(255),
 	`certificados` VARCHAR(255),
 	PRIMARY KEY(`id`)
@@ -26,6 +27,8 @@ CREATE TABLE `empresas` (
 	`cnpj` VARCHAR(14) NOT NULL UNIQUE,
 	`senha` VARCHAR(100) NOT NULL,
 	`descricao` TEXT,
+    `local` varchar(100),
+    `tipo` varchar(50),
 	`logo` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
@@ -189,13 +192,17 @@ CREATE TRIGGER after_update_candidatura_status
 AFTER UPDATE ON candidaturas
 FOR EACH ROW
 BEGIN
+    DECLARE empresa_id INT;
+
     IF OLD.status <> NEW.status THEN
         -- Obter o ID da empresa da vaga
-        DECLARE empresa_id INT;
         SELECT empresa_id INTO empresa_id FROM vagas WHERE id = NEW.id_vaga;
-        
-        -- Criar notificação com mensagens personalizadas baseadas no novo status
-        INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, status_candidatura)
+
+        -- Inserir notificação
+        INSERT INTO notificacao (
+            candidaturas_id, empresas_id, usuarios_id, 
+            mensagem_usuario, mensagem_empresa, status_candidatura
+        )
         VALUES (
             NEW.id,
             empresa_id,
@@ -285,3 +292,6 @@ INSERT INTO candidaturas (id_usuario, id_vaga, curriculo_usuario) VALUES
 select * from usuarios;
 select * from logs;
 select * from candidaturas;
+select * from empresas;
+
+ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;

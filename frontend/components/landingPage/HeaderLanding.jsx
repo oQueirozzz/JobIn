@@ -129,7 +129,7 @@ export default function HeaderLanding() {
                                 className="block w-full bg-white text-[#7B2D26] px-6 py-2.5 rounded-full hover:bg-white/90 transition-all duration-300 text-center font-medium shadow-sm hover:shadow-md"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Publicar Vaga
+                                Sou Empresa
                             </Link>
                         </div>
                     </nav>

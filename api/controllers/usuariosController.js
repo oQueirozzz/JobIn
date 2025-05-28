@@ -95,14 +95,27 @@ exports.loginUsuario = async (req, res) => {
     console.log('Senha recebida:', senha);
 
     if (!email || !senha) {
-      return res.status(400).json({ message: 'Por favor, forneça email e senha' });
+      return res.status(400).json({ 
+        message: 'Por favor, preencha todos os campos para fazer login.' 
+      });
+    }
+
+    // Verificar se o email pertence a uma empresa
+    const Empresa = require('../models/Empresa');
+    const empresaComMesmoEmail = await Empresa.findByEmail(email);
+    if (empresaComMesmoEmail) {
+      return res.status(401).json({ 
+        message: 'Ops! Parece que você está tentando fazer login como candidato, mas este email está cadastrado como empresa. Por favor, clique em "Sou Empresa" e tente novamente.' 
+      });
     }
 
     const usuario = await Usuario.findByEmail(email);
     console.log('Usuário encontrado:', usuario);
 
     if (!usuario) {
-      return res.status(401).json({ message: 'Email ou senha inválidos' });
+      return res.status(401).json({ 
+        message: 'Não encontramos uma conta com este email. Verifique se o email está correto ou cadastre-se como candidato.' 
+      });
     }
 
     console.log('Senha no banco (hash):', usuario.senha);
@@ -111,7 +124,9 @@ exports.loginUsuario = async (req, res) => {
     console.log('Senha correta?', senhaCorreta);
 
     if (!senhaCorreta) {
-      return res.status(401).json({ message: 'Email ou senha inválidos' });
+      return res.status(401).json({ 
+        message: 'Senha incorreta. Por favor, verifique sua senha e tente novamente.' 
+      });
     }
     
     // Registrar log de login
@@ -132,8 +147,16 @@ exports.loginUsuario = async (req, res) => {
       autenticado: true
     };
 
+    // Gerar token JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { id: usuario.id, type: 'user' },
+      process.env.JWT_SECRET || 'sua-chave-secreta',
+      { expiresIn: '24h' }
+    );
+
     res.status(200).json({
-      token: 'fake-token',
+      token,
       usuario: usuarioFrontend
     });
   } catch (error) {
@@ -145,40 +168,39 @@ exports.loginUsuario = async (req, res) => {
 // Atualizar um usuário
 exports.updateUsuario = async (req, res) => {
   try {
-    // Determinar o ID do usuário
-    let userId;
+    const userId = parseInt(req.params.id, 10);
+    console.log('ID do usuário recebido:', userId);
+    console.log('Tipo do ID:', typeof userId);
+    console.log('Dados recebidos para atualização:', req.body);
     
-    // Se estamos na rota /atualizar, extrair o ID do token de autenticação
-    if (!req.params.id) {
-      // Verificar se há um token de autenticação
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        return res.status(401).json({ message: 'Token de autenticação não fornecido' });
-      }
-      
-      // Extrair o token
-      const token = authHeader.split(' ')[1];
-      
-      // Em um sistema real, você decodificaria o token JWT para obter o ID do usuário
-      // Como estamos usando um sistema simplificado, vamos extrair o ID do usuário do corpo da requisição
-      if (!req.body.id) {
-        return res.status(400).json({ message: 'ID do usuário não fornecido no corpo da requisição' });
-      }
-      
-      userId = req.body.id;
-    } else {
-      // Se estamos na rota /:id, usar o ID dos parâmetros
-      userId = req.params.id;
+    if (!userId || isNaN(userId)) {
+      console.error('ID inválido:', req.params.id);
+      return res.status(400).json({ message: 'ID do usuário inválido' });
+    }
+    
+    // Verificar se o usuário existe antes de tentar atualizar
+    const usuarioExistente = await Usuario.findById(userId);
+    console.log('Usuário existente:', usuarioExistente);
+    
+    if (!usuarioExistente) {
+      console.error('Usuário não encontrado com ID:', userId);
+      return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     
     // Atualizar o usuário
+    console.log('Iniciando atualização do usuário...');
     const result = await Usuario.update(userId, req.body);
+    console.log('Resultado da atualização:', result);
+    
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     
     // Buscar os dados atualizados do usuário para retornar ao cliente
+    console.log('Buscando dados atualizados do usuário...');
     const usuarioAtualizado = await Usuario.findById(userId);
+    console.log('Dados atualizados encontrados:', usuarioAtualizado);
+    
     if (!usuarioAtualizado) {
       return res.status(404).json({ message: 'Erro ao buscar dados atualizados do usuário' });
     }
@@ -189,8 +211,8 @@ exports.updateUsuario = async (req, res) => {
     // Retornar os dados atualizados do usuário
     res.status(200).json(usuarioAtualizado);
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({ message: 'Erro ao atualizar usuário' });
+    console.error('Erro detalhado ao atualizar usuário:', error);
+    res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
   }
 };
 

@@ -88,19 +88,34 @@ exports.loginEmpresa = async (req, res) => {
 
     // Verificar se email e senha foram fornecidos
     if (!email || !senha) {
-      return res.status(400).json({ message: 'Por favor, forneça email e senha' });
+      return res.status(400).json({ 
+        message: 'Por favor, preencha todos os campos para fazer login.' 
+      });
+    }
+
+    // Verificar se o email pertence a um usuário
+    const Usuario = require('../models/Usuario');
+    const usuarioComMesmoEmail = await Usuario.findByEmail(email);
+    if (usuarioComMesmoEmail) {
+      return res.status(401).json({ 
+        message: 'Ops! Parece que você está tentando fazer login como empresa, mas este email está cadastrado como candidato. Por favor, clique em "Sou Candidato" e tente novamente.' 
+      });
     }
 
     // Buscar empresa pelo email
     const empresa = await Empresa.findByEmail(email);
     if (!empresa) {
-      return res.status(401).json({ message: 'Email ou senha inválidos' });
+      return res.status(401).json({ 
+        message: 'Não encontramos uma empresa com este email. Verifique se o email está correto ou cadastre sua empresa.' 
+      });
     }
 
     // Verificar senha
     const senhaCorreta = await Empresa.comparePassword(senha, empresa.senha);
     if (!senhaCorreta) {
-      return res.status(401).json({ message: 'Email ou senha inválidos' });
+      return res.status(401).json({ 
+        message: 'Senha incorreta. Por favor, verifique sua senha e tente novamente.' 
+      });
     }
     
     // Registrar log de login
@@ -117,9 +132,17 @@ exports.loginEmpresa = async (req, res) => {
       autenticado: true
     };
 
+    // Gerar token JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { id: empresa.id, type: 'company' },
+      process.env.JWT_SECRET || 'sua-chave-secreta',
+      { expiresIn: '24h' }
+    );
+
     // Retornar token e objeto empresa
     res.status(200).json({
-      token: 'fake-company-token', // Token fake para empresas
+      token,
       empresa: empresaFrontend
     });
   } catch (error) {
