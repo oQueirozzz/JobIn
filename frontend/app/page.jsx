@@ -51,7 +51,7 @@ export default function Feed() {
     { id: 3, title: 'Como se destacar no LinkedIn', info: 'há 1d • 3.421 leitores', trending: true },
     { id: 4, title: 'Salários em alta para desenvolvedores', info: 'há 3h • 2.156 leitores', trending: false },
     { id: 5, title: 'Empresas buscam profissionais com soft skills', info: 'há 6h • 1.890 leitores', trending: true },
-    { id: 6, title: 'Tendências de trabalho remoto em 2024', info: 'há 4h • 3.245 leitores', trending: false },
+    { id: 6, title: 'Tendências de trabalho remoto em 2024', info: 'há 4h • 3.245 leitores', trending: true },
   ]);
 
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
@@ -242,6 +242,7 @@ export default function Feed() {
                     title={item.title}
                     info={item.info}
                     trending={item.trending}
+                    
                   />
                 ))}
 
