@@ -29,7 +29,7 @@ export default function ClientLayout({ children }) {
   const shouldHideHeader = hideHeaderRoutes.includes(pathname);
   
   // Rotas que devem usar o HeaderLanding em vez do Header padrão
-  const landingHeaderRoutes = ["/login", "/cadAlunos", "/cadEmpresas"];
+  const landingHeaderRoutes = ["/login", "/cadAlunos", "/cadEmpresas", "/novaSenha"];
   const shouldUseLandingHeader = landingHeaderRoutes.includes(pathname);
   
   // Simular carregamento inicial da aplicação

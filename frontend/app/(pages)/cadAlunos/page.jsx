@@ -1,212 +1,401 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
 
-export default function cadAlunos() {
-    const [mensagem, setMensagem] = useState('');
-    const [carregando, setCarregando] = useState(false);
-    const [tipoMensagem, setTipoMensagem] = useState(''); // 'sucesso' ou 'erro'
+export default function CadastroAlunos() {
+    const [formData, setFormData] = useState({
+        nome: '',
+        email: '',
+        senha: '',
+        confirmarSenha: '',
+        cpf: '',
+        data_nascimento: '',
+        formacao: '',
+        area_interesse: '',
+        habilidades: '',
+        descricao: ''
+    });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
     const { login } = useAuth();
 
-    async function cadAluno(event) {
-        event.preventDefault();
-        setCarregando(true);
-        setMensagem('');
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
-        const formData = new FormData(event.target);
-        
-        // Processar o CPF para remover caracteres não numéricos
-        let cpf = formData.get('cpf');
-        if (cpf) {
-            cpf = cpf.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
-            formData.set('cpf', cpf); // Atualiza o CPF no FormData
-        }
-        
-        // Validação básica
-        const senha = formData.get('senha');
-        if (senha && senha.length < 6) {
-            setTipoMensagem('erro');
-            setMensagem('A senha deve ter pelo menos 6 caracteres.');
-            setCarregando(false);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+
+        if (formData.senha !== formData.confirmarSenha) {
+            setError('As senhas não coincidem');
+            setIsLoading(false);
             return;
         }
-        
-        if (cpf && cpf.length !== 11) {
-            setTipoMensagem('erro');
-            setMensagem('O CPF deve conter 11 dígitos numéricos.');
-            setCarregando(false);
+
+        if (formData.senha.length < 6) {
+            setError('A senha deve ter pelo menos 6 caracteres');
+            setIsLoading(false);
             return;
         }
-        
+
         try {
-            // Convertendo os dados do formulário para um objeto para enviar como JSON
-            // O backend não está configurado para processar FormData com arquivos
-            const dadosCadastro = {
-                nome: formData.get('nome'),
-                email: formData.get('email'),
-                senha: formData.get('senha'),
-                cpf: cpf,
-                data_nascimento: formData.get('data_nascimento'),
-                formacao: formData.get('formacao'),
-                area_interesse: formData.get('area_interesse'),
-                habilidades: formData.get('habilidades'),
-                descricao: formData.get('descricao'),
-                tipo: 'usuario'
-                // Arquivos serão tratados separadamente em uma implementação futura
-            };
-
-            
-            
-            console.log('Enviando dados de cadastro do aluno:', dadosCadastro);
-            
             const response = await fetch('http://localhost:3001/api/usuarios/register', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dadosCadastro),
+                body: JSON.stringify({
+                    nome: formData.nome,
+                    email: formData.email,
+                    senha: formData.senha,
+                    cpf: formData.cpf,
+                    data_nascimento: formData.data_nascimento,
+                    formacao: formData.formacao,
+                    area_interesse: formData.area_interesse,
+                    habilidades: formData.habilidades,
+                    descricao: formData.descricao
+                })
             });
 
-            console.log('Status da resposta:', response.status);
-            console.log('Headers da resposta:', Object.fromEntries(response.headers));
-            
-            const data = await response.json();
-            console.log('Dados da resposta:', data);
-
-            if (response.ok) {
-                setTipoMensagem('sucesso');
-                setMensagem('Cadastro realizado com sucesso!');
-                
-                // Fazer login automaticamente após o cadastro bem-sucedido
-                try {
-                    await login(dadosCadastro.email, dadosCadastro.senha, 'user');
-                    // O redirecionamento será feito pela função login
-                } catch (loginError) {
-                    console.error('Erro ao fazer login após cadastro:', loginError);
-                    // Mesmo que o login falhe, o cadastro foi bem-sucedido
-                    // Redirecionar para a página de login após um breve delay
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 1500);
-                }
-            } else {
-                setTipoMensagem('erro');
-                console.error('Erro no cadastro do aluno:', data);
-                // Exibir mensagem de erro mais detalhada
-                if (data.error && typeof data.error === 'object') {
-                    // Se o erro for um objeto com múltiplos campos
-                    const errorMessages = Object.values(data.error).join(', ');
-                    setMensagem(errorMessages || data.message || data.mensagem || 'Erro ao realizar cadastro. Tente novamente.');
-                } else {
-                    setMensagem(data.message || data.mensagem || data.error || 'Erro ao realizar cadastro. Tente novamente.');
-                }
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('Erro ao processar resposta do servidor:', jsonError);
+                throw new Error('Erro ao processar resposta do servidor. Verifique se o servidor está rodando.');
             }
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erro ao cadastrar usuário');
+            }
+
+            setSuccess('Cadastro realizado com sucesso! Redirecionando...');
+
+            try {
+                await login(formData.email, formData.senha, 'user');
+                setTimeout(() => {
+                    router.push('/');
+                }, 1500);
+            } catch (loginError) {
+                console.error('Erro no login automático:', loginError);
+                router.push('/login');
+            }
+
         } catch (error) {
-            setTipoMensagem('erro');
-            console.error('Exceção durante o cadastro do aluno:', error);
-            // Melhorar a mensagem de erro para o usuário
-            setMensagem('Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.');
+            console.error('Erro detalhado:', error);
+            setError(error.message || 'Erro ao cadastrar usuário. Verifique se o servidor está rodando.');
         } finally {
-            setCarregando(false);
+            setIsLoading(false);
         }
-    }
+    };
+
     return (
-        <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
-            <div className="w-full max-w-3xl bg-white rounded-lg shadow-xl p-6 sm:p-10 my-20 sm:my-20">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+            <div className="w-full max-w-4xl mb-10">
+                {/* Logo e Título */}
+                <div className="flex flex-col items-center mb-8">
+                    <img src="/img/global/logo_completa.svg" alt="JobIn Logo" className="h-20 mb-4" />
+                    <h1 className="text-3xl font-bold text-[#7B2D26]">Comece sua jornada profissional</h1>
+                    <p className="text-gray-600 mt-2">Preencha seus dados para criar sua conta</p>
+                </div>
 
-                {mensagem && (
-                    <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {mensagem}
-                    </div>
-                )}
+                <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
+                    <form onSubmit={handleSubmit}>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Coluna da Esquerda - Informações Pessoais */}
+                            <div className="space-y-6">
+                                <h2 className="text-xl font-semibold text-[#7B2D26] mb-6 pb-2 border-b border-gray-200">
+                                    Informações Pessoais
+                                </h2>
 
-                <form className="w-full" id="cadastroAluno" onSubmit={cadAluno}>
-                    <div className="relative z-0 w-full mb-5 group">
-                        <input type="text" name="nome" id="nome" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                        <label htmlFor="nome" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Nome</label>
-                    </div>
+                                <div>
+                                    <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Nome Completo
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="nome"
+                                            name="nome"
+                                            required
+                                            value={formData.nome}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="Seu nome completo"
+                                        />
+                                    </div>
+                                </div>
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <input type="email" name="email" id="email" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                        <label htmlFor="email" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email</label>
-                    </div>
+                                <div>
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="seu@email.com"
+                                        />
+                                    </div>
+                                </div>
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <input type="password" name="senha" id="senha" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                        <label htmlFor="senha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Senha</label>
-                        <p className="mt-1 text-xs text-gray-500">Mínimo de 6 caracteres recomendado</p>
-                    </div>
+                                <div>
+                                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                                        CPF
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="cpf"
+                                            name="cpf"
+                                            required
+                                            value={formData.cpf}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="000.000.000-00"
+                                        />
+                                    </div>
+                                </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-6">
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input type="text" name="cpf" id="cpf" maxLength={11} className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                            <label htmlFor="cpf" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">CPF</label>
-                            <p className="mt-1 text-xs text-gray-500">Digite apenas números (11 dígitos)</p>
+                                <div>
+                                    <label htmlFor="data_nascimento" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Data de Nascimento
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="date"
+                                            id="data_nascimento"
+                                            name="data_nascimento"
+                                            required
+                                            value={formData.data_nascimento}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Coluna da Direita - Informações Profissionais */}
+                            <div className="space-y-6">
+                                <h2 className="text-xl font-semibold text-[#7B2D26] mb-6 pb-2 border-b border-gray-200">
+                                    Informações Profissionais
+                                </h2>
+
+                                <div>
+                                    <label htmlFor="formacao" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Formação Acadêmica
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="formacao"
+                                            name="formacao"
+                                            value={formData.formacao}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="Sua formação acadêmica"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="area_interesse" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Área de Interesse
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="area_interesse"
+                                            name="area_interesse"
+                                            required
+                                            value={formData.area_interesse}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="Sua área de interesse profissional"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="habilidades" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Habilidades
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            id="habilidades"
+                                            name="habilidades"
+                                            value={formData.habilidades}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="Suas habilidades (ex: JavaScript, Python, Design)"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Resumo Profissional
+                                    </label>
+                                    <div className="relative">
+                                        <textarea
+                                            id="descricao"
+                                            name="descricao"
+                                            value={formData.descricao}
+                                            onChange={handleChange}
+                                            rows="4"
+                                            className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="Descreva brevemente sua experiência e objetivos profissionais"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input type="date" name="data_nascimento" id="data_nascimento" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                            <label htmlFor="data_nascimento" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Data de Nascimento</label>
+                        {/* Seção de Senha */}
+                        <div className="mt-8 pt-8 border-t border-gray-200">
+                            <h2 className="text-xl font-semibold text-[#7B2D26] mb-6">Segurança da Conta</h2>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Senha
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="password"
+                                            id="senha"
+                                            name="senha"
+                                            required
+                                            value={formData.senha}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="••••••••"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Confirmar Senha
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg className="h-5 w-5 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="password"
+                                            id="confirmarSenha"
+                                            name="confirmarSenha"
+                                            required
+                                            value={formData.confirmarSenha}
+                                            onChange={handleChange}
+                                            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            placeholder="••••••••"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <input type="text" name="formacao" id="formacao" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                        <label htmlFor="formacao" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Formação</label>
-                    </div>
+                        {error && (
+                            <div className="mt-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-center">
+                                {error}
+                            </div>
+                        )}
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <input type="text" name="area_interesse" id="area_interesse" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " required />
-                        <label htmlFor="area_interesse" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Área de Interesse</label>
-                    </div>
+                        {success && (
+                            <div className="mt-6 p-4 bg-green-50 text-green-700 border border-green-200 rounded-xl text-center">
+                                {success}
+                            </div>
+                        )}
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <textarea name="habilidades" id="habilidades" maxLength={50} rows="3" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " ></textarea>
-                        <label htmlFor="habilidades" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Habilidades</label>
-                    </div>
+                        <div className="mt-8 flex flex-col items-center space-y-4">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full md:w-auto px-8 py-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Processando...
+                                    </>
+                                ) : 'Criar Conta'}
+                            </button>
 
-                    <div className="relative z-0 w-full mb-5 group">
-                        <textarea name="descricao" id="descricao" maxLength={200} rows="3" className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" placeholder=" " ></textarea>
-                        <label htmlFor="descricao" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Descrição</label>
-                    </div>
-
-                    <div className="relative z-0 w-full mb-5 group">
-                        <label htmlFor="curriculo" className="block mb-2 text-sm font-medium text-gray-600">Currículo <span className="text-gray-400">(PDF)</span></label>
-                        <input type="file" name="curriculo" id="curriculo" accept=".pdf" className="cursor-pointer bg-gray-200 block w-full text-sm text-gray-700 hover:text-red-950 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-vinho file:text-black-100 hover:file:bg-vinho/90 transition-colors"/>
-                    </div>
-
-                    <div className="relative z-0 w-full mb-5 group">
-                        <label htmlFor="foto" className="block mb-2 text-sm font-medium text-gray-600">Foto <span className="text-gray-400">(JPG, PNG)</span></label>
-                        <input type="file" name="foto" id="foto" accept="image/*" className="cursor-pointer bg-gray-200 block w-full text-sm text-gray-700 hover:text-red-950 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-vinho file:text-black-100 hover:file:bg-vinho/90 transition-colors"  />
-                    </div>
-
-                    <div className="relative z-0 w-full mb-5 group">
-                        <label htmlFor="certificados" className="block mb-2 text-sm font-medium text-gray-600">Certificados <span className="text-gray-400">(PDF, ZIP, etc.)</span></label>
-                        <input type="file" name="certificados" id="certificados" multiple className="cursor-pointer bg-gray-200 block w-full text-sm text-gray-700 hover:text-red-950 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-vinho file:text-black-100 hover:file:bg-vinho/90 transition-colors" />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center" 
-                        disabled={carregando}
-                    >
-                        {carregando ? (
-                            <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Processando...
-                            </>
-                        ) : 'Cadastrar-se'}
-                    </button>
-                </form>
-                <p className="text-xs text-gray-500 text-center mt-4">Já possui conta?</p>
-                <p className="text-sm text-center text-gray-700 mt-2">Fazer <a href="/login" className="text-vinho hover:underline">Login</a></p>
-                
+                            <p className="text-sm text-gray-600">
+                                Já possui uma conta?{' '}
+                                <a href="/login" className="text-[#7B2D26] font-medium hover:text-[#9B3D36] transition-colors duration-300">
+                                    Faça login
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </section>
-
+        </div>
     );
 }

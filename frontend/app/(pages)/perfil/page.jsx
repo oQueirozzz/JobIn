@@ -81,31 +81,58 @@ export default function Perfil() {
 
     // Função para comprimir imagem
     const compressImage = (base64String, maxWidth = 800) => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
             img.src = base64String;
+            
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+                try {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
 
-                if (width > maxWidth) {
-                    height = (maxWidth * height) / width;
-                    width = maxWidth;
+                    // Calcular as novas dimensões mantendo a proporção
+                    if (width > maxWidth) {
+                        height = (maxWidth * height) / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+
+                    // Melhorar a qualidade da imagem
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+
+                    // Desenhar a imagem com fundo branco para imagens PNG com transparência
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Comprimir a imagem com qualidade ajustada
+                    const quality = width > 400 ? 0.7 : 0.8; // Qualidade maior para imagens menores
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    
+                    // Verificar se a compressão reduziu o tamanho
+                    const originalSize = base64String.length;
+                    const compressedSize = compressedBase64.length;
+                    
+                    // Se a compressão não reduziu o tamanho, retorna a imagem original
+                    if (compressedSize >= originalSize) {
+                        resolve(base64String);
+                    } else {
+                        resolve(compressedBase64);
+                    }
+                } catch (error) {
+                    console.error('Erro ao comprimir imagem:', error);
+                    resolve(base64String); // Em caso de erro, retorna a imagem original
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Comprimir a imagem com qualidade 0.7
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                resolve(compressedBase64);
             };
+
             img.onerror = () => {
-                // Se houver erro no carregamento da imagem, retorna a string original
-                resolve(base64String);
+                console.error('Erro ao carregar imagem');
+                resolve(base64String); // Em caso de erro, retorna a string original
             };
         });
     };
@@ -113,22 +140,48 @@ export default function Perfil() {
     // Função para atualizar o estado local quando o arquivo é carregado
     const handleFileChange = async (e, field) => {
         const file = e.target.files[0];
-        if (file) {
+        if (!file) return;
+
+        // Verificar tamanho do arquivo (máximo 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB em bytes
+        if (file.size > maxSize) {
+            showMessage('O arquivo é muito grande. Tamanho máximo permitido: 5MB', 'error');
+            return;
+        }
+
+        // Verificar tipo do arquivo
+        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const allowedDocTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        if (field === 'foto' || field === 'logo') {
+            if (!allowedImageTypes.includes(file.type)) {
+                showMessage('Formato de imagem não suportado. Use JPG, PNG ou GIF', 'error');
+                return;
+            }
+        } else if (field === 'curriculo' || field === 'certificados') {
+            if (!allowedDocTypes.includes(file.type)) {
+                showMessage('Formato de documento não suportado. Use PDF, DOC ou DOCX', 'error');
+                return;
+            }
+        }
+
+        try {
             const reader = new FileReader();
+            
             reader.onloadend = async () => {
                 try {
-                    // Comprimir a imagem se for uma foto
                     let processedData = reader.result;
+                    
+                    // Comprimir apenas imagens
                     if (field === 'foto' || field === 'logo') {
                         processedData = await compressImage(reader.result);
                     }
 
                     // Atualizar o estado local
-                    const newData = {
-                        ...formData,
+                    setFormData(prev => ({
+                        ...prev,
                         [field]: processedData
-                    };
-                    setFormData(newData);
+                    }));
 
                     // Atualizar o localStorage
                     const authEntity = JSON.parse(localStorage.getItem('authEntity'));
@@ -144,13 +197,104 @@ export default function Perfil() {
                     }
 
                     // Mostrar mensagem de sucesso
-                    showMessage(`${field === 'foto' ? 'Foto' : field === 'curriculo' ? 'Currículo' : 'Certificado'} atualizado com sucesso!`, 'success');
+                    showMessage(`${field === 'foto' ? 'Foto' : field === 'curriculo' ? 'Currículo' : field === 'logo' ? 'Logo' : 'Certificado'} atualizado com sucesso!`, 'success');
                 } catch (error) {
                     console.error('Erro ao processar arquivo:', error);
                     showMessage('Erro ao processar arquivo. Tente novamente.', 'error');
                 }
             };
+
+            reader.onerror = () => {
+                showMessage('Erro ao ler o arquivo. Tente novamente.', 'error');
+            };
+
             reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Erro ao processar arquivo:', error);
+            showMessage('Erro ao processar arquivo. Tente novamente.', 'error');
+        }
+    };
+
+    // Função para baixar arquivo
+    const downloadFile = (data, filename) => {
+        try {
+            // Se for uma URL, baixa diretamente
+            if (data.startsWith('http')) {
+                window.open(data, '_blank');
+                return;
+            }
+
+            // Se for base64, converte e baixa
+            if (data.startsWith('data:')) {
+                // Extrair o tipo MIME e os dados base64
+                const matches = data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                if (!matches || matches.length !== 3) {
+                    throw new Error('Formato de arquivo inválido');
+                }
+
+                const mimeType = matches[1];
+                const base64Data = matches[2];
+
+                // Verificar se o tipo MIME é válido
+                const validMimeTypes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'image/jpeg',
+                    'image/png',
+                    'image/gif'
+                ];
+
+                if (!validMimeTypes.includes(mimeType)) {
+                    throw new Error('Tipo de arquivo não suportado');
+                }
+
+                // Converter base64 para blob
+                const byteCharacters = atob(base64Data);
+                const byteArrays = [];
+
+                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                    const slice = byteCharacters.slice(offset, offset + 512);
+                    const byteNumbers = new Array(slice.length);
+                    
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i);
+                    }
+                    
+                    const byteArray = new Uint8Array(byteNumbers);
+                    byteArrays.push(byteArray);
+                }
+
+                const blob = new Blob(byteArrays, { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                
+                // Determinar a extensão correta baseada no tipo MIME
+                let extension = 'pdf';
+                if (mimeType.includes('word')) {
+                    extension = 'docx';
+                } else if (mimeType.includes('pdf')) {
+                    extension = 'pdf';
+                } else if (mimeType.includes('jpeg')) {
+                    extension = 'jpg';
+                } else if (mimeType.includes('png')) {
+                    extension = 'png';
+                } else if (mimeType.includes('gif')) {
+                    extension = 'gif';
+                }
+                
+                link.download = `${filename}.${extension}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } else {
+                throw new Error('Formato de arquivo não suportado');
+            }
+        } catch (error) {
+            console.error('Erro ao baixar arquivo:', error);
+            showMessage(error.message || 'Erro ao baixar arquivo. Tente novamente.', 'error');
         }
     };
 
@@ -172,51 +316,46 @@ export default function Perfil() {
         setSuccess(null);
 
         try {
-            if (!authInfo || !authInfo.entity || !authInfo.entity.id) {
-                throw new Error('Informações de autenticação inválidas');
+            const userId = authInfo?.entity?.id;
+            if (!userId) {
+                showMessage('ID do usuário não encontrado!', 'error');
+                setIsSaving(false);
+                return;
             }
-
+            
             const isEmpresa = authInfo.type === 'company';
             const apiUrl = isEmpresa 
-                ? `http://localhost:3001/api/empresas/${authInfo.entity.id}`
-                : `http://localhost:3001/api/usuarios/${authInfo.entity.id}`;
+                ? `http://localhost:3001/api/empresas/${userId}`
+                : `http://localhost:3001/api/usuarios/atualizar`; // Rota corrigida
 
-            // Mantém apenas os campos editáveis
+            // Incluir todos os dados do formulário, incluindo arquivos
             const dadosParaEnviar = { ...formData };
             
-            // Comprime as imagens se existirem
-            if (dadosParaEnviar.foto) {
-                dadosParaEnviar.foto = await compressImage(dadosParaEnviar.foto);
-            }
-            if (dadosParaEnviar.logo) {
-                dadosParaEnviar.logo = await compressImage(dadosParaEnviar.logo);
+            // Para usuários, incluir o ID no corpo da requisição
+            if (!isEmpresa) {
+                dadosParaEnviar.id = userId;
             }
 
-            if (isEmpresa) {
-                // Campos editáveis para empresa
-                const camposEmpresa = {
-                    nome: dadosParaEnviar.nome,
-                    descricao: dadosParaEnviar.descricao,
-                    local: dadosParaEnviar.local,
-                    logo: dadosParaEnviar.logo
-                };
-                Object.assign(dadosParaEnviar, camposEmpresa);
-            } else {
-                // Campos editáveis para aluno
-                const camposUsuario = {
-                    nome: dadosParaEnviar.nome,
-                    formacao: dadosParaEnviar.formacao,
-                    area_interesse: dadosParaEnviar.area_interesse,
-                    habilidades: dadosParaEnviar.habilidades,
-                    descricao: dadosParaEnviar.descricao,
-                    curriculo: dadosParaEnviar.curriculo,
-                    certificados: dadosParaEnviar.certificados,
-                    foto: dadosParaEnviar.foto
-                };
-                Object.assign(dadosParaEnviar, camposUsuario);
-            }
+            // Filtrar apenas os campos necessários
+            const camposPermitidos = isEmpresa 
+                ? ['nome', 'descricao', 'local', 'logo']
+                : ['id', 'nome', 'formacao', 'area_interesse', 'habilidades', 'descricao', 'curriculo', 'certificados', 'foto'];
+                
+            const dadosFiltrados = Object.keys(dadosParaEnviar)
+                .filter(key => camposPermitidos.includes(key))
+                .reduce((obj, key) => {
+                    obj[key] = dadosParaEnviar[key];
+                    return obj;
+                }, {});
 
             const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage('Token de autenticação não encontrado', 'error');
+                setIsSaving(false);
+                return;
+            }
+
+            console.log('URL:', apiUrl, 'ID:', userId, 'Body:', dadosFiltrados);
 
             const response = await fetch(apiUrl, {
                 method: 'PUT',
@@ -224,20 +363,15 @@ export default function Perfil() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(dadosParaEnviar)
+                body: JSON.stringify(dadosFiltrados)
             });
 
-            const responseText = await response.text();
-            let dadosAtualizados;
-            try {
-                dadosAtualizados = JSON.parse(responseText);
-            } catch (e) {
-                throw new Error('Resposta inválida do servidor');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Erro ao atualizar perfil');
             }
 
-            if (!response.ok) {
-                throw new Error(dadosAtualizados.message || 'Erro ao atualizar perfil');
-            }
+            const dadosAtualizados = await response.json();
 
             // Atualizar o localStorage
             const authEntity = JSON.parse(localStorage.getItem('authEntity'));
@@ -252,7 +386,7 @@ export default function Perfil() {
             verificarCamposObrigatorios(updatedEntity);
 
             // Atualizar o contexto de autenticação
-            if (authInfo && authInfo.entity) {
+            if (authInfo?.entity) {
                 authInfo.entity = updatedEntity;
             }
 
@@ -263,7 +397,7 @@ export default function Perfil() {
             showMessage('Perfil atualizado com sucesso!', 'success');
 
         } catch (error) {
-            console.error('Erro detalhado:', error);
+            console.error('Erro ao atualizar perfil:', error);
             showMessage(error.message || 'Erro ao atualizar perfil. Tente novamente.', 'error');
         } finally {
             setIsSaving(false);
@@ -454,14 +588,7 @@ export default function Perfil() {
                             {formData.curriculo && formData.curriculo !== "" ? (
                                 <>
                                     <button 
-                                        onClick={() => {
-                                            const link = document.createElement('a');
-                                            link.href = formData.curriculo;
-                                            link.download = 'curriculo.pdf';
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                        }}
+                                        onClick={() => downloadFile(formData.curriculo, 'curriculo')}
                                         className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,12 +596,12 @@ export default function Perfil() {
                                         </svg>
                                         Baixar Currículo
                                     </button>
-                                    <button className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm">
-                                        Atualizar Currículo
-                                    </button>
                                 </>
                             ) : (
-                                <button className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm">
+                                <button 
+                                    onClick={() => document.getElementById('curriculo-input').click()}
+                                    className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm"
+                                >
                                     Enviar Currículo
                                 </button>
                             )}
@@ -489,7 +616,7 @@ export default function Perfil() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
                         <h2 className="text-xl font-semibold text-gray-800">Certificados</h2>
                         <button 
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => document.getElementById('certificados-input').click()}
                             className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,7 +627,7 @@ export default function Perfil() {
                     </div>
                     
                     <div className="space-y-4">
-                        {formData.certificados && formData.certificados.startsWith('data:') && (
+                        {formData.certificados && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#7B2D26] transition-colors duration-300">
                                     <div className="flex items-center justify-between mb-3">
@@ -508,14 +635,7 @@ export default function Perfil() {
                                         <span className="text-sm text-gray-500">PDF</span>
                                     </div>
                                     <button 
-                                        onClick={() => {
-                                            const link = document.createElement('a');
-                                            link.href = formData.certificados;
-                                            link.download = 'certificado.pdf';
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                        }}
+                                        onClick={() => downloadFile(formData.certificados, 'certificado')}
                                         className="w-full cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center justify-center"
                                     >
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

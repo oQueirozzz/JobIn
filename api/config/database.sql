@@ -12,12 +12,11 @@ CREATE TABLE `usuarios` (
 	`habilidades` VARCHAR(50),
 	`descricao` TEXT(200),
 	`formacao` VARCHAR(50),
-	`curriculo` VARCHAR(255),
+	`curriculo` longtext,
 	`area_interesse` VARCHAR(50),
     `tipo` varchar(50),
-	`foto` VARCHAR(255),
-	`certificados` VARCHAR(255),
-    `tipo` VARCHAR(255),
+	`foto` longtext,
+	`certificados` longtext,
 	PRIMARY KEY(`id`)
 );
 
@@ -30,8 +29,7 @@ CREATE TABLE `empresas` (
 	`descricao` TEXT,
     `local` varchar(100),
     `tipo` varchar(50),
-	`logo` VARCHAR(255),
-    `tipo` VARCHAR(255),
+	`logo` longtext,
 	PRIMARY KEY(`id`)
 );
 
@@ -51,8 +49,10 @@ CREATE TABLE `candidaturas` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`id_usuario` INTEGER NOT NULL,
 	`id_vaga` INTEGER NOT NULL,
-    `empresa_id` INTEGER NOT NULL,
-	`curriculo_usuario` VARCHAR(255),
+    `empresa_id` integer not null,
+	`curriculo_usuario` longtext,
+	`status` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA') DEFAULT 'PENDENTE',
+	`data_atualizacao` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY(`id`)
 );
 
@@ -92,7 +92,22 @@ CREATE TABLE `notificacao` (
 	PRIMARY KEY(`id`)
 );
 
+CREATE TABLE `posts` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+    `empresa_id` INTEGER NOT NULL,
+    `titulo` VARCHAR(100) NOT NULL,
+    `conteudo` TEXT NOT NULL,
+    `imagem` longtext, -- opcional
+    `data_publicacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(`id`),
+    FOREIGN KEY (`empresa_id`) REFERENCES `empresas`(`id`) ON DELETE CASCADE
+);
+
 -- Chaves estrangeiras
+
+ALTER TABLE `posts`
+ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 ALTER TABLE `candidaturas`
 ADD FOREIGN KEY(`id_usuario`) REFERENCES `usuarios`(`id`)

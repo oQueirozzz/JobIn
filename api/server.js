@@ -10,6 +10,9 @@ const logsRoutes = require('./routes/logs');
 const notificacoesRoutes = require('./routes/notificacoes');
 const rotasRoutes = require('./routes/rotas');
 const pontosRotasRoutes = require('./routes/pontosRotas');
+const postsRoutes = require('./routes/posts');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,6 +21,15 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Configurar pasta de uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Criar pasta de uploads se não existir
+const uploadsDir = path.join(__dirname, 'uploads', 'posts');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Rotas
 app.use('/api/usuarios', usuariosRoutes);
@@ -29,6 +41,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/notificacoes', notificacoesRoutes);
 app.use('/api/rotas', rotasRoutes);
 app.use('/api/pontos-rotas', pontosRotasRoutes);
+app.use('/api/posts', postsRoutes);
 
 // Rota padrão
 app.get('/', (req, res) => {

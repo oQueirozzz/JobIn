@@ -36,6 +36,8 @@ export default function Feed() {
   const [camposFaltantes, setCamposFaltantes] = useState([]);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState('');
+  const [postTitle, setPostTitle] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -55,6 +57,7 @@ export default function Feed() {
   ]);
 
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,8 +71,9 @@ export default function Feed() {
   useEffect(() => {
     if (isAuthenticated && authInfo?.entity) {
       const usuario = authInfo.entity;
+      const isCompany = !!usuario.cnpj;
 
-      if (authInfo.entity.tipo !== 'empresa') {
+      if (!isCompany) {
         const camposObrigatorios = {
           nome: 'Nome',
           email: 'Email',
@@ -87,13 +91,8 @@ export default function Feed() {
         setCamposFaltantes(camposIncompletos);
         setPerfilCompleto(camposIncompletos.length === 0);
         setShowCompleteProfile(camposIncompletos.length > 0);
-      } else {
-        setPerfilCompleto(true);
-        setCamposFaltantes([]);
-        setShowCompleteProfile(false);
-      }
 
-      if (authInfo.entity.tipo !== 'empresa') {
+        // Carregar vagas recomendadas apenas para usuários
         const carregarVagasRecomendadas = async () => {
           try {
             const vagasSimuladas = [
@@ -107,10 +106,43 @@ export default function Feed() {
         };
         carregarVagasRecomendadas();
       } else {
+        // Para empresas
+        const camposObrigatorios = {
+          nome: 'Nome da Empresa',
+          email: 'Email Corporativo',
+          cnpj: 'CNPJ',
+          localizacao: 'Localização',
+          descricao: 'Descrição da Empresa'
+        };
+
+        const camposIncompletos = Object.entries(camposObrigatorios)
+          .filter(([campo]) => !usuario[campo])
+          .map(([_, label]) => label);
+
+        setCamposFaltantes(camposIncompletos);
+        setPerfilCompleto(camposIncompletos.length === 0);
+        setShowCompleteProfile(camposIncompletos.length > 0);
         setVagasRecomendadas([]);
       }
     }
   }, [isLoading, isAuthenticated, authInfo]);
+
+  // Carregar posts
+  useEffect(() => {
+    const carregarPosts = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/posts');
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        console.error('Erro ao carregar posts:', error);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    };
+
+    carregarPosts();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -129,13 +161,48 @@ export default function Feed() {
     setShowCompleteProfile(false);
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('empresa_id', authInfo.entity.id);
+      formData.append('titulo', postTitle);
+      formData.append('conteudo', postContent);
+      if (selectedImage) {
+        formData.append('imagem', selectedImage);
+      }
+
+      const response = await fetch('http://localhost:3001/api/posts', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const newPost = await response.json();
+        setPosts([newPost, ...posts]);
+        setShowCreatePost(false);
+        setPostContent('');
+        setPostTitle('');
+        setSelectedImage(null);
+      }
+    } catch (error) {
+      console.error('Erro ao criar post:', error);
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
 
   if (isAuthenticated && authInfo?.entity) {
     const usuario = authInfo.entity;
-    const isCompany = usuario.tipo === 'empresa';
+    const isCompany = !!usuario.cnpj;
+    console.log('É empresa?', isCompany);
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -226,6 +293,26 @@ export default function Feed() {
               </div>
             )}
 
+            {/* Botão de Criar Post - Apenas para empresas */}
+            {isCompany && (
+              <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
+                <div className="p-4">
+                  <h2 className="font-semibold mb-3">Compartilhe com sua rede</h2>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
+                      {getInitials(usuario.nome)}
+                    </div>
+                    <button 
+                      onClick={() => setShowCreatePost(true)}
+                      className="flex-1 text-left px-4 py-3 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+                    >
+                      Compartilhe uma atualização
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Notícias do Mercado */}
             <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
               <div className="p-4">
@@ -290,12 +377,40 @@ export default function Feed() {
                     </button>
                   </div>
                   <div className="p-4">
+                    <input
+                      type="text"
+                      value={postTitle}
+                      onChange={(e) => setPostTitle(e.target.value)}
+                      placeholder="Título da publicação"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26]/20 mb-4"
+                    />
                     <textarea
                       value={postContent}
                       onChange={(e) => setPostContent(e.target.value)}
                       placeholder="O que você gostaria de compartilhar?"
-                      className="w-full h-32 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26]/20 resize-none"
+                      className="w-full h-32 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26]/20 resize-none mb-4"
                     />
+                    <div className="flex items-center justify-between">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                        <div className="flex items-center text-gray-500 hover:text-[#7B2D26] transition-colors">
+                          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Adicionar imagem
+                        </div>
+                      </label>
+                      {selectedImage && (
+                        <div className="text-sm text-gray-500">
+                          {selectedImage.name}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
                     <button 
@@ -305,10 +420,7 @@ export default function Feed() {
                       Cancelar
                     </button>
                     <button 
-                      onClick={() => {
-                        setShowCreatePost(false);
-                        setPostContent('');
-                      }}
+                      onClick={handleCreatePost}
                       className="px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
                     >
                       Publicar
@@ -320,10 +432,63 @@ export default function Feed() {
 
             {/* Feed de Posts */}
             <div className="space-y-6">
-              {posts.length === 0 && (
+              {isLoadingPosts ? (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+                  <p className="text-gray-500">Carregando posts...</p>
+                </div>
+              ) : posts.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
                   <p className="text-gray-500">Nenhum post encontrado</p>
                 </div>
+              ) : (
+                posts.map(post => (
+                  <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div className="p-4">
+                      <div className="flex items-center mb-4">
+                        <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
+                          {getInitials(post.nome_empresa)}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{post.nome_empresa}</h3>
+                          <p className="text-sm text-gray-500">
+                            {new Date(post.data_publicacao).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <h4 className="font-semibold text-lg mb-2">{post.titulo}</h4>
+                      <p className="text-gray-700 mb-4">{post.conteudo}</p>
+                      {post.imagem && (
+                        <div className="mb-4">
+                          <img 
+                            src={`http://localhost:3001/${post.imagem}`}
+                            alt="Post"
+                            className="w-full rounded-lg"
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-4 text-gray-500">
+                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
+                          <ThumbsUp className="w-5 h-5 mr-1" />
+                          <span>0</span>
+                        </button>
+                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
+                          <MessageCircle className="w-5 h-5 mr-1" />
+                          <span>0</span>
+                        </button>
+                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
+                          <Share2 className="w-5 h-5 mr-1" />
+                          <span>Compartilhar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>

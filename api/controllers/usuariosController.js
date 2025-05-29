@@ -168,13 +168,20 @@ exports.loginUsuario = async (req, res) => {
 // Atualizar um usuário
 exports.updateUsuario = async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    // Obter ID do usuário dos parâmetros da URL ou do corpo da requisição
+    let userId = parseInt(req.params.id, 10);
+    
+    // Se não houver ID nos parâmetros (rota /atualizar), buscar no corpo
+    if (!userId || isNaN(userId)) {
+      userId = parseInt(req.body.id, 10);
+    }
+    
     console.log('ID do usuário recebido:', userId);
     console.log('Tipo do ID:', typeof userId);
     console.log('Dados recebidos para atualização:', req.body);
     
     if (!userId || isNaN(userId)) {
-      console.error('ID inválido:', req.params.id);
+      console.error('ID inválido:', req.params.id || req.body.id);
       return res.status(400).json({ message: 'ID do usuário inválido' });
     }
     

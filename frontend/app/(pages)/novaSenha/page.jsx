@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
+import HeaderLanding from '../../../components/landingPage/HeaderLanding';
 
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
@@ -308,7 +309,7 @@ export default function NovaSenha() {
                 // Usando o padrão correto para EmailJS
                 await emailjs.send(
                     'service_r9l70po',
-                'template_0t894rd',  // TEMPLATE_ID do EmailJS
+                    'template_0t894rd',  // TEMPLATE_ID do EmailJS
                     templateParams
                 );
                
@@ -506,32 +507,35 @@ export default function NovaSenha() {
     };
 
     return (
-        <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
-            <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">
+        <>
+            <HeaderLanding />
+            <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
+                <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">
 
-                <div className="flex justify-center mb-6">
-                    <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
-                </div>
-
-                <h2 className="text-xl font-semibold text-center mb-6 text-gray-800">
-                    {etapa === 1 && 'Recuperação de Senha'}
-                    {etapa === 2 && 'Verificação de Código'}
-                    {etapa === 3 && 'Definir Nova Senha'}
-                </h2>
-
-                {mensagem && (
-                    <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {mensagem}
+                    <div className="flex justify-center mb-6">
+                        <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
                     </div>
-                )}
 
-                {renderizarFormulario()}
+                    <h2 className="text-xl font-semibold text-center mb-6 text-gray-800">
+                        {etapa === 1 && 'Recuperação de Senha'}
+                        {etapa === 2 && 'Verificação de Código'}
+                        {etapa === 3 && 'Definir Nova Senha'}
+                    </h2>
 
-                <p className="text-sm text-center text-gray-700 mt-6">
-                    <a href="/login" className="text-vinho hover:underline">Voltar para o login</a>
-                </p>
+                    {mensagem && (
+                        <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {mensagem}
+                        </div>
+                    )}
 
-            </div>
-        </section>
+                    {renderizarFormulario()}
+
+                    <p className="text-sm text-center text-gray-700 mt-6">
+                        <a href="/login" className="text-vinho hover:underline">Voltar para o login</a>
+                    </p>
+
+                </div>
+            </section>
+        </>
     );
 }

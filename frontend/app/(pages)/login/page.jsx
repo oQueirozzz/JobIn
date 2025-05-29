@@ -25,7 +25,6 @@ export default function Login() {
     };
 
     try {
-      // Chama o método login do seu hook useAuth
       const userData = await login(dadosLogin.email, dadosLogin.senha, authType);
 
       if (!userData) {
@@ -47,7 +46,6 @@ export default function Login() {
       setTipoMensagem('sucesso');
       setMensagem(`Login de ${authType === 'user' ? 'usuário' : 'empresa'} realizado com sucesso!`);
 
-      // Redireciona após breve delay para o usuário ver a mensagem
       setTimeout(() => {
         router.push('/');
       }, 1500);
@@ -60,102 +58,149 @@ export default function Login() {
   }
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
-      <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">
-
-        {/* Botões para selecionar tipo de login */}
-        <div className="flex justify-center mb-6 space-x-4">
-          <button
-            type="button"
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-              authType === 'user' 
-                ? 'bg-[#7B2D26] text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            onClick={() => setAuthType('user')}
-            disabled={carregando}
-          >
-            Sou Candidato
-          </button>
-          <button
-            type="button"
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-              authType === 'company' 
-                ? 'bg-[#7B2D26] text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            onClick={() => setAuthType('company')}
-            disabled={carregando}
-          >
-            Sou Empresa
-          </button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img src="/img/global/logo_completa.svg" alt="JobIn Logo" className="h-16" />
         </div>
 
-        {mensagem && (
-          <div className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {mensagem}
-          </div>
-        )}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Acesse sua conta</h2>
 
-        <form className="w-full" id="loginForm" onSubmit={handleLogin}>
-          <div className="relative z-0 w-full mb-5 group">
-            <input 
-              type="email" 
-              name="email" 
-              id="email" 
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" 
-              placeholder=" " 
-              required 
+          {/* Botões de Tipo de Login */}
+          <div className="flex space-x-4 mb-8">
+            <button
+              type="button"
+              onClick={() => setAuthType('user')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${
+                authType === 'user'
+                  ? 'bg-[#7B2D26] text-white shadow-lg shadow-[#7B2D26]/20'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
               disabled={carregando}
-            />
-            <label htmlFor="email" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email</label>
-          </div>
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input 
-              type="password" 
-              name="senha" 
-              id="senha" 
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer" 
-              placeholder=" " 
-              required 
-              disabled={carregando}
-            />
-            <label htmlFor="senha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Senha</label>
-          </div>
-
-          <button 
-            type="submit" 
-            className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center" 
-            disabled={carregando}
-          >
-            {carregando ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                Processando...
-              </>
-            ) : `Login como ${authType === 'user' ? 'Candidato' : 'Empresa'}`}
-          </button>
-        </form>
+                <span>Candidato</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthType('company')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 ${
+                authType === 'company'
+                  ? 'bg-[#7B2D26] text-white shadow-lg shadow-[#7B2D26]/20'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+              disabled={carregando}
+            >
+              <div className="flex items-center justify-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Empresa</span>
+              </div>
+            </button>
+          </div>
 
-        <div className="mt-6 space-y-4">
-          <p className="text-xs text-gray-500 text-center">Não possui conta?</p>
+          {mensagem && (
+            <div className={`mb-6 p-4 rounded-xl text-center ${
+              tipoMensagem === 'sucesso' 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {mensagem}
+            </div>
+          )}
 
-        <p className="text-sm text-center text-gray-700 mt-2">Cadastrar-se como{' '}
-          <a href="/cadAlunos" className="text-vinho hover:underline">Candidato</a>{' '}
-          ou{' '}
-          <a href="/cadEmpresas" className="text-vinho hover:underline">Empresa</a>
-        </p>
-        
-        <p className="text-center mt-4">
-          <a href="/novaSenha" className="text-xs text-vinho hover:underline">Esqueci a senha</a>
-        </p>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                  </svg>
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  required
+                  disabled={carregando}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                  placeholder="seu@email.com"
+                />
+              </div>
+            </div>
 
+            <div>
+              <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  name="senha"
+                  id="senha"
+                  required
+                  disabled={carregando}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end">
+              <a href="/novaSenha" className="text-sm text-[#7B2D26] hover:text-[#9B3D36] transition-colors duration-300">
+                Esqueceu a senha?
+              </a>
+            </div>
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="w-full py-3 px-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center"
+            >
+              {carregando ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  Entrar
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600">
+              Não possui uma conta?{' '}
+              <a href={authType === 'user' ? "/cadAlunos" : "/cadEmpresas"} className="text-[#7B2D26] font-medium hover:text-[#9B3D36] transition-colors duration-300">
+                Cadastre-se como {authType === 'user' ? 'Candidato' : 'Empresa'}
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
-      </div>
-    </section>
+    </div>
   );
 }
