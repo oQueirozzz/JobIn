@@ -11,6 +11,6 @@ router.get('/vaga/:vagaId', candidaturasController.getCandidaturasByVaga);
 router.post('/', candidaturasController.createCandidatura);
 router.put('/:id', candidaturasController.updateCandidatura);
 router.put('/:id/status', candidaturasController.atualizarStatusCandidatura);
-router.delete('/:id', candidaturasController.deleteCandidatura);
+router.delete('/', candidaturasController.deleteCandidatura);
 
 module.exports = router;

@@ -13,6 +13,15 @@ class Usuario {
 
   static async findById(id) {
     try {
+      const [rows] = await db.query('SELECT * FROM usuarios WHERE id = ?', [id]);
+      return rows[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async findById(id) {
+    try {
       const userId = parseInt(id, 10);
       console.log('Executando findById com ID:', userId);
       console.log('Tipo do ID:', typeof userId);

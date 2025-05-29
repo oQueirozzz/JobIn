@@ -22,7 +22,7 @@ class Candidatura {
          FROM candidaturas c 
          JOIN usuarios u ON c.id_usuario = u.id 
          JOIN vagas v ON c.id_vaga = v.id 
-         WHERE c.id = ?`, 
+         WHERE c.id = ?`,
         [id]
       );
       return rows[0];
@@ -37,7 +37,7 @@ class Candidatura {
         `SELECT c.*, v.nome_vaga, v.nome_empresa 
          FROM candidaturas c 
          JOIN vagas v ON c.id_vaga = v.id 
-         WHERE c.id_usuario = ?`, 
+         WHERE c.id_usuario = ?`,
         [usuarioId]
       );
       return rows;
@@ -52,7 +52,7 @@ class Candidatura {
         `SELECT c.*, u.nome as nome_usuario 
          FROM candidaturas c 
          JOIN usuarios u ON c.id_usuario = u.id 
-         WHERE c.id_vaga = ?`, 
+         WHERE c.id_vaga = ?`,
         [vagaId]
       );
       return rows;
@@ -64,10 +64,13 @@ class Candidatura {
   static async create(candidaturaData) {
     try {
       const [result] = await db.query(
-        'INSERT INTO candidaturas (id_usuario, id_vaga, curriculo_usuario) VALUES (?, ?, ?)',
+        `INSERT INTO candidaturas 
+         (id_usuario, id_vaga, empresa_id, curriculo_usuario) 
+         VALUES (?, ?, ?, ?)`,
         [
           candidaturaData.id_usuario,
           candidaturaData.id_vaga,
+          candidaturaData.empresa_id,
           candidaturaData.curriculo_usuario || null
         ]
       );
@@ -88,10 +91,15 @@ class Candidatura {
         updateFields.push('curriculo_usuario = ?');
         values.push(candidaturaData.curriculo_usuario);
       }
-      
+
       if (candidaturaData.status !== undefined) {
         updateFields.push('status = ?');
         values.push(candidaturaData.status);
+      }
+
+      if (candidaturaData.empresa_id !== undefined) {
+        updateFields.push('empresa_id = ?');
+        values.push(candidaturaData.empresa_id);
       }
 
       if (updateFields.length === 0) {
@@ -117,6 +125,31 @@ class Candidatura {
       throw error;
     }
   }
+
+  static async findByUsuarioEVaga(id_usuario, id_vaga) {
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM candidaturas WHERE id_usuario = ? AND id_vaga = ?',
+      [id_usuario, id_vaga]
+    );
+    return rows[0]; 
+  } catch (error) {
+    throw error;
+  }
 }
+
+static async delete(id) {
+  try {
+    const [result] = await db.query('DELETE FROM candidaturas WHERE id = ?', [id]);
+    return result.affectedRows;
+  } catch (error) {
+    throw error;
+  }
+}
+
+}
+
+
+
 
 module.exports = Candidatura;

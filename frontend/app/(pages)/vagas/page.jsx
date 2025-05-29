@@ -5,54 +5,162 @@ import { useState, useEffect, useRef } from 'react';
 export default function Vagas() {
   const [categoria, setCategoria] = useState('');
   const [tipo, setTipo] = useState('');
-  const [local, setLocal] = useState('');
+  const [empresa, setEmpresa] = useState('');
   const [vagas, setVagas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vagaSelecionada, setVagaSelecionada] = useState(null);
+  const [candidaturas, setCandidaturas] = useState([]);
+  const [mensagem, setMensagem] = useState(null);
+  const [isCandidato, setIsCandidato] = useState(false);
 
   const detalhesRef = useRef(null);
+
   useEffect(() => {
-    async function fetchVagas() {
-      setLoading(true);
+  async function fetchVagas() {
+    setLoading(true);
 
-      try {
-        const res = await fetch('http://localhost:3001/api/vagas');
-        const data = await res.json();
+    try {
+      const res = await fetch('http://localhost:3001/api/vagas');
+      const data = await res.json();
 
-        const authData = localStorage.getItem('authEntity');
-        let empresaId = null;
+      const authData = localStorage.getItem('authEntity');
+      let empresaId = null;
+      let usuarioId = null;
 
-        if (authData) {
-          try {
-            const parsed = JSON.parse(authData);
+      if (authData) {
+        try {
+          const parsed = JSON.parse(authData);
 
-            if (parsed?.id) {
+          if (parsed?.id) {
+            usuarioId = parsed.id;
+
+            if (parsed.tipo === 'empresa') {
               empresaId = parsed.id;
+              setIsCandidato(false);
+            } else if (parsed.tipo === 'usuario') {
+              setIsCandidato(true);
             } else {
-              console.log('Usuário logado não é empresa, mostrando todas as vagas.');
+              setIsCandidato(false);
             }
-          } catch (error) {
-            console.error('Erro ao interpretar os dados de autenticação.', error);
           }
+        } catch (error) {
+          console.error('Erro ao interpretar os dados de autenticação.', error);
         }
-
-        const vagasFiltradas = empresaId
-          ? data.filter((vaga) => vaga.empresa_id === empresaId) // só da empresa
-          : data; // todas as vagas se não for empresa
-
-        setVagas(vagasFiltradas);
-        setVagaSelecionada(vagasFiltradas.length > 0 ? vagasFiltradas[0] : null);
-
-      } catch (err) {
-        console.error('Erro ao buscar vagas:', err);
-      } finally {
-        setLoading(false);
       }
+
+      const vagasFiltradas = empresaId
+        ? data.filter((vaga) => vaga.empresa_id === empresaId)
+        : data;
+
+      setVagas(vagasFiltradas);
+      setVagaSelecionada(vagasFiltradas.length > 0 ? vagasFiltradas[0] : null);
+
+      if (usuarioId) {
+        const resCandidaturas = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
+        if (resCandidaturas.ok) {
+          const dataCandidaturas = await resCandidaturas.json();
+          const vagasCandidatadasIds = dataCandidaturas.map(cand => cand.id_vaga);
+          setCandidaturas(vagasCandidatadasIds);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao buscar vagas:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchVagas();
+}, []);
+
+
+  // Função para mostrar mensagem temporária
+  function mostrarMensagem(texto, tipo = 'info') {
+    setMensagem({ texto, tipo });
+    setTimeout(() => setMensagem(null), 4000);
+  }
+
+  async function handleCandidatar() {
+    const authData = localStorage.getItem('authEntity');
+
+    if (!authData || !vagaSelecionada) {
+      mostrarMensagem('Usuário não autenticado ou vaga não selecionada.', 'error');
+      return;
     }
 
-    fetchVagas();
-  }, []);
+    try {
+      const parsed = JSON.parse(authData);
 
+      const candidaturaPayload = {
+        id_usuario: parsed.id,
+        id_vaga: vagaSelecionada.id,
+        empresa_id: vagaSelecionada.empresa_id,
+        curriculo_usuario: parsed.curriculo || null,
+      };
+
+      const res = await fetch('http://localhost:3001/api/candidaturas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(candidaturaPayload),
+      });
+
+      if (!res.ok) {
+        throw new Error('Erro ao enviar candidatura');
+      }
+
+      mostrarMensagem('Candidatura enviada com sucesso!', 'success');
+      setCandidaturas(prev => [...prev, vagaSelecionada.id]);
+    } catch (error) {
+      console.error('Erro ao enviar candidatura:', error);
+      mostrarMensagem('Erro ao enviar candidatura. Tente novamente.', 'error');
+    }
+  }
+
+  async function handleRemoverCandidatura() {
+    const authData = localStorage.getItem('authEntity');
+
+    if (!authData || !vagaSelecionada) {
+      mostrarMensagem('Usuário não autenticado ou vaga não selecionada.', 'error');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(authData);
+      const usuarioId = parsed.id;
+
+      const res = await fetch('http://localhost:3001/api/candidaturas', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id_usuario: usuarioId,
+          id_vaga: vagaSelecionada.id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Erro ao remover candidatura');
+      }
+
+      mostrarMensagem('Candidatura removida com sucesso!', 'success');
+      setCandidaturas(prev => prev.filter(id => id !== vagaSelecionada.id));
+    } catch (error) {
+      console.error('Erro ao remover candidatura:', error);
+      mostrarMensagem('Erro ao remover candidatura. Tente novamente.', 'error');
+    }
+  }
+
+  const vagasFiltradas = vagas.filter(vaga => {
+    const filtraCategoria = categoria ? vaga.categoria === categoria : true;
+    const filtraTipo = tipo ? vaga.tipo_vaga === tipo : true;
+    const filtraEmpresa = empresa ? vaga.nome_empresa === empresa : true;
+    return filtraCategoria && filtraTipo && filtraEmpresa;
+  });
+
+  const isCandidatado = vagaSelecionada ? candidaturas.includes(vagaSelecionada.id) : false;
 
   return (
     <section className="bg-gray-50 flex flex-col items-center min-h-screen">
@@ -87,16 +195,18 @@ export default function Vagas() {
         </div>
 
         <div className="flex flex-col w-full md:w-1/3 px-2 md:px-0">
-          <label className="text-sm font-medium text-gray-700 mb-1">Local</label>
+          <label className="text-sm font-medium text-gray-700 mb-1">Empresa</label>
           <select
             className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
-            value={local}
-            onChange={(e) => setLocal(e.target.value)}
+            value={empresa}
+            onChange={(e) => setEmpresa(e.target.value)}
           >
             <option value="">Nenhum</option>
-            <option value="sao-paulo">São Paulo</option>
-            <option value="sao-caetano">São Caetano do Sul</option>
-            <option value="campinas">Campinas</option>
+            {[...new Set(vagas.map(v => v.nome_empresa))].map((empresaNome) => (
+              <option key={empresaNome} value={empresaNome}>
+                {empresaNome}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -106,13 +216,14 @@ export default function Vagas() {
         <div className="w-full lg:w-5/12 flex flex-col items-center lg:items-center">
           {loading ? (
             <p>Carregando vagas...</p>
-          ) : vagas.length === 0 ? (
+          ) : vagasFiltradas.length === 0 ? (
             <p>Nenhuma vaga encontrada.</p>
           ) : (
-            vagas.map((vaga) => (
+            vagasFiltradas.map((vaga) => (
               <div
                 key={vaga.id}
-                className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 cursor-pointer hover:shadow-md transition-shadow"
+                className={`w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 cursor-pointer hover:shadow-md transition-shadow
+                  ${vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26]' : ''}`}
                 onClick={() => setVagaSelecionada(vaga)}
               >
                 <h1 className="font-bold text-3xl">{vaga.nome_vaga}</h1>
@@ -150,7 +261,7 @@ export default function Vagas() {
           )}
         </div>
 
-        {/* Detalhes da vaga selecionada */}
+
         <div
           ref={detalhesRef}
           className="w-full lg:w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6 lg:mt-0 lg:ml-6 relative lg:sticky lg:top-20 self-start"
@@ -171,12 +282,32 @@ export default function Vagas() {
               <p className="text-justify text-sm md:text-base max-w-full break-words px-1 md:px-0 whitespace-pre-line">
                 {vagaSelecionada.descricao}
               </p>
-              <button
-                className="cursor-pointer mt-6 w-full bg-[#7B2D26] hover:bg-red-800 text-white py-2 rounded-full shadow transition-colors duration-300"
-                type="button"
-              >
-                Candidatar-me
-              </button>
+
+              {/* {!isCandidato ? (
+                <button
+                  className="cursor-not-allowed mt-6 w-full bg-gray-300 text-gray-600 py-2 rounded-full shadow"
+                  type="button"
+                  disabled
+                >
+                  Desabilitado Para Empresas
+                </button>
+              ) : */}{isCandidatado ? ( 
+                <button
+                  className="cursor-pointer mt-6 w-full bg-gray-600 hover:bg-gray-800 text-white py-2 rounded-full shadow transition-colors duration-300"
+                  type="button"
+                  onClick={handleRemoverCandidatura}
+                >
+                  Remover candidatura
+                </button>
+              ) : (
+                <button
+                  className="cursor-pointer mt-6 w-full bg-[#7B2D26] hover:bg-red-800 text-white py-2 rounded-full shadow transition-colors duration-300"
+                  type="button"
+                  onClick={handleCandidatar}
+                >
+                  Candidatar-me
+                </button>
+              )}
             </>
           ) : (
             <p>Selecione uma vaga para ver detalhes.</p>

@@ -77,7 +77,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <Link href="/" className="transform transition-transform duration-200 ">
               <div className="w-20 h-20 sm:w-24 sm:h-24">
-                <img src="/img/global/logo_completa_branca.svg" alt="JobIn" className="w-full h-full" />
+                <img src="img/global/logo_completa_branca.svg" alt="JobIn" className="w-full h-full" />
               </div>
             </Link>
             <div className="hidden md:block relative group">
