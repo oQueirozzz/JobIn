@@ -158,18 +158,44 @@ exports.loginEmpresa = async (req, res) => {
 // Atualizar uma empresa
 exports.updateEmpresa = async (req, res) => {
   try {
+    console.log('ID da empresa recebido:', req.params.id);
+    console.log('Dados recebidos para atualização:', req.body);
+    
+    // Verificar se a empresa existe antes de tentar atualizar
+    const empresaExistente = await Empresa.findById(req.params.id);
+    console.log('Empresa existente:', empresaExistente);
+    
+    if (!empresaExistente) {
+      console.error('Empresa não encontrada com ID:', req.params.id);
+      return res.status(404).json({ message: 'Empresa não encontrada' });
+    }
+    
+    // Atualizar a empresa
+    console.log('Iniciando atualização da empresa...');
     const result = await Empresa.update(req.params.id, req.body);
+    console.log('Resultado da atualização:', result);
+    
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Empresa não encontrada' });
+    }
+    
+    // Buscar os dados atualizados da empresa para retornar ao cliente
+    console.log('Buscando dados atualizados da empresa...');
+    const empresaAtualizada = await Empresa.findById(req.params.id);
+    console.log('Dados atualizados encontrados:', empresaAtualizada);
+    
+    if (!empresaAtualizada) {
+      return res.status(404).json({ message: 'Erro ao buscar dados atualizados da empresa' });
     }
     
     // Registrar log de atualização de perfil
     await logsController.logAtualizacaoPerfil(0, req.params.id, 'empresa');
     
-    res.status(200).json({ message: 'Empresa atualizada com sucesso' });
+    // Retornar os dados atualizados da empresa
+    res.status(200).json(empresaAtualizada);
   } catch (error) {
-    console.error('Erro ao atualizar empresa:', error);
-    res.status(500).json({ message: 'Erro ao atualizar empresa' });
+    console.error('Erro detalhado ao atualizar empresa:', error);
+    res.status(500).json({ message: 'Erro ao atualizar empresa', error: error.message });
   }
 };
 
