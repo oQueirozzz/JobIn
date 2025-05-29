@@ -12,6 +12,8 @@ export default function CriarVaga() {
 
   useEffect(() => {
     const authData = localStorage.getItem('authEntity');
+
+
     if (authData) {
       try {
         const parsed = JSON.parse(authData);
@@ -163,7 +165,7 @@ export default function CriarVaga() {
               id="tipo_vaga"
               required
               disabled={carregando}
-             className="block appearance-none w-full bg-white border-0 border-b-2 border-gray-300 text-gray-500 py-2.5 px-0 text-sm focus:border-transparent"
+              className="block appearance-none w-full bg-white border-0 border-b-2 border-gray-300 text-gray-500 py-2.5 px-0 text-sm focus:border-transparent"
               style={{ lineHeight: '1.25rem', height: '2.5rem' }}
               defaultValue=""
             >
@@ -267,7 +269,7 @@ export default function CriarVaga() {
           </button>
 
           <div className="flex items-center justify-center">
-            <a href="/perfil" className="text-xs hover:text-[#7B2D26] text-gray-500 text-center mt-4 cursor-pointer">
+            <a href="/vagas" className="text-xs hover:text-[#7B2D26] text-gray-500 text-center mt-4 cursor-pointer">
               Voltar
             </a>
           </div>
@@ -276,3 +278,4 @@ export default function CriarVaga() {
     </section>
   );
 }
+
