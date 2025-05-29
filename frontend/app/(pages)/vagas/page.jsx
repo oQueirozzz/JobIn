@@ -16,62 +16,61 @@ export default function Vagas() {
   const detalhesRef = useRef(null);
 
   useEffect(() => {
-  async function fetchVagas() {
-    setLoading(true);
+    async function fetchVagas() {
+      setLoading(true);
 
-    try {
-      const res = await fetch('http://localhost:3001/api/vagas');
-      const data = await res.json();
+      try {
+        const res = await fetch('http://localhost:3001/api/vagas');
+        const data = await res.json();
 
-      const authData = localStorage.getItem('authEntity');
-      let empresaId = null;
-      let usuarioId = null;
+        const authData = localStorage.getItem('authEntity');
+        let empresaId = null;
+        let usuarioId = null;
 
-      if (authData) {
-        try {
-          const parsed = JSON.parse(authData);
+        if (authData) {
+          try {
+            const parsed = JSON.parse(authData);
 
-          if (parsed?.id) {
-            usuarioId = parsed.id;
-
-            if (parsed.tipo === 'empresa') {
+            if (parsed?.id) {
+              usuarioId = parsed.id;
               empresaId = parsed.id;
-              setIsCandidato(false);
-            } else if (parsed.tipo === 'usuario') {
-              setIsCandidato(true);
-            } else {
-              setIsCandidato(false);
+              if (parsed.tipo === 'empresa') {
+                setIsCandidato(false);
+              } else if (parsed.tipo === 'usuario') {
+                setIsCandidato(true);
+              } else {
+                setIsCandidato(false);
+              }
             }
+          } catch (error) {
+            console.error('Erro ao interpretar os dados de autenticação.', error);
           }
-        } catch (error) {
-          console.error('Erro ao interpretar os dados de autenticação.', error);
         }
-      }
 
-      const vagasFiltradas = empresaId
-        ? data.filter((vaga) => vaga.empresa_id === empresaId)
-        : data;
+        const vagasFiltradas = empresaId
+          ? data.filter((vaga) => vaga.empresa_id === empresaId)
+          : data;
 
-      setVagas(vagasFiltradas);
-      setVagaSelecionada(vagasFiltradas.length > 0 ? vagasFiltradas[0] : null);
+        setVagas(vagasFiltradas);
+        setVagaSelecionada(vagasFiltradas.length > 0 ? vagasFiltradas[0] : null);
 
-      if (usuarioId) {
-        const resCandidaturas = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
-        if (resCandidaturas.ok) {
-          const dataCandidaturas = await resCandidaturas.json();
-          const vagasCandidatadasIds = dataCandidaturas.map(cand => cand.id_vaga);
-          setCandidaturas(vagasCandidatadasIds);
+        if (usuarioId) {
+          const resCandidaturas = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
+          if (resCandidaturas.ok) {
+            const dataCandidaturas = await resCandidaturas.json();
+            const vagasCandidatadasIds = dataCandidaturas.map(vg => vg.id_vaga);
+            setCandidaturas(vagasCandidatadasIds);
+          }
         }
+      } catch (err) {
+        console.error('Erro ao buscar vagas:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Erro ao buscar vagas:', err);
-    } finally {
-      setLoading(false);
     }
-  }
 
-  fetchVagas();
-}, []);
+    fetchVagas();
+  }, []);
 
 
   // Função para mostrar mensagem temporária
@@ -209,6 +208,18 @@ export default function Vagas() {
             ))}
           </select>
         </div>
+
+        {!isCandidato ? (
+          <div className='flex flex-col w-full md:w-1/3 px-2 md:px-0'>
+              <a href="/criarVaga"className="cursor-pointer mt-6 w-full bg-[#7B2D26] hover:bg-red-800 text-white text-center py-2 rounded-full shadow transition-colors duration-300" >
+                Criar Nova Vaga
+              </a>
+          </div>)
+          : ''
+        }
+
+
+
       </div>
 
       <div className="h-auto flex flex-col-reverse lg:flex-row justify-center w-full px-4 md:px-10 mt-8 gap-6">
@@ -283,7 +294,7 @@ export default function Vagas() {
                 {vagaSelecionada.descricao}
               </p>
 
-              {/* {!isCandidato ? (
+              {!isCandidato ? (
                 <button
                   className="cursor-not-allowed mt-6 w-full bg-gray-300 text-gray-600 py-2 rounded-full shadow"
                   type="button"
@@ -291,7 +302,7 @@ export default function Vagas() {
                 >
                   Desabilitado Para Empresas
                 </button>
-              ) : */}{isCandidatado ? ( 
+              ) : isCandidatado ? (
                 <button
                   className="cursor-pointer mt-6 w-full bg-gray-600 hover:bg-gray-800 text-white py-2 rounded-full shadow transition-colors duration-300"
                   type="button"
@@ -313,6 +324,7 @@ export default function Vagas() {
             <p>Selecione uma vaga para ver detalhes.</p>
           )}
         </div>
+
       </div>
     </section>
   );

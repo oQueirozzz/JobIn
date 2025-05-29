@@ -32,14 +32,14 @@ export default function Login() {
         throw new Error('Dados de login inválidos');
       }
 
-      if (authType === 'company' && userData.empresa_id) {
+      if (authType === 'company' && userData.cnpj) {
         localStorage.setItem('authEntity', JSON.stringify({
-          id: userData.empresa_id,
+          id: userData.cnpj,
           tipo: 'empresa'
         }));
-      } else if (authType === 'user' && userData.usuario_id) {
+      } else if (authType === 'user' && userData.cpf) {
         localStorage.setItem('authEntity', JSON.stringify({
-          id: userData.usuario_id,
+          id: userData.cpf,
           tipo: 'usuario'
         }));
       }

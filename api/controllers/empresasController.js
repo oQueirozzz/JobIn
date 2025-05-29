@@ -132,6 +132,7 @@ exports.loginEmpresa = async (req, res) => {
       cnpj: empresa.cnpj,
       descricao: empresa.descricao || '',
       logo: empresa.logo || '',
+      tipo: 'empresa',
       autenticado: true
     };
 

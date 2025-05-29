@@ -144,7 +144,9 @@ exports.loginUsuario = async (req, res) => {
       descricao: usuario.descricao || '',
       curriculo: usuario.curriculo || '',
       foto: usuario.foto || usuario.foto_perfil || '',
+      tipo: 'usuario',
       autenticado: true
+
     };
 
     // Gerar token JWT

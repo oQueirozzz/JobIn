@@ -267,7 +267,7 @@ export default function CriarVaga() {
           </button>
 
           <div className="flex items-center justify-center">
-            <a href="/perfil" className="text-xs hover:text-[#7B2D26] text-gray-500 text-center mt-4 cursor-pointer">
+            <a href="/vagas" className="text-xs hover:text-[#7B2D26] text-gray-500 text-center mt-4 cursor-pointer">
               Voltar
             </a>
           </div>

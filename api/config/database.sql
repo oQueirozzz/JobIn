@@ -48,13 +48,16 @@ CREATE TABLE `vagas` (
 );
 
 CREATE TABLE `candidaturas` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`id_usuario` INTEGER NOT NULL,
-	`id_vaga` INTEGER NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+    `id_usuario` INTEGER NOT NULL,
+    `id_vaga` INTEGER NOT NULL,
     `empresa_id` INTEGER NOT NULL,
-	`curriculo_usuario` VARCHAR(255),
-	PRIMARY KEY(`id`)
+    `curriculo_usuario` VARCHAR(255),
+    `status` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA') DEFAULT 'PENDENTE',
+    `data_atualizacao` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY(`id`)
 );
+
 
 CREATE TABLE `chat` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
