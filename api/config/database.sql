@@ -42,6 +42,7 @@ CREATE TABLE `vagas` (
 	`tipo_vaga` VARCHAR(30),
 	`local_vaga` VARCHAR(50),
 	`categoria` VARCHAR(50),
+    `salario` VARCHAR(255),
 	PRIMARY KEY(`id`)
 );
 

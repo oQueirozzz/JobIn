@@ -184,6 +184,7 @@ export default function CadastroAlunos() {
                                             onChange={handleChange}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             placeholder="000.000.000-00"
+                                            maxLength={11}
                                         />
                                     </div>
                                 </div>

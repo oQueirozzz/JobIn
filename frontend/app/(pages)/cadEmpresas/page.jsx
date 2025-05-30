@@ -160,7 +160,7 @@ export default function CadastroEmpresas() {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700 mb-2 ">
                                         CNPJ
                                     </label>
                                     <div className="relative">
@@ -178,6 +178,7 @@ export default function CadastroEmpresas() {
                                             onChange={handleChange}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             placeholder="00.000.000/0000-00"
+                                            maxLength={13}
                                         />
                                     </div>
                                 </div>

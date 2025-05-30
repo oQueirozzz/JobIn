@@ -15,7 +15,7 @@ class Vaga {
   static async findById(id) {
     try {
       const [rows] = await db.query(
-        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = ?', 
+        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = ?',
         [id]
       );
       return rows[0];
@@ -36,7 +36,7 @@ class Vaga {
   static async create(vagaData) {
     try {
       const [result] = await db.query(
-        'INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria, salario) VALUES (?, ?, ?, ?, ?, ?, ?,?)',
         [
           vagaData.empresa_id,
           vagaData.nome_vaga,
@@ -44,7 +44,8 @@ class Vaga {
           vagaData.descricao || null,
           vagaData.tipo_vaga || null,
           vagaData.local_vaga || null,
-          vagaData.categoria || null
+          vagaData.categoria || null,
+          vagaData.salario || null
         ]
       );
 
@@ -92,6 +93,11 @@ class Vaga {
 
       if (updateFields.length === 0) {
         return { message: 'Nenhum campo para atualizar' };
+      }
+
+      if (vagaData.salario !== undefined) {
+        updateFields.push('salario = ?');
+        values.push(vagaData.salario);
       }
 
       query += updateFields.join(', ');

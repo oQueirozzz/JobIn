@@ -53,6 +53,7 @@ export default function CriarVaga() {
       tipo_vaga: formData.get('tipo_vaga'),
       local_vaga: formData.get('local_vaga'),
       categoria: formData.get('categoria'),
+      salario: formData.get('salario')
     };
 
     try {
@@ -170,9 +171,9 @@ export default function CriarVaga() {
               defaultValue=""
             >
               <option value="" disabled hidden>Tipo da Vaga</option>
-              <option value="presencial">Presencial</option>
-              <option value="hibrido">Híbrido</option>
-              <option value="remoto">Remoto</option>
+              <option value="Presencial">Presencial</option>
+              <option value="Hibrido">Híbrido</option>
+              <option value="Remoto">Remoto</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
               <svg
@@ -198,9 +199,9 @@ export default function CriarVaga() {
               defaultValue=""
             >
               <option value="" disabled hidden>Categoria</option>
-              <option value="tecnologia">Tecnologia</option>
-              <option value="administração">Administração</option>
-              <option value="engenharia">Engenharia</option>
+              <option value="Técnologia">Tecnologia</option>
+              <option value="Administração">Administração</option>
+              <option value="Engenharia">Engenharia</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
               <svg
@@ -214,6 +215,29 @@ export default function CriarVaga() {
               </svg>
             </div>
           </div>
+
+
+          <div className="relative z-0 w-full mb-5 group">
+            <input
+              type="text"
+              name="salario"
+              id="salario"
+              required
+              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
+              placeholder=" "
+              disabled={carregando}
+              maxLength={5}
+              inputMode="numeric"
+              pattern="\d*"
+            />
+            <label
+              htmlFor="salario"
+              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+            >
+              Salário
+            </label>
+          </div>
+
 
           <div className="relative z-0 w-full mb-5 group">
             <textarea
