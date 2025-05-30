@@ -318,19 +318,16 @@ export default function Feed() {
               <div className="p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h2 className="font-semibold">Notícias do mercado</h2>
-                  <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
-                    i
-                  </div>
                 </div>
 
                 {news.slice(0, showMoreNews ? news.length : 3).map(item => (
-                  <NewsItem 
-                    key={item.id}
-                    title={item.title}
-                    info={item.info}
-                    trending={item.trending}
-                    
-                  />
+                  <Link href={`/noticias/${item.id}`} key={item.id}>
+                    <NewsItem 
+                      title={item.title}
+                      info={item.info}
+                      trending={item.trending}
+                    />
+                  </Link>
                 ))}
 
                 <button 
@@ -473,18 +470,17 @@ export default function Feed() {
                           />
                         </div>
                       )}
-                      <div className="flex items-center space-x-4 text-gray-500">
-                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
-                          <ThumbsUp className="w-5 h-5 mr-1" />
-                          <span>0</span>
-                        </button>
-                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
-                          <MessageCircle className="w-5 h-5 mr-1" />
-                          <span>0</span>
-                        </button>
-                        <button className="flex items-center hover:text-[#7B2D26] transition-colors">
-                          <Share2 className="w-5 h-5 mr-1" />
-                          <span>Compartilhar</span>
+                      <div className="flex items-center">
+                        <button 
+                          onClick={() => handleLikePost(post.id)}
+                          className={`flex cursor-pointer items-center transition-all duration-300 ${
+                            likedPosts[post.id] 
+                              ? 'text-[#7B2D26] transform scale-110' 
+                              : 'text-gray-500 hover:text-[#7B2D26]'
+                          }`}
+                        >
+                          <ThumbsUp className={`w-5 h-5 mr-1 ${likedPosts[post.id] ? 'fill-[#7B2D26]' : ''}`} />
+                          <span>{likedPosts[post.id] ? '1' : '0'}</span>
                         </button>
                       </div>
                     </div>
@@ -579,15 +575,17 @@ function SidebarItem({ icon, label, count = null }) {
 
 function NewsItem({ title, info, trending = false }) {
   return (
-    <div className="mb-3 hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer">
-      <div className="flex items-start">
-        {trending && (
-          <span className="text-red-500 mr-2">🔥</span>
-        )}
-        <div>
-          <h4 className="text-sm font-medium hover:text-[#7B2D26] transition-colors">{title}</h4>
+    <div className="group cursor-pointer p-3 hover:bg-gray-50 rounded-lg transition-colors">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-gray-900 group-hover:text-[#7B2D26] transition-colors">{title}</h3>
           <p className="text-xs text-gray-500 mt-1">{info}</p>
         </div>
+        {trending && (
+          <span className="ml-2 px-2 py-1 text-xs font-medium text-[#7B2D26] bg-red-50 rounded-full">
+            Trending
+          </span>
+        )}
       </div>
     </div>
   );

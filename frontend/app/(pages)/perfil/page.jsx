@@ -23,8 +23,24 @@ export default function Perfil() {
 
         if (authInfo) {
             const dadosUsuario = authInfo.entity;
-            setFormData(dadosUsuario);
-            verificarCamposObrigatorios(dadosUsuario);
+            // Garantir que todos os campos necessários existam
+            const dadosIniciais = {
+                nome: dadosUsuario.nome || '',
+                email: dadosUsuario.email || '',
+                foto: dadosUsuario.foto || null,
+                descricao: dadosUsuario.descricao || '',
+                formacao: dadosUsuario.formacao || '',
+                area_interesse: dadosUsuario.area_interesse || '',
+                habilidades: dadosUsuario.habilidades || '',
+                curriculo: dadosUsuario.curriculo || null,
+                certificados: dadosUsuario.certificados || null,
+                local: dadosUsuario.local || '',
+                cpf: dadosUsuario.cpf || '',
+                cnpj: dadosUsuario.cnpj || '',
+                data_nascimento: dadosUsuario.data_nascimento || ''
+            };
+            setFormData(dadosIniciais);
+            verificarCamposObrigatorios(dadosIniciais);
         }
     }, [authInfo, isLoading, router]);
 
@@ -166,6 +182,7 @@ export default function Perfil() {
         }
 
         try {
+            // Converter o arquivo para base64
             const reader = new FileReader();
             
             reader.onloadend = async () => {
@@ -218,9 +235,17 @@ export default function Perfil() {
     // Função para baixar arquivo
     const downloadFile = (data, filename) => {
         try {
+            console.log('Tentando baixar arquivo:', { data: data.substring(0, 100) + '...', filename });
+            
             // Se for uma URL, baixa diretamente
             if (data.startsWith('http')) {
                 window.open(data, '_blank');
+                return;
+            }
+
+            // Se for um caminho de arquivo, baixa do servidor
+            if (data.startsWith('/')) {
+                window.open(`http://localhost:3001${data}`, '_blank');
                 return;
             }
 
@@ -229,11 +254,14 @@ export default function Perfil() {
                 // Extrair o tipo MIME e os dados base64
                 const matches = data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
                 if (!matches || matches.length !== 3) {
+                    console.error('Formato inválido de base64:', data.substring(0, 100));
                     throw new Error('Formato de arquivo inválido');
                 }
 
                 const mimeType = matches[1];
                 const base64Data = matches[2];
+
+                console.log('MIME type detectado:', mimeType);
 
                 // Verificar se o tipo MIME é válido
                 const validMimeTypes = [
@@ -246,7 +274,8 @@ export default function Perfil() {
                 ];
 
                 if (!validMimeTypes.includes(mimeType)) {
-                    throw new Error('Tipo de arquivo não suportado');
+                    console.error('Tipo MIME não suportado:', mimeType);
+                    throw new Error(`Tipo de arquivo não suportado: ${mimeType}`);
                 }
 
                 // Converter base64 para blob
@@ -290,6 +319,7 @@ export default function Perfil() {
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
             } else {
+                console.error('Formato de dados não reconhecido:', data.substring(0, 50));
                 throw new Error('Formato de arquivo não suportado');
             }
         } catch (error) {
@@ -372,18 +402,36 @@ export default function Perfil() {
             }
 
             const dadosAtualizados = await response.json();
+            console.log('Dados atualizados recebidos do servidor:', dadosAtualizados);
+
+            // Criar um objeto atualizado combinando os dados existentes com os retornados pelo servidor
+            const updatedEntity = {
+                ...authInfo.entity,
+                ...dadosFiltrados,  // Mantém os dados enviados (incluindo arquivos em base64)
+                ...dadosAtualizados // Sobrescreve com dados do servidor quando disponíveis
+            };
 
             // Atualizar o localStorage
-            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
-            const updatedEntity = {
-                ...authEntity,
-                ...dadosAtualizados
-            };
             localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
 
-            // Atualizar o estado local
-            setFormData(updatedEntity);
-            verificarCamposObrigatorios(updatedEntity);
+            // Atualizar o estado local com todos os campos necessários
+            const dadosAtualizadosCompletos = {
+                nome: updatedEntity.nome || '',
+                email: updatedEntity.email || '',
+                foto: updatedEntity.foto || null,
+                descricao: updatedEntity.descricao || '',
+                formacao: updatedEntity.formacao || '',
+                area_interesse: updatedEntity.area_interesse || '',
+                habilidades: updatedEntity.habilidades || '',
+                curriculo: updatedEntity.curriculo || null,
+                certificados: updatedEntity.certificados || null,
+                local: updatedEntity.local || '',
+                cpf: updatedEntity.cpf || '',
+                cnpj: updatedEntity.cnpj || '',
+                data_nascimento: updatedEntity.data_nascimento || ''
+            };
+            setFormData(dadosAtualizadosCompletos);
+            verificarCamposObrigatorios(dadosAtualizadosCompletos);
 
             // Atualizar o contexto de autenticação
             if (authInfo?.entity) {
@@ -396,12 +444,27 @@ export default function Perfil() {
             // Mostrar mensagem de sucesso
             showMessage('Perfil atualizado com sucesso!', 'success');
 
+            // Forçar uma atualização da página para garantir que as alterações sejam exibidas
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
         } catch (error) {
             console.error('Erro ao atualizar perfil:', error);
             showMessage(error.message || 'Erro ao atualizar perfil. Tente novamente.', 'error');
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const getInitials = (name) => {
+        if (!name) return 'U';
+        return name
+          .split(' ')
+          .map(part => part[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
     };
 
     if (isLoading) {
@@ -471,11 +534,33 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl flex flex-col md:flex-row p-8 space-y-6 md:space-y-0 md:space-x-8 transform hover:scale-[1.01] transition-transform duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
-                        <img 
-                            className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] object-cover shadow-lg transform transition-transform duration-300 group-hover:scale-105" 
-                            src={formData.foto || "/img/perfil/profile.svg"} 
-                            alt="Foto de Perfil" 
-                        />
+                        {authInfo?.type === 'company' ? (
+                            // Exibição para empresa
+                            formData.logo ? (
+                                <img 
+                                    className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-lg transform transition-transform duration-300 group-hover:scale-105" 
+                                    src={formData.logo} 
+                                    alt="Logo da Empresa" 
+                                />
+                            ) : (
+                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] bg-[#7B2D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-105">
+                                    {getInitials(formData.nome || 'E')}
+                                </div>
+                            )
+                        ) : (
+                            // Exibição para usuário
+                            formData.foto ? (
+                                <img 
+                                    className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] object-cover shadow-lg transform transition-transform duration-300 group-hover:scale-105" 
+                                    src={formData.foto} 
+                                    alt="Foto de Perfil" 
+                                />
+                            ) : (
+                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] bg-[#7B2D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-105">
+                                    {getInitials(formData.nome || 'U')}
+                                </div>
+                            )
+                        )}
                         <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
                             <button 
                                 onClick={() => setIsModalOpen(true)}
@@ -751,31 +836,123 @@ export default function Perfil() {
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
                                                 <div className="flex items-center space-x-4">
                                                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                                                        <img 
-                                                            src={formData.foto || "/img/perfil/profile.svg"} 
-                                                            alt="Preview" 
-                                                            className="w-full h-full object-cover"
-                                                        />
+                                                        {formData.foto ? (
+                                                            <img 
+                                                                src={formData.foto} 
+                                                                alt="Preview" 
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-[#7B2D26] text-white text-center text-2xl font-bold flex items-center justify-center">
+                                                                {getInitials(formData.nome || 'U')}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <div className="relative">
-                                                            <input
-                                                                type="file"
-                                                                name="foto"
-                                                                onChange={(e) => handleFileChange(e, 'foto')}
-                                                                className="hidden"
-                                                                id="foto-input"
-                                                                accept="image/*"
-                                                            />
-                                                            <label
-                                                                htmlFor="foto-input"
-                                                                className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                            >
-                                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                </svg>
-                                                                Escolher Foto
-                                                            </label>
+                                                        <div className="flex flex-col space-y-2">
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="file"
+                                                                    name="foto"
+                                                                    onChange={(e) => handleFileChange(e, 'foto')}
+                                                                    className="hidden"
+                                                                    id="foto-input"
+                                                                    accept="image/*"
+                                                                />
+                                                                <label
+                                                                    htmlFor="foto-input"
+                                                                    className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
+                                                                >
+                                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    {formData.foto ? 'Alterar Foto' : 'Escolher Foto'}
+                                                                </label>
+                                                            </div>
+                                                            {formData.foto && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const userId = authInfo?.entity?.id;
+                                                                            if (!userId) {
+                                                                                showMessage('ID do usuário não encontrado!', 'error');
+                                                                                return;
+                                                                            }
+
+                                                                            const isEmpresa = authInfo.type === 'company';
+                                                                            const apiUrl = isEmpresa 
+                                                                                ? `http://localhost:3001/api/empresas/${userId}`
+                                                                                : `http://localhost:3001/api/usuarios/atualizar`;
+
+                                                                            // Preparar dados para envio
+                                                                            const dadosParaEnviar = {
+                                                                                ...formData,
+                                                                                foto: null
+                                                                            };
+
+                                                                            // Para usuários, incluir o ID no corpo da requisição
+                                                                            if (!isEmpresa) {
+                                                                                dadosParaEnviar.id = userId;
+                                                                            }
+
+                                                                            const token = localStorage.getItem('authToken');
+                                                                            if (!token) {
+                                                                                showMessage('Token de autenticação não encontrado', 'error');
+                                                                                return;
+                                                                            }
+
+                                                                            const response = await fetch(apiUrl, {
+                                                                                method: 'PUT',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'Authorization': `Bearer ${token}`
+                                                                                },
+                                                                                body: JSON.stringify(dadosParaEnviar)
+                                                                            });
+
+                                                                            if (!response.ok) {
+                                                                                throw new Error('Erro ao remover foto');
+                                                                            }
+
+                                                                            // Atualizar estado local
+                                                                            setFormData(prev => ({
+                                                                                ...prev,
+                                                                                foto: null
+                                                                            }));
+
+                                                                            // Atualizar localStorage
+                                                                            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+                                                                            const updatedEntity = {
+                                                                                ...authEntity,
+                                                                                foto: null
+                                                                            };
+                                                                            localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
+
+                                                                            // Atualizar contexto de autenticação
+                                                                            if (authInfo && authInfo.entity) {
+                                                                                authInfo.entity = updatedEntity;
+                                                                            }
+
+                                                                            showMessage('Foto removida com sucesso!', 'success');
+                                                                            
+                                                                            // Forçar atualização da página após 1.5 segundos
+                                                                            setTimeout(() => {
+                                                                                window.location.reload();
+                                                                            }, 1500);
+                                                                        } catch (error) {
+                                                                            console.error('Erro ao remover foto:', error);
+                                                                            showMessage('Erro ao remover foto. Tente novamente.', 'error');
+                                                                        }
+                                                                    }}
+                                                                    className="cursor-pointer bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg border border-red-300 flex items-center justify-center transition-all duration-300"
+                                                                >
+                                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                    Remover Foto
+                                                                </button>
+                                                            )}
                                                         </div>
                                                         <p className="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG, GIF</p>
                                                     </div>
