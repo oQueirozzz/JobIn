@@ -99,7 +99,6 @@ export default function CadastroEmpresas() {
             <div className="w-full max-w-4xl mb-10">
                 {/* Logo e Título */}
                 <div className="flex flex-col items-center mb-8">
-                    <img src="/img/global/logo_completa.svg" alt="JobIn Logo" className="h-20 mb-4" />
                     <h1 className="text-3xl font-bold text-[#7B2D26]">Expanda sua empresa</h1>
                     <p className="text-gray-600 mt-2">Cadastre-se e encontre os melhores talentos</p>
                 </div>

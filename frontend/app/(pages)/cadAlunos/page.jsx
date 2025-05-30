@@ -105,7 +105,6 @@ export default function CadastroAlunos() {
             <div className="w-full max-w-4xl mb-10">
                 {/* Logo e Título */}
                 <div className="flex flex-col items-center mb-8">
-                    <img src="/img/global/logo_completa.svg" alt="JobIn Logo" className="h-20 mb-4" />
                     <h1 className="text-3xl font-bold text-[#7B2D26]">Comece sua jornada profissional</h1>
                     <p className="text-gray-600 mt-2">Preencha seus dados para criar sua conta</p>
                 </div>
