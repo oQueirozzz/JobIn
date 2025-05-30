@@ -175,7 +175,7 @@ export default function CadastroAlunos() {
                                             </svg>
                                         </div>
                                         <input
-                                            type="text"
+                                            type="number"
                                             id="cpf"
                                             name="cpf"
                                             required

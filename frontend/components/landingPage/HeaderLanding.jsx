@@ -31,7 +31,6 @@ export default function HeaderLanding() {
     const navItems = [
         { label: 'Início', href: '#hero' },
         { label: 'Vagas', href: '#jobs' },
-        { label: 'Empresas', href: '#empresas' },
         { label: 'Como Funciona', href: '#como-funciona' }
     ];
 

@@ -219,7 +219,7 @@ export default function CriarVaga() {
 
           <div className="relative z-0 w-full mb-5 group">
             <input
-              type="text"
+              type="number"
               name="salario"
               id="salario"
               required

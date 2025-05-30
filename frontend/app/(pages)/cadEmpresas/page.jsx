@@ -169,7 +169,7 @@ export default function CadastroEmpresas() {
                                             </svg>
                                         </div>
                                         <input
-                                            type="text"
+                                            type="number"
                                             id="cnpj"
                                             name="cnpj"
                                             required

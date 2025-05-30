@@ -5,7 +5,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Jobs from "../../components/landingPage/Jobs";
 import HeroSection from "../../components/landingPage/HeroSection";
-import Empresas from "../../components/landingPage/Empresas";
 import Funcionamento from "../../components/landingPage/Funcionamento";
 import HeaderLanding from "../../components/landingPage/HeaderLanding";
 import Link from 'next/link';
@@ -57,7 +56,6 @@ export default function DashboardPage() {
       </section>
 
       <Jobs />
-      <Empresas />
       <Funcionamento />
 
       {/* CTA Final */}
