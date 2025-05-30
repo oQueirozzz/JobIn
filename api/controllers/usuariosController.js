@@ -39,10 +39,25 @@ exports.getUsuarioById = async (req, res) => {
 // Registrar um novo usuário
 exports.registerUsuario = async (req, res) => {
   try {
-    const { nome, email, senha, cpf, data_nascimento } = req.body;
+    const { nome, email, senha, cpf, data_nascimento, formacao, area_interesse, habilidades, descricao } = req.body;
+    
+    console.log('Dados recebidos no registro:', { ...req.body, senha: '[PROTEGIDA]' });
+
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!nome || !email || !senha || !cpf || !data_nascimento ) {
+    if (!nome || !email || !senha || !cpf || !data_nascimento) {
+      console.log('Campos obrigatórios faltando:', { nome: !!nome, email: !!email, senha: !!senha, cpf: !!cpf, data_nascimento: !!data_nascimento });
       return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
+    }
+
+    // Verificar se o email é válido
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Email inválido' });
+    }
+
+    // Verificar se o CPF é válido (apenas formato básico)
+    if (cpf.length !== 11 || !/^\d+$/.test(cpf)) {
+      return res.status(400).json({ message: 'CPF inválido' });
     }
 
     // Verificar se o usuário já existe
@@ -52,7 +67,17 @@ exports.registerUsuario = async (req, res) => {
     }
 
     // Criar o usuário
-    const novoUsuario = await Usuario.create(req.body);
+    const novoUsuario = await Usuario.create({
+      nome,
+      email,
+      senha,
+      cpf,
+      data_nascimento,
+      formacao,
+      area_interesse,
+      habilidades,
+      descricao
+    });
     
     // Registrar log de criação de usuário
     await logsController.registrarLog(
@@ -74,7 +99,7 @@ exports.registerUsuario = async (req, res) => {
       mensagem_usuario: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso. Comece a buscar vagas agora mesmo!`
     });
 
-    // Versão simplificada sem token
+    // Retornar dados do usuário criado (sem a senha)
     res.status(201).json({
       id: novoUsuario.id,
       nome: novoUsuario.nome,
@@ -84,7 +109,7 @@ exports.registerUsuario = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao registrar usuário:', error);
-    res.status(500).json({ message: 'Erro ao registrar usuário' });
+    res.status(500).json({ message: 'Erro ao registrar usuário. Por favor, tente novamente.' });
   }
 };
 

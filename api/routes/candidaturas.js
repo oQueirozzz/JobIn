@@ -9,8 +9,7 @@ router.get('/:id', candidaturasController.getCandidaturaById);
 router.get('/usuario/:usuarioId', candidaturasController.getCandidaturasByUsuario);
 router.get('/vaga/:vagaId', candidaturasController.getCandidaturasByVaga);
 router.post('/', candidaturasController.createCandidatura);
-router.put('/:id', candidaturasController.updateCandidatura);
-router.put('/:id/status', candidaturasController.atualizarStatusCandidatura);
-router.delete('/', candidaturasController.deleteCandidatura);
+router.put('/:id/status', candidaturasController.updateStatusCandidatura);
+router.delete('/:id', candidaturasController.deleteCandidatura);
 
 module.exports = router;

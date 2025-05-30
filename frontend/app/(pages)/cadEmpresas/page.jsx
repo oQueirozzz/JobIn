@@ -77,15 +77,19 @@ export default function CadastroEmpresas() {
             setSuccess('Cadastro realizado com sucesso! Redirecionando...');
 
             try {
+                if (!formData.email || !formData.senha) {
+                    throw new Error('Email e senha são obrigatórios para login');
+                }
+
                 await login(formData.email, formData.senha, 'company');
                 setTimeout(() => {
                     router.push('/');
                 }, 1500);
             } catch (loginError) {
                 console.error('Erro no login automático:', loginError);
+                setError(loginError.message || 'Erro durante o login automático');
                 router.push('/login');
             }
-
         } catch (error) {
             console.error('Erro detalhado:', error);
             setError(error.message || 'Erro ao cadastrar empresa. Verifique se o servidor está rodando.');

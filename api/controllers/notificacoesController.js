@@ -73,10 +73,10 @@ exports.getNotificacoesByCandidatura = async (req, res) => {
 // Criar nova notificação
 exports.createNotificacao = async (req, res) => {
   try {
-    const { candidaturas_id, empresas_id, usuarios_id, mensagem, tipo } = req.body;
+    const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura } = req.body;
     
     // Validação básica
-    if (!usuarios_id || !mensagem || !tipo) {
+    if (!usuarios_id || !empresas_id || !candidaturas_id || !mensagem_usuario || !mensagem_empresa || !tipo) {
       return res.status(400).json({ message: 'Dados incompletos para criar notificação' });
     }
     
@@ -84,8 +84,10 @@ exports.createNotificacao = async (req, res) => {
       candidaturas_id,
       empresas_id,
       usuarios_id,
-      mensagem,
-      tipo
+      mensagem_usuario,
+      mensagem_empresa,
+      tipo,
+      status_candidatura
     });
     
     // Registrar log da criação da notificação
@@ -141,33 +143,27 @@ exports.marcarTodasComoLidas = async (req, res) => {
 // Excluir notificação
 exports.deleteNotificacao = async (req, res) => {
   try {
-    const notificacaoId = req.params.id;
+    const notificacao = await Notificacao.findById(req.params.id);
     
-    const notificacaoExistente = await Notificacao.findById(notificacaoId);
-    if (!notificacaoExistente) {
+    if (!notificacao) {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
+
+    await Notificacao.delete(req.params.id);
     
-    const { usuarios_id, empresas_id } = notificacaoExistente;
-    
-    const resultado = await Notificacao.delete(notificacaoId);
-    
-    if (!resultado || resultado.affectedRows === 0) {
-      return res.status(404).json({ message: 'Falha ao excluir notificação' });
-    }
-    
+    // Registrar log da exclusão da notificação
     await Log.create({
-      usuario_id: usuarios_id,
-      empresa_id: empresas_id,
+      usuario_id: notificacao.usuarios_id,
+      empresa_id: notificacao.empresas_id,
       acao: 'EXCLUIR',
       resourse: 'NOTIFICACAO',
       descricao: 'Notificação excluída',
-      detalhes: { notificacao_id: notificacaoId }
+      detalhes: { notificacao_id: notificacao.id, tipo: notificacao.tipo }
     });
     
-    res.status(200).json({ message: 'Notificação excluída com sucesso', ...resultado });
+    res.status(200).json({ message: 'Notificação excluída com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir notificação:', error);
-    res.status(500).json({ message: 'Erro ao excluir notificação', error: error.message });
+    res.status(500).json({ message: 'Erro ao excluir notificação' });
   }
 };

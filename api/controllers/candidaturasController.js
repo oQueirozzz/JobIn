@@ -52,17 +52,18 @@ exports.getCandidaturasByVaga = async (req, res) => {
   }
 };
 
+// Criar candidatura
 exports.createCandidatura = async (req, res) => {
   try {
     const { id_usuario, id_vaga, curriculo_usuario } = req.body;
 
     // Validar campos obrigatórios
-    if (!id_usuario || !id_vaga || !curriculo_usuario) {
-      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+    if (!id_usuario || !id_vaga) {
+      return res.status(400).json({ message: 'ID do usuário e ID da vaga são obrigatórios' });
     }
 
     // Verificar se já existe uma candidatura
-    const candidaturaExistente = await Candidatura.findByUsuarioAndVaga(id_usuario, id_vaga);
+    const candidaturaExistente = await Candidatura.findByUsuarioEVaga(id_usuario, id_vaga);
     if (candidaturaExistente) {
       return res.status(400).json({ message: 'Você já se candidatou para esta vaga' });
     }
@@ -78,7 +79,7 @@ exports.createCandidatura = async (req, res) => {
       id_usuario,
       id_vaga,
       empresa_id: vaga.empresa_id,
-      curriculo_usuario
+      curriculo_usuario: curriculo_usuario || null
     });
 
     // Criar notificação
@@ -91,8 +92,8 @@ exports.createCandidatura = async (req, res) => {
   }
 };
 
-// Atualizar uma candidatura
-exports.updateCandidatura = async (req, res) => {
+// Atualizar status da candidatura
+exports.updateStatusCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -102,39 +103,55 @@ exports.updateCandidatura = async (req, res) => {
       return res.status(400).json({ message: 'Status inválido' });
     }
 
-    // Buscar a candidatura antes de atualizar
+    // Buscar a candidatura
     const candidatura = await Candidatura.findById(id);
     if (!candidatura) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
 
-    // Atualizar a candidatura
-    const resultado = await Candidatura.update(id, { status });
-    
+    // Atualizar o status
+    const resultado = await Candidatura.updateStatus(id, status);
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
 
-    // Se a candidatura foi aprovada, criar notificação
-    if (status === 'APROVADO') {
-      await NotificacaoService.criarNotificacaoCandidaturaAprovada(
-        candidatura.id_usuario,
-        candidatura.empresa_id,
-        candidatura.id_vaga
-      );
+    // Criar notificação baseada no status
+    switch (status) {
+      case 'APROVADO':
+        await NotificacaoService.criarNotificacaoCandidaturaAprovada(
+          candidatura.id_usuario,
+          candidatura.empresa_id,
+          candidatura.id_vaga
+        );
+        break;
+      case 'REJEITADO':
+        await NotificacaoService.criarNotificacaoCandidaturaRejeitada(
+          candidatura.id_usuario,
+          candidatura.empresa_id,
+          candidatura.id_vaga
+        );
+        break;
+      case 'EM_ESPERA':
+        await NotificacaoService.criarNotificacaoCandidaturaEmEspera(
+          candidatura.id_usuario,
+          candidatura.empresa_id,
+          candidatura.id_vaga
+        );
+        break;
     }
 
-    res.status(200).json({ message: 'Candidatura atualizada com sucesso' });
+    res.status(200).json({ message: 'Status da candidatura atualizado com sucesso' });
   } catch (error) {
-    console.error('Erro ao atualizar candidatura:', error);
-    res.status(500).json({ message: 'Erro ao atualizar candidatura' });
+    console.error('Erro ao atualizar status da candidatura:', error);
+    res.status(500).json({ message: 'Erro ao atualizar status da candidatura' });
   }
 };
 
+// Remover candidatura
 exports.deleteCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Buscar a candidatura antes de excluir
     const candidatura = await Candidatura.findById(id);
     if (!candidatura) {
@@ -143,7 +160,6 @@ exports.deleteCandidatura = async (req, res) => {
 
     // Excluir a candidatura
     const resultado = await Candidatura.delete(id);
-    
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
@@ -155,10 +171,10 @@ exports.deleteCandidatura = async (req, res) => {
       candidatura.id_vaga
     );
 
-    res.status(200).json({ message: 'Candidatura excluída com sucesso' });
+    res.status(200).json({ message: 'Candidatura removida com sucesso' });
   } catch (error) {
-    console.error('Erro ao excluir candidatura:', error);
-    res.status(500).json({ message: 'Erro ao excluir candidatura' });
+    console.error('Erro ao remover candidatura:', error);
+    res.status(500).json({ message: 'Erro ao remover candidatura' });
   }
 };
 

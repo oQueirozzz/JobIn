@@ -39,7 +39,6 @@ exports.getVagasByEmpresa = async (req, res) => {
   }
 };
 
-
 // Criar uma nova vaga
 exports.createVaga = async (req, res) => {
   try {
@@ -55,8 +54,8 @@ exports.createVaga = async (req, res) => {
     } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!empresa_id || !nome_vaga || !nome_empresa || !descricao || !tipo_vaga || !local_vaga || !categoria|| !salario) {
-      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios.' });
+    if (!empresa_id || !nome_vaga || !nome_empresa) {
+      return res.status(400).json({ message: 'Por favor, forneça os campos obrigatórios: empresa_id, nome_vaga e nome_empresa.' });
     }
 
     // Criar a vaga
@@ -66,13 +65,7 @@ exports.createVaga = async (req, res) => {
     await logsController.logCriacaoVaga(empresa_id, novaVaga.id, nome_vaga);
 
     // Criar notificação
-    await Notificacao.create({
-      candidaturas_id: 0,
-      empresas_id: empresa_id,
-      usuarios_id: 0,
-      mensagem_empresa: `Nova vaga criada: ${nome_vaga}`,
-      mensagem_usuario: null
-    });
+    await NotificacaoService.criarNotificacaoVagaCriada(empresa_id, novaVaga.id);
 
     return res.status(201).json(novaVaga);
   } catch (error) {
@@ -103,7 +96,7 @@ exports.updateVaga = async (req, res) => {
     // Buscar todas as candidaturas para esta vaga
     const candidaturas = await require('../models/Candidatura').findByVaga(id);
 
-    // Criar notificação para cada candidato
+    // Criar notificação para cada candidato e para a empresa
     for (const candidatura of candidaturas) {
       await NotificacaoService.criarNotificacaoVagaAtualizada(
         candidatura.id_usuario,
@@ -140,7 +133,7 @@ exports.deleteVaga = async (req, res) => {
       return res.status(404).json({ message: 'Vaga não encontrada' });
     }
 
-    // Criar notificação para cada candidato
+    // Criar notificação para cada candidato e para a empresa
     for (const candidatura of candidaturas) {
       await NotificacaoService.criarNotificacaoVagaExcluida(
         candidatura.id_usuario,

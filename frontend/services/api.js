@@ -1,25 +1,29 @@
 import axios from 'axios';
 
-// Criando uma instância do axios com configurações base
+// Criar instância do axios com configurações base
 const api = axios.create({
   baseURL: 'http://localhost:3001/api',
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Incluir cookies nas requisições
 });
 
-// Interceptor para requisições - adiciona o token de autenticação
+// Função para configurar o token de autenticação
+export const setAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
+
+// Interceptor para adicionar token em todas as requisições
 api.interceptors.request.use(
   (config) => {
-    // Verificar se estamos no navegador
-    if (typeof window !== 'undefined') {
-      // Obter o token do localStorage
-      const token = localStorage.getItem('authToken');
-      
-      // Se o token existir, adicionar ao cabeçalho de autorização
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -50,16 +54,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Função para salvar o token
-export const setAuthToken = (token) => {
-  if (token) {
-    localStorage.setItem('authToken', token);
-    return true;
-  } else {
-    localStorage.removeItem('authToken');
-    return false;
-  }
-};
 
 export default api;

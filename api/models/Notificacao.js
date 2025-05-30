@@ -39,14 +39,38 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    const { candidaturas_id, empresas_id, usuarios_id, mensagem, tipo } = notificacaoData;
-    
-    const [result] = await pool.query(
-      'INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem, tipo) VALUES (?, ?, ?, ?, ?)',
-      [candidaturas_id || null, empresas_id || null, usuarios_id, mensagem, tipo]
-    );
-    
-    return { id: result.insertId, ...notificacaoData };
+    try {
+      console.log('Dados recebidos para criar notificação:', notificacaoData);
+      
+      const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, status_candidatura } = notificacaoData;
+      
+      // Validação dos dados
+      if (!usuarios_id || !candidaturas_id || !empresas_id) {
+        throw new Error('Dados incompletos para criar notificação');
+      }
+
+      // Verificar se o usuário existe
+      const [usuario] = await pool.query('SELECT id FROM usuarios WHERE id = ?', [usuarios_id]);
+      if (!usuario || usuario.length === 0) {
+        throw new Error(`Usuário com ID ${usuarios_id} não encontrado`);
+      }
+
+      // Criar a notificação
+      const [result] = await pool.query(
+        'INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, status_candidatura) VALUES (?, ?, ?, ?, ?, ?)',
+        [candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, status_candidatura]
+      );
+      
+      console.log('Notificação criada com sucesso:', { id: result.insertId, ...notificacaoData });
+      
+      return { id: result.insertId, ...notificacaoData };
+    } catch (error) {
+      console.error('Erro ao criar notificação:', {
+        error: error.message,
+        data: notificacaoData
+      });
+      throw error;
+    }
   }
 
   // Marcar notificação como lida
@@ -69,7 +93,7 @@ class Notificacao {
 
   // Atualizar notificação
   static async update(id, notificacaoData) {
-    const { mensagem_usuario, mensagem_empresa } = notificacaoData;
+    const { mensagem_usuario, mensagem_empresa, status_candidatura } = notificacaoData;
     
     let query = 'UPDATE notificacao SET ';
     const values = [];
@@ -83,6 +107,11 @@ class Notificacao {
     if (mensagem_empresa !== undefined) {
       updateFields.push('mensagem_empresa = ?');
       values.push(mensagem_empresa);
+    }
+
+    if (status_candidatura !== undefined) {
+      updateFields.push('status_candidatura = ?');
+      values.push(status_candidatura);
     }
 
     if (updateFields.length === 0) {
@@ -99,23 +128,9 @@ class Notificacao {
 
   // Excluir notificação
   static async delete(id) {
-    try {
-      const notificacao = await this.findById(id);
-      if (!notificacao) {
-        return { affectedRows: 0, error: 'Notificação não encontrada' };
-      }
-      
-      const [result] = await pool.query('DELETE FROM notificacao WHERE id = ?', [id]);
-      
-      if (result.affectedRows === 0) {
-        return { affectedRows: 0, error: 'Falha ao excluir notificação' };
-      }
-      
-      return { affectedRows: result.affectedRows, success: true };
-    } catch (error) {
-      console.error('Erro no modelo ao excluir notificação:', error);
-      throw error;
-    }
+    const query = 'DELETE FROM notificacao WHERE id = ?';
+    const [result] = await pool.query(query, [id]);
+    return result;
   }
 }
 

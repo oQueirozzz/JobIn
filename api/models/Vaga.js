@@ -35,8 +35,10 @@ class Vaga {
 
   static async create(vagaData) {
     try {
+      console.log('Dados recebidos para criar vaga:', vagaData);
+      
       const [result] = await db.query(
-        'INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria, salario) VALUES (?, ?, ?, ?, ?, ?, ?,?)',
+        'INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria, salario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
           vagaData.empresa_id,
           vagaData.nome_vaga,
@@ -49,8 +51,10 @@ class Vaga {
         ]
       );
 
+      console.log('Vaga criada com sucesso:', { id: result.insertId, ...vagaData });
       return { id: result.insertId, ...vagaData };
     } catch (error) {
+      console.error('Erro ao criar vaga:', error);
       throw error;
     }
   }

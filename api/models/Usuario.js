@@ -65,7 +65,7 @@ class Usuario {
       });
 
       const [result] = await db.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados,tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)',
+        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           userData.nome,
           userData.email,
@@ -77,12 +77,9 @@ class Usuario {
           userData.formacao || null,
           userData.area_interesse || null,
           userData.foto || null,
-          userData.certificados || null,
-          userData.tipo
+          userData.certificados || null
         ]
       );
-
-      
 
       console.log('Usuário criado com ID:', result.insertId);
       return { id: result.insertId, ...userData, senha: undefined };

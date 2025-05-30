@@ -353,7 +353,7 @@ export default function Perfil() {
                 return;
             }
             
-            const isEmpresa = authInfo.type === 'company';
+            const isEmpresa = authInfo?.type === 'company';
             const apiUrl = isEmpresa 
                 ? `http://localhost:3001/api/empresas/${userId}`
                 : `http://localhost:3001/api/usuarios/atualizar`; // Rota corrigida
@@ -880,7 +880,7 @@ export default function Perfil() {
                                                                                 return;
                                                                             }
 
-                                                                            const isEmpresa = authInfo.type === 'company';
+                                                                            const isEmpresa = authInfo?.type === 'company';
                                                                             const apiUrl = isEmpresa 
                                                                                 ? `http://localhost:3001/api/empresas/${userId}`
                                                                                 : `http://localhost:3001/api/usuarios/atualizar`;

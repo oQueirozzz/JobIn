@@ -13,7 +13,7 @@ const pontosRotasRoutes = require('./routes/pontosRotas');
 const postsRoutes = require('./routes/posts');
 const path = require('path');
 const fs = require('fs');
-require('./jobs/notificacaoDiaria');
+require('./jobs/notificacaoTeste');
 
 const app = express();
 const PORT = process.env.PORT || 3001;

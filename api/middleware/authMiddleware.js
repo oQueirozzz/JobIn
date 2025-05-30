@@ -1,25 +1,54 @@
 const jwt = require('jsonwebtoken');
 
-// Middleware de autenticação simplificado
-// Esta versão permite acesso sem verificação de token
+// Middleware de autenticação
 exports.protect = (req, res, next) => {
-  // Versão simplificada que não verifica token
-  // Apenas passa para o próximo middleware
-  console.log('Middleware de autenticação: acesso permitido sem token');
-  
-  // Simula um usuário autenticado para manter compatibilidade com código existente
-  req.usuario = {
-    id: null,  // ID nulo para indicar que não há autenticação real
-    isAuthenticated: true  // Marca como autenticado para compatibilidade
-  };
-  
+  try {
+    // Obter o token do header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Token não fornecido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Token não fornecido' });
+    }
+
+    // Verificar o token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sua-chave-secreta');
+    
+    // Adicionar informações do usuário ao request
+    req.usuario = {
+      id: decoded.id,
+      type: decoded.type,
+      isAuthenticated: true
+    };
+
+    next();
+  } catch (error) {
+    console.error('Erro na autenticação:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Token inválido' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expirado' });
+    }
+    return res.status(500).json({ message: 'Erro na autenticação' });
+  }
+};
+
+// Middleware para verificar se é uma empresa
+exports.empresa = (req, res, next) => {
+  if (!req.usuario || req.usuario.type !== 'company') {
+    return res.status(403).json({ message: 'Acesso permitido apenas para empresas' });
+  }
   next();
 };
 
-// Função auxiliar para verificar se o usuário é uma empresa
-// Mantida para compatibilidade, mas sempre retorna verdadeiro
-exports.empresa = (req, res, next) => {
-  // Versão simplificada que não verifica se é empresa
-  console.log('Middleware de verificação de empresa: acesso permitido sem verificação');
+// Middleware para verificar se é um usuário
+exports.usuario = (req, res, next) => {
+  if (!req.usuario || req.usuario.type !== 'user') {
+    return res.status(403).json({ message: 'Acesso permitido apenas para usuários' });
+  }
   next();
 };

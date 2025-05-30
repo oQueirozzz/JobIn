@@ -14,7 +14,9 @@ import {
   LogOut,
   User,
   ChevronDown,
-  Settings
+  Settings,
+  Trash2,
+  Check
 } from "lucide-react";
 
 // Componente NavItem
@@ -77,6 +79,21 @@ export default function Header() {
       fetchNotifications();
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId, event) => {
+    event.stopPropagation();
+    try {
+      await fetch(`http://localhost:3001/api/notificacoes/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Erro ao excluir notificação:', error);
     }
   };
 
@@ -186,7 +203,7 @@ export default function Header() {
                   <div className="relative mt-2">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
                         {unreadCount}
                       </span>
                     )}
@@ -207,46 +224,60 @@ export default function Header() {
                         </button>
                       )}
                     </div>
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                        Nenhuma notificação não lida
-                      </div>
-                    ) : (
-                      notifications.map(notification => (
-                        <div
-                          key={notification.id}
-                          onClick={() => handleNotificationClick(notification.id)}
-                          className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-start">
-                            <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
-                              notification.tipo === 'PERFIL_VISITADO' ? 'bg-purple-500' :
-                              notification.tipo === 'CANDIDATURA_CRIADA' ? 'bg-blue-500' :
-                              notification.tipo === 'CANDIDATURA_REMOVIDA' ? 'bg-red-500' :
-                              notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
-                              notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
-                              notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
-                              'bg-gray-500'
-                            }`} />
-                            <div>
-                              <p className="text-sm">{notification.mensagem}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {new Date(notification.data_notificacao).toLocaleDateString('pt-BR', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Nenhuma notificação não lida
+                        </div>
+                      ) : (
+                        notifications.map(notification => (
+                          <div
+                            key={notification.id}
+                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start flex-1">
+                                <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
+                                  notification.tipo === 'PERFIL_VISITADO' ? 'bg-purple-500' :
+                                  notification.tipo === 'CANDIDATURA_CRIADA' ? 'bg-blue-500' :
+                                  notification.tipo === 'CANDIDATURA_REMOVIDA' ? 'bg-red-500' :
+                                  notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
+                                  notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
+                                  notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
+                                  'bg-gray-500'
+                                }`} />
+                                <div className="flex-1">
+                                  <p className="text-sm">{notification.mensagem}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(notification.data_notificacao).toLocaleDateString('pt-BR', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2 ml-2">
+                                <button
+                                  onClick={(e) => handleNotificationClick(notification.id)}
+                                  className="p-1 text-gray-400 hover:text-[#7B2D26] transition-colors"
+                                  title="Marcar como lida"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => handleDeleteNotification(notification.id, e)}
+                                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Excluir notificação"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
-                    )}
-                    <div className="px-4 py-2 border-t border-gray-100">
-                      <Link href="/notificacoes" className="text-[#7B2D26] text-sm font-medium hover:underline w-full text-center block">
-                        Ver todas as notificações
-                      </Link>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}

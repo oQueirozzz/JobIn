@@ -67,6 +67,7 @@ exports.registerEmpresa = async (req, res) => {
       usuarios_id: 0, // Sem usuário específico
       mensagem_empresa: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso.`,
       mensagem_usuario: null
+
       
     });
 

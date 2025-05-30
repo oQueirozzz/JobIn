@@ -82,11 +82,12 @@ CREATE TABLE `logs` (
 
 CREATE TABLE `notificacao` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`candidaturas_id` INTEGER,
-	`empresas_id` INTEGER,
+	`candidaturas_id` INTEGER NOT NULL,
+	`empresas_id` INTEGER NOT NULL,
     `usuarios_id` INTEGER NOT NULL,
-	`mensagem` VARCHAR(255) NOT NULL,
-	`tipo` ENUM('PERFIL_VISITADO', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA', 'VAGA_EXCLUIDA', 'VAGA_ATUALIZADA', 'SENHA_ALTERADA') NOT NULL,
+	`mensagem_usuario` VARCHAR(100),
+    `mensagem_empresa` VARCHAR(100),
+	`status_candidatura` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'),
 	`data_notificacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
 	`lida` BOOLEAN DEFAULT FALSE,
 	PRIMARY KEY(`id`)
@@ -217,7 +218,7 @@ BEGIN
         -- Inserir notificação
         INSERT INTO notificacao (
             candidaturas_id, empresas_id, usuarios_id, 
-            mensagem, tipo
+            mensagem_usuario, mensagem_empresa, status_candidatura
         )
         VALUES (
             NEW.id,
@@ -229,7 +230,13 @@ BEGIN
                 WHEN NEW.status = 'EM_ESPERA' THEN 'Sua candidatura está em análise.'
                 ELSE 'O status da sua candidatura foi atualizado.'
             END,
-            'CANDIDATURA_APROVADA'
+            CASE 
+                WHEN NEW.status = 'APROVADO' THEN 'Você aprovou uma candidatura.'
+                WHEN NEW.status = 'REJEITADO' THEN 'Você rejeitou uma candidatura.'
+                WHEN NEW.status = 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
+                ELSE 'Você atualizou o status de uma candidatura.'
+            END,
+            NEW.status
         );
     END IF;
 END$$
@@ -237,6 +244,67 @@ END$$
 DELIMITER ;
 -- Inserindo dados
 
+INSERT INTO empresas (nome, email, cnpj, senha, descricao, logo) VALUES
+('TechLight Soluções', 'contato@techlight.com', '12345678000100', 'senha123', 'Empresa especializada em soluções de tecnologia e automação.', 'logo_techlight.png'),
+('Oficina Ideal', 'oficina@ideal.com', '23456789000111', 'senha456', 'Oficina mecânica moderna com foco em inovação e qualidade.', 'logo_oficina.png'),
+('Gráfica PrintMais', 'contato@printmais.com', '34567890000122', 'senha789', 'Gráfica digital com serviços personalizados e impressão rápida.', 'logo_printmais.png');
+
+INSERT INTO usuarios (
+    nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, foto, certificados
+) VALUES
+(
+    'João da Silva', 
+    'joao.silva@email.com', 
+    'joao123', 
+    '12345678901', 
+    '1998-05-10', 
+    'HTML, CSS, JavaScript', 
+    'Desenvolvedor web júnior em busca de oportunidades.', 
+    'Técnico em Informática', 
+    'curriculo_joao.pdf', 
+    'Desenvolvimento Web', 
+    'joao.png', 
+    'certificado_frontend.pdf'
+),
+(
+    'Maria Oliveira', 
+    'maria.oliveira@email.com', 
+    'maria456', 
+    '23456789012', 
+    '1995-08-22', 
+    'Photoshop, Figma, Illustrator', 
+    'Designer com experiência em identidade visual e UI/UX.', 
+    'Design Gráfico', 
+    'curriculo_maria.pdf', 
+    'Design', 
+    'maria.png', 
+    'certificado_design.pdf'
+),
+(
+    'Carlos Souza', 
+    'carlos.souza@email.com', 
+    'carlos789', 
+    '34567890123', 
+    '1992-11-15', 
+    'Manutenção, Redes, Atendimento', 
+    'Técnico em manutenção com foco em suporte técnico.', 
+    'Redes de Computadores', 
+    'curriculo_carlos.pdf', 
+    'Suporte Técnico', 
+    'carlos.png', 
+    'certificado_redes.pdf'
+);
+
+
+INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria) VALUES
+(1, 'Desenvolvedor Frontend Júnior', 'TechLight Soluções', 'Atuar com desenvolvimento de interfaces web responsivas.', 'CLT', 'São Lucas do Oeste', 'TI'),
+(2, 'Auxiliar de Mecânica', 'Oficina Ideal', 'Auxílio em reparos e manutenção de veículos.', 'Estágio', 'São Lucas do Oeste', 'Mecânica'),
+(3, 'Designer Gráfico', 'Gráfica PrintMais', 'Criação de materiais gráficos para impressão e digital.', 'Freelancer', 'São Lucas do Oeste', 'Design');
+
+INSERT INTO candidaturas (id_usuario, id_vaga, curriculo_usuario) VALUES
+(1, 1, 'curriculo_joao.pdf'),  -- João se candidatou para Desenvolvedor Frontend
+(2, 3, 'curriculo_maria.pdf'), -- Maria se candidatou para Designer Gráfico
+(3, 2, 'curriculo_carlos.pdf'); -- Carlos se candidatou para Auxiliar de Mecânica
 
 select * from usuarios;
 select * from logs;

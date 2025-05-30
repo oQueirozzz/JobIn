@@ -70,6 +70,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, senha }),
+        credentials: 'include' // Incluir cookies na requisição
       });
 
       if (!response.ok) {
@@ -100,6 +101,8 @@ export function AuthProvider({ children }) {
       // Desativar o loader global em caso de erro
       setIsLoading(false);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,7 +138,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Hook personalizado para usar o contexto
+// Hook personalizado para usar o contexto de autenticação
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

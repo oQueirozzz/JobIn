@@ -90,12 +90,19 @@ export default function Vagas() {
     try {
       const parsed = JSON.parse(authData);
 
+      if (!parsed.id) {
+        mostrarMensagem('Erro ao obter dados do usuário.', 'error');
+        return;
+      }
+
       const candidaturaPayload = {
         id_usuario: parsed.id,
         id_vaga: vagaSelecionada.id,
         empresa_id: vagaSelecionada.empresa_id,
-        curriculo_usuario: parsed.curriculo || null,
+        curriculo_usuario: parsed.curriculo || null
       };
+
+      console.log('Enviando candidatura:', candidaturaPayload);
 
       const res = await fetch('http://localhost:3001/api/candidaturas', {
         method: 'POST',
@@ -105,15 +112,17 @@ export default function Vagas() {
         body: JSON.stringify(candidaturaPayload),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error('Erro ao enviar candidatura');
+        throw new Error(data.message || 'Erro ao enviar candidatura');
       }
 
       mostrarMensagem('Candidatura enviada com sucesso!', 'success');
       setCandidaturas(prev => [...prev, vagaSelecionada.id]);
     } catch (error) {
       console.error('Erro ao enviar candidatura:', error);
-      mostrarMensagem('Erro ao enviar candidatura. Tente novamente.', 'error');
+      mostrarMensagem(error.message || 'Erro ao enviar candidatura. Tente novamente.', 'error');
     }
   }
 
