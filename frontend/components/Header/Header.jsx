@@ -43,11 +43,56 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'vaga', message: 'Sua candidatura para Desenvolvedor Frontend foi aceita!', time: 'Há 2 horas' },
-    { id: 2, type: 'mensagem', message: 'Nova mensagem de Tech Solutions', time: 'Há 5 horas' },
-    { id: 3, type: 'sistema', message: 'Complete seu perfil para aumentar suas chances', time: 'Há 1 dia' }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (authInfo?.entity?.id) {
+      fetchNotifications();
+      // Atualizar notificações a cada 5 minutos
+      const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [authInfo?.entity?.id]);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/nao-lidas`);
+      const data = await response.json();
+      setNotifications(data);
+      setUnreadCount(data.length);
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notificationId) => {
+    try {
+      await fetch(`http://localhost:3001/api/notificacoes/${notificationId}/marcar-lida`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/marcar-todas-lidas`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Erro ao marcar todas as notificações como lidas:', error);
+    }
+  };
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -140,32 +185,64 @@ export default function Header() {
                 >
                   <div className="relative mt-2">
                     <Bell className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                      3
-                    </span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs mt-1">Notificações</span>
                 </div>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
-                    <div className="px-4 py-2 border-b border-gray-100">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                       <h3 className="font-semibold text-sm">Notificações</h3>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="text-[#7B2D26] text-xs hover:underline"
+                        >
+                          Marcar todas como lidas
+                        </button>
+                      )}
                     </div>
-                    {notifications.map(notification => (
-                      <div key={notification.id} className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
-                        <div className="flex items-start">
-                          <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${notification.type === 'vaga' ? 'bg-green-500' :
-                              notification.type === 'mensagem' ? 'bg-blue-500' :
-                                'bg-purple-500'
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Nenhuma notificação não lida
+                      </div>
+                    ) : (
+                      notifications.map(notification => (
+                        <div
+                          key={notification.id}
+                          onClick={() => handleNotificationClick(notification.id)}
+                          className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-start">
+                            <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
+                              notification.tipo === 'PERFIL_VISITADO' ? 'bg-purple-500' :
+                              notification.tipo === 'CANDIDATURA_CRIADA' ? 'bg-blue-500' :
+                              notification.tipo === 'CANDIDATURA_REMOVIDA' ? 'bg-red-500' :
+                              notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
+                              notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
+                              notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
+                              'bg-gray-500'
                             }`} />
-                          <div>
-                            <p className="text-sm">{notification.message}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                            <div>
+                              <p className="text-sm">{notification.mensagem}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(notification.data_notificacao).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                     <div className="px-4 py-2 border-t border-gray-100">
                       <Link href="/notificacoes" className="text-[#7B2D26] text-sm font-medium hover:underline w-full text-center block">
                         Ver todas as notificações
