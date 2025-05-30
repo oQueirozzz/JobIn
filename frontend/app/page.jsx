@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 import { useLoading } from './ClientLayout';
 
+
 export default function Feed() {
   const { logout, isAuthenticated, authInfo } = useAuth();
   const { isLoading, setIsLoading } = useLoading();
@@ -58,6 +59,7 @@ export default function Feed() {
 
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [vagas, setVagas] = useState([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -95,16 +97,23 @@ export default function Feed() {
         // Carregar vagas recomendadas apenas para usuários
         const carregarVagasRecomendadas = async () => {
           try {
-            const vagasSimuladas = [
-              { id: 1, empresa: 'TechSolutions', logo: '/placeholder.svg?height=48&width=48', titulo: 'Desenvolvedor Full Stack', local: 'São Paulo, SP', salario: 'R$ 6.000 - R$ 8.000', dataPublicacao: '2 dias atrás', requisitos: ['React', 'Node.js', 'MongoDB'] },
-              { id: 2, empresa: 'Inovação Digital', logo: '/placeholder.svg?height=48&width=48', titulo: 'UX/UI Designer', local: 'Remoto', salario: 'R$ 5.000 - R$ 7.000', dataPublicacao: '1 semana atrás', requisitos: ['Figma', 'Adobe XD', 'Pesquisa de usuário'] }
-            ];
-            setVagasRecomendadas(vagasSimuladas);
+            const res = await fetch("http://localhost:3001/api/vagas");
+            const data = await res.json();
+            setVagas(data);
+
+            const vagasAleatorias = data
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 2);
+
+            setVagas(vagasAleatorias);
           } catch (error) {
-            console.error('Erro ao carregar vagas recomendadas simuladas:', error);
+            console.error("Erro ao carregar vagas:", error);
           }
         };
+
+
         carregarVagasRecomendadas();
+
       } else {
         // Para empresas
         const camposObrigatorios = {
@@ -217,7 +226,7 @@ export default function Feed() {
                       <h2 className="font-semibold text-lg">Complete seu perfil</h2>
                       <p className="text-sm text-gray-500 mt-1">Aumente suas chances de conseguir uma vaga</p>
                     </div>
-                    <button 
+                    <button
                       onClick={handleCloseCompleteProfile}
                       className="text-gray-400 hover:text-gray-600"
                     >
@@ -232,7 +241,7 @@ export default function Feed() {
                       </div>
                     ))}
                   </div>
-                  <Link 
+                  <Link
                     href="/perfil"
                     className="mt-4 block text-center px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
                   >
@@ -243,47 +252,32 @@ export default function Feed() {
             )}
 
             {/* Vagas Recomendadas - Apenas para candidatos */}
-            {!isCompany && vagasRecomendadas.length > 0 && (
+            {!isCompany && vagas.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
                 <div className="p-4">
                   <h2 className="font-semibold mb-3">Vagas recomendadas</h2>
                   <div className="space-y-4">
-                    {vagasRecomendadas.map(vaga => (
-                      <div key={vaga.id} className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors">
+                    {vagas.map((vaga) => (
+                      <div
+                        key={vaga.id}
+                        className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors"
+                      >
                         <div className="flex items-start">
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mr-3">
-                            <Image
-                              src={vaga.logo}
-                              alt={vaga.empresa}
-                              width={32}
-                              height={32}
-                              className="rounded-lg"
-                            />
-                          </div>
                           <div className="flex-1">
-                            <h3 className="font-medium text-sm hover:text-[#7B2D26] transition-colors cursor-pointer">{vaga.titulo}</h3>
-                            <p className="text-xs text-gray-500 mt-1">{vaga.empresa}</p>
+                            <h3 className="font-medium text-2sm transition-colors cursor-pointer">
+                              {vaga.nome_vaga.length > 30 ? vaga.nome_vaga.slice(0, 80) + '...' : vaga.nome_vaga}
+                            </h3>
+                            <p className="text-sm text-[#7B2D26] mt-1">{vaga.nome_empresa}</p>
                             <div className="flex items-center text-xs text-gray-500 mt-2">
                               <span>{vaga.local}</span>
-                              <span className="mx-2">•</span>
-                              <span>{vaga.salario}</span>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {vaga.requisitos.map((req, index) => (
-                                <span 
-                                  key={index}
-                                  className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
-                                >
-                                  {req}
-                                </span>
-                              ))}
+                              <span>R${vaga.salario}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <Link 
+                  <Link
                     href="/vagas"
                     className="mt-4 block text-center text-sm text-[#7B2D26] hover:underline"
                   >
@@ -302,7 +296,7 @@ export default function Feed() {
                     <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
                       {getInitials(usuario.nome)}
                     </div>
-                    <button 
+                    <button
                       onClick={() => setShowCreatePost(true)}
                       className="flex-1 text-left px-4 py-3 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
                     >
@@ -322,7 +316,7 @@ export default function Feed() {
 
                 {news.slice(0, showMoreNews ? news.length : 3).map(item => (
                   <Link href={`/noticias/${item.id}`} key={item.id}>
-                    <NewsItem 
+                    <NewsItem
                       title={item.title}
                       info={item.info}
                       trending={item.trending}
@@ -330,7 +324,7 @@ export default function Feed() {
                   </Link>
                 ))}
 
-                <button 
+                <button
                   onClick={() => setShowMoreNews(!showMoreNews)}
                   className="text-gray-500 text-sm mt-3 flex items-center hover:text-[#7B2D26] transition-colors"
                 >
@@ -350,7 +344,7 @@ export default function Feed() {
                     <div className="w-12 h-12 rounded-full bg-[#7B2D26] text-white text-center text-xl font-bold leading-[3rem] mr-3">
                       {getInitials(usuario.nome)}
                     </div>
-                    <button 
+                    <button
                       onClick={() => setShowCreatePost(true)}
                       className="flex-1 text-left px-4 py-3 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
                     >
@@ -367,7 +361,7 @@ export default function Feed() {
                 <div className="bg-white rounded-xl w-full max-w-2xl mx-4">
                   <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="font-semibold">Criar publicação</h3>
-                    <button 
+                    <button
                       onClick={() => setShowCreatePost(false)}
                       className="text-gray-500 hover:text-gray-700"
                     >
@@ -411,13 +405,13 @@ export default function Feed() {
                     </div>
                   </div>
                   <div className="p-4 border-t border-gray-100 flex justify-end space-x-3">
-                    <button 
+                    <button
                       onClick={() => setShowCreatePost(false)}
                       className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                       Cancelar
                     </button>
-                    <button 
+                    <button
                       onClick={handleCreatePost}
                       className="px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
                     >
@@ -463,7 +457,7 @@ export default function Feed() {
                       <p className="text-gray-700 mb-4">{post.conteudo}</p>
                       {post.imagem && (
                         <div className="mb-4">
-                          <img 
+                          <img
                             src={`http://localhost:3001/${post.imagem}`}
                             alt="Post"
                             className="w-full rounded-lg"
@@ -471,13 +465,12 @@ export default function Feed() {
                         </div>
                       )}
                       <div className="flex items-center">
-                        <button 
+                        <button
                           onClick={() => handleLikePost(post.id)}
-                          className={`flex cursor-pointer items-center transition-all duration-300 ${
-                            likedPosts[post.id] 
-                              ? 'text-[#7B2D26] transform scale-110' 
-                              : 'text-gray-500 hover:text-[#7B2D26]'
-                          }`}
+                          className={`flex cursor-pointer items-center transition-all duration-300 ${likedPosts[post.id]
+                            ? 'text-[#7B2D26] transform scale-110'
+                            : 'text-gray-500 hover:text-[#7B2D26]'
+                            }`}
                         >
                           <ThumbsUp className={`w-5 h-5 mr-1 ${likedPosts[post.id] ? 'fill-[#7B2D26]' : ''}`} />
                           <span>{likedPosts[post.id] ? '1' : '0'}</span>
@@ -501,8 +494,8 @@ export default function Feed() {
                 </div>
                 <h2 className="font-semibold text-lg mt-3">{authInfo?.entity?.nome || 'Usuário'}</h2>
                 <p className="text-sm text-gray-600 mt-1">{authInfo?.entity?.formacao || 'Adicione sua formação'}</p>
-                
-                {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && ( 
+
+                {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && (
                   <div className="mt-4 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 border border-amber-100 text-left">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium">Perfil Incompleto</span>
@@ -511,8 +504,8 @@ export default function Feed() {
                       </span>
                     </div>
                     <div className="w-full bg-amber-200 rounded-full h-1.5">
-                      <div 
-                        className="bg-amber-600 h-1.5 rounded-full transition-all duration-300" 
+                      <div
+                        className="bg-amber-600 h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${((7 - camposFaltantes.length) / 7) * 100}%` }}
                       ></div>
                     </div>
@@ -524,7 +517,7 @@ export default function Feed() {
               </div>
             </div>
 
-           
+
           </div>
         </main>
       </div>
@@ -536,42 +529,8 @@ export default function Feed() {
   return null;
 }
 
-// Components
-function NavItem({ icon, label, active = false, count = null }) {
-  return (
-    <div
-      className={`flex flex-col items-center px-3 h-14 ${
-        active 
-          ? "text-[#7B2D26] border-b-2 border-[#7B2D26]" 
-          : "text-gray-500 hover:text-[#7B2D26] transition-colors"
-      }`}
-    >
-      <div className="relative mt-2">
-        {icon}
-        {count && (
-          <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-            {count}
-          </span>
-        )}
-      </div>
-      <span className="text-xs mt-1">{label}</span>
-    </div>
-  );
-}
 
-function SidebarItem({ icon, label, count = null }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors">
-      <div className="flex items-center">
-        {icon}
-        <span className="ml-2 text-sm">{label}</span>
-      </div>
-      {count && (
-        <span className="text-xs text-gray-500">{count}</span>
-      )}
-    </div>
-  );
-}
+
 
 function NewsItem({ title, info, trending = false }) {
   return (
