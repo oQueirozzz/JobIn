@@ -68,9 +68,9 @@ export default function HeroSection() {
             </div>
             
             <div className="mt-4 flex justify-center">
-              <button className="bg-[#7B2D26] text-white px-8 py-3 rounded-full font-medium hover:bg-[#7B2D26]/90 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <a href='/login' className="bg-[#7B2D26] text-white px-8 py-3 rounded-full font-medium hover:bg-[#7B2D26]/90 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                 Buscar Vagas
-              </button>
+              </a>
             </div>
           </div>
           
