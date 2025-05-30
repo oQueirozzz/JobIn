@@ -3,7 +3,7 @@ const pool = require('../config/db');
 class Notificacao {
   // Buscar todas as notificações
   static async findAll() {
-    const [rows] = await pool.query('SELECT * FROM notificacao ORDER BY id DESC');
+    const [rows] = await pool.query('SELECT * FROM notificacao ORDER BY data_notificacao DESC');
     return rows;
   }
 
@@ -15,7 +15,13 @@ class Notificacao {
 
   // Buscar notificações por usuário
   static async findByUsuario(usuarioId) {
-    const [rows] = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = ? ORDER BY id DESC', [usuarioId]);
+    const [rows] = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = ? ORDER BY data_notificacao DESC', [usuarioId]);
+    return rows;
+  }
+
+  // Buscar notificações não lidas por usuário
+  static async findNaoLidasByUsuario(usuarioId) {
+    const [rows] = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = ? AND lida = FALSE ORDER BY data_notificacao DESC', [usuarioId]);
     return rows;
   }
 
@@ -33,14 +39,32 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa } = notificacaoData;
+    const { candidaturas_id, empresas_id, usuarios_id, mensagem, tipo } = notificacaoData;
     
     const [result] = await pool.query(
-      'INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa) VALUES (?, ?, ?, ?, ?)',
-      [candidaturas_id, empresas_id, usuarios_id, mensagem_usuario || null, mensagem_empresa || null]
+      'INSERT INTO notificacao (candidaturas_id, empresas_id, usuarios_id, mensagem, tipo) VALUES (?, ?, ?, ?, ?)',
+      [candidaturas_id || null, empresas_id || null, usuarios_id, mensagem, tipo]
     );
     
     return { id: result.insertId, ...notificacaoData };
+  }
+
+  // Marcar notificação como lida
+  static async marcarComoLida(id) {
+    const [result] = await pool.query(
+      'UPDATE notificacao SET lida = TRUE WHERE id = ?',
+      [id]
+    );
+    return result.affectedRows > 0;
+  }
+
+  // Marcar todas as notificações do usuário como lidas
+  static async marcarTodasComoLidas(usuarioId) {
+    const [result] = await pool.query(
+      'UPDATE notificacao SET lida = TRUE WHERE usuarios_id = ?',
+      [usuarioId]
+    );
+    return result.affectedRows;
   }
 
   // Atualizar notificação
@@ -76,16 +100,13 @@ class Notificacao {
   // Excluir notificação
   static async delete(id) {
     try {
-      // Verificar se a notificação existe antes de tentar excluir
       const notificacao = await this.findById(id);
       if (!notificacao) {
         return { affectedRows: 0, error: 'Notificação não encontrada' };
       }
       
-      // Executar a exclusão
       const [result] = await pool.query('DELETE FROM notificacao WHERE id = ?', [id]);
       
-      // Verificar se a exclusão foi bem-sucedida
       if (result.affectedRows === 0) {
         return { affectedRows: 0, error: 'Falha ao excluir notificação' };
       }
@@ -93,7 +114,7 @@ class Notificacao {
       return { affectedRows: result.affectedRows, success: true };
     } catch (error) {
       console.error('Erro no modelo ao excluir notificação:', error);
-      throw error; // Propagar o erro para ser tratado no controlador
+      throw error;
     }
   }
 }

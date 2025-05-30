@@ -1,6 +1,7 @@
 const Vaga = require('../models/Vaga');
 const Notificacao = require('../models/Notificacao');
 const logsController = require('./logsController');
+const NotificacaoService = require('../services/notificacaoService');
 
 // Obter todas as vagas
 exports.getVagas = async (req, res) => {
@@ -83,10 +84,34 @@ exports.createVaga = async (req, res) => {
 // Atualizar uma vaga
 exports.updateVaga = async (req, res) => {
   try {
-    const result = await Vaga.update(req.params.id, req.body);
-    if (result.affectedRows === 0) {
+    const { id } = req.params;
+    const dadosAtualizados = req.body;
+
+    // Buscar a vaga antes de atualizar
+    const vaga = await Vaga.findById(id);
+    if (!vaga) {
       return res.status(404).json({ message: 'Vaga não encontrada' });
     }
+
+    // Atualizar a vaga
+    const resultado = await Vaga.update(id, dadosAtualizados);
+    
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ message: 'Vaga não encontrada' });
+    }
+
+    // Buscar todas as candidaturas para esta vaga
+    const candidaturas = await require('../models/Candidatura').findByVaga(id);
+
+    // Criar notificação para cada candidato
+    for (const candidatura of candidaturas) {
+      await NotificacaoService.criarNotificacaoVagaAtualizada(
+        candidatura.id_usuario,
+        vaga.empresa_id,
+        id
+      );
+    }
+
     res.status(200).json({ message: 'Vaga atualizada com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar vaga:', error);
@@ -97,10 +122,33 @@ exports.updateVaga = async (req, res) => {
 // Excluir uma vaga
 exports.deleteVaga = async (req, res) => {
   try {
-    const result = await Vaga.delete(req.params.id);
-    if (result.affectedRows === 0) {
+    const { id } = req.params;
+    
+    // Buscar a vaga antes de excluir
+    const vaga = await Vaga.findById(id);
+    if (!vaga) {
       return res.status(404).json({ message: 'Vaga não encontrada' });
     }
+
+    // Buscar todas as candidaturas para esta vaga
+    const candidaturas = await require('../models/Candidatura').findByVaga(id);
+
+    // Excluir a vaga
+    const resultado = await Vaga.delete(id);
+    
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ message: 'Vaga não encontrada' });
+    }
+
+    // Criar notificação para cada candidato
+    for (const candidatura of candidaturas) {
+      await NotificacaoService.criarNotificacaoVagaExcluida(
+        candidatura.id_usuario,
+        vaga.empresa_id,
+        id
+      );
+    }
+
     res.status(200).json({ message: 'Vaga excluída com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir vaga:', error);

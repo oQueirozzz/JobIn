@@ -82,12 +82,11 @@ CREATE TABLE `logs` (
 
 CREATE TABLE `notificacao` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`candidaturas_id` INTEGER NOT NULL,
-	`empresas_id` INTEGER NOT NULL,
+	`candidaturas_id` INTEGER,
+	`empresas_id` INTEGER,
     `usuarios_id` INTEGER NOT NULL,
-	`mensagem_usuario` VARCHAR(100),
-    `mensagem_empresa` VARCHAR(100),
-	`status_candidatura` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'),
+	`mensagem` VARCHAR(255) NOT NULL,
+	`tipo` ENUM('PERFIL_VISITADO', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA', 'VAGA_EXCLUIDA', 'VAGA_ATUALIZADA', 'SENHA_ALTERADA') NOT NULL,
 	`data_notificacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
 	`lida` BOOLEAN DEFAULT FALSE,
 	PRIMARY KEY(`id`)
@@ -218,7 +217,7 @@ BEGIN
         -- Inserir notificação
         INSERT INTO notificacao (
             candidaturas_id, empresas_id, usuarios_id, 
-            mensagem_usuario, mensagem_empresa, status_candidatura
+            mensagem, tipo
         )
         VALUES (
             NEW.id,
@@ -230,13 +229,7 @@ BEGIN
                 WHEN NEW.status = 'EM_ESPERA' THEN 'Sua candidatura está em análise.'
                 ELSE 'O status da sua candidatura foi atualizado.'
             END,
-            CASE 
-                WHEN NEW.status = 'APROVADO' THEN 'Você aprovou uma candidatura.'
-                WHEN NEW.status = 'REJEITADO' THEN 'Você rejeitou uma candidatura.'
-                WHEN NEW.status = 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
-                ELSE 'Você atualizou o status de uma candidatura.'
-            END,
-            NEW.status
+            'CANDIDATURA_APROVADA'
         );
     END IF;
 END$$

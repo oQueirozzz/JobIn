@@ -1,5 +1,7 @@
 const Usuario = require('../models/Usuario');
 const logsController = require('./logsController');
+const NotificacaoService = require('../services/notificacaoService');
+const bcrypt = require('bcrypt');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -268,6 +270,43 @@ exports.getPerfil = async (req, res) => {
     console.error('Erro ao buscar perfil do usuário:', error);
     // Retorna um usuário fictício para testes em caso de erro
     res.status(200).json({ message: 'Usuário de teste', nome: 'Usuário Teste', email: 'teste@exemplo.com' });
+  }
+};
+
+exports.updateSenha = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { senha_atual, nova_senha } = req.body;
+
+    // Buscar o usuário
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Verificar senha atual
+    const senhaCorreta = await bcrypt.compare(senha_atual, usuario.senha);
+    if (!senhaCorreta) {
+      return res.status(400).json({ message: 'Senha atual incorreta' });
+    }
+
+    // Criptografar nova senha
+    const senhaCriptografada = await bcrypt.hash(nova_senha, 10);
+
+    // Atualizar senha
+    const resultado = await Usuario.update(id, { senha: senhaCriptografada });
+    
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Criar notificação
+    await NotificacaoService.criarNotificacaoSenhaAlterada(id);
+
+    res.status(200).json({ message: 'Senha atualizada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao atualizar senha:', error);
+    res.status(500).json({ message: 'Erro ao atualizar senha' });
   }
 };
 

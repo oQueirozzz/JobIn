@@ -37,6 +37,17 @@ exports.getNotificacoesByUsuario = async (req, res) => {
   }
 };
 
+// Obter notificações não lidas por usuário
+exports.getNotificacoesNaoLidasByUsuario = async (req, res) => {
+  try {
+    const notificacoes = await Notificacao.findNaoLidasByUsuario(req.params.usuarioId);
+    res.status(200).json(notificacoes);
+  } catch (error) {
+    console.error('Erro ao buscar notificações não lidas:', error);
+    res.status(500).json({ message: 'Erro ao buscar notificações não lidas' });
+  }
+};
+
 // Obter notificações por empresa
 exports.getNotificacoesByEmpresa = async (req, res) => {
   try {
@@ -62,10 +73,10 @@ exports.getNotificacoesByCandidatura = async (req, res) => {
 // Criar nova notificação
 exports.createNotificacao = async (req, res) => {
   try {
-    const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa } = req.body;
+    const { candidaturas_id, empresas_id, usuarios_id, mensagem, tipo } = req.body;
     
     // Validação básica
-    if (!candidaturas_id || !empresas_id || !usuarios_id) {
+    if (!usuarios_id || !mensagem || !tipo) {
       return res.status(400).json({ message: 'Dados incompletos para criar notificação' });
     }
     
@@ -73,8 +84,8 @@ exports.createNotificacao = async (req, res) => {
       candidaturas_id,
       empresas_id,
       usuarios_id,
-      mensagem_usuario,
-      mensagem_empresa
+      mensagem,
+      tipo
     });
     
     // Registrar log da criação da notificação
@@ -84,7 +95,7 @@ exports.createNotificacao = async (req, res) => {
       acao: 'CRIAR',
       resourse: 'NOTIFICACAO',
       descricao: 'Notificação criada',
-      detalhes: { notificacao_id: notificacao.id }
+      detalhes: { notificacao_id: notificacao.id, tipo }
     });
     
     res.status(201).json(notificacao);
@@ -94,37 +105,36 @@ exports.createNotificacao = async (req, res) => {
   }
 };
 
-// Atualizar notificação
-exports.updateNotificacao = async (req, res) => {
+// Marcar notificação como lida
+exports.marcarComoLida = async (req, res) => {
   try {
-    const { mensagem_usuario, mensagem_empresa } = req.body;
     const notificacaoId = req.params.id;
+    const sucesso = await Notificacao.marcarComoLida(notificacaoId);
     
-    // Verificar se a notificação existe
-    const notificacaoExistente = await Notificacao.findById(notificacaoId);
-    if (!notificacaoExistente) {
+    if (!sucesso) {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
     
-    const resultado = await Notificacao.update(notificacaoId, {
-      mensagem_usuario,
-      mensagem_empresa
-    });
-    
-    // Registrar log da atualização
-    await Log.create({
-      usuario_id: notificacaoExistente.usuarios_id,
-      empresa_id: notificacaoExistente.empresas_id,
-      acao: 'ATUALIZAR',
-      resourse: 'NOTIFICACAO',
-      descricao: 'Notificação atualizada',
-      detalhes: { notificacao_id: notificacaoId }
-    });
-    
-    res.status(200).json(resultado);
+    res.status(200).json({ message: 'Notificação marcada como lida' });
   } catch (error) {
-    console.error('Erro ao atualizar notificação:', error);
-    res.status(500).json({ message: 'Erro ao atualizar notificação' });
+    console.error('Erro ao marcar notificação como lida:', error);
+    res.status(500).json({ message: 'Erro ao marcar notificação como lida' });
+  }
+};
+
+// Marcar todas as notificações do usuário como lidas
+exports.marcarTodasComoLidas = async (req, res) => {
+  try {
+    const usuarioId = req.params.usuarioId;
+    const quantidade = await Notificacao.marcarTodasComoLidas(usuarioId);
+    
+    res.status(200).json({ 
+      message: 'Notificações marcadas como lidas',
+      quantidade
+    });
+  } catch (error) {
+    console.error('Erro ao marcar notificações como lidas:', error);
+    res.status(500).json({ message: 'Erro ao marcar notificações como lidas' });
   }
 };
 
@@ -133,24 +143,19 @@ exports.deleteNotificacao = async (req, res) => {
   try {
     const notificacaoId = req.params.id;
     
-    // Verificar se a notificação existe
     const notificacaoExistente = await Notificacao.findById(notificacaoId);
     if (!notificacaoExistente) {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
     
-    // Armazenar os IDs antes de excluir a notificação
     const { usuarios_id, empresas_id } = notificacaoExistente;
     
-    // Tentar excluir a notificação
     const resultado = await Notificacao.delete(notificacaoId);
     
-    // Verificar se a exclusão foi bem-sucedida
     if (!resultado || resultado.affectedRows === 0) {
       return res.status(404).json({ message: 'Falha ao excluir notificação' });
     }
     
-    // Registrar log da exclusão apenas se a exclusão foi bem-sucedida
     await Log.create({
       usuario_id: usuarios_id,
       empresa_id: empresas_id,
