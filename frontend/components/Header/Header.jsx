@@ -133,14 +133,6 @@ export default function Header() {
 
               </div>
             </Link>
-            <div className="hidden md:block relative group">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-300 group-hover:text-white transition-colors" />
-              <input
-                type="text"
-                placeholder="Pesquisar vagas, pessoas, empresas..."
-                className="bg-white/10 text-white placeholder-gray-300 rounded-full pl-10 pr-4 py-2 w-72 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/20 transition-all duration-200"
-              />
-            </div>
           </div>
 
           {/* Menu Mobile Button */}
@@ -162,17 +154,17 @@ export default function Header() {
           <nav className="hidden md:flex items-center">
             <div className="flex items-center space-x-1">
               <NavItem
-                icon={<Home className="h-5 w-5" />}
+                icon={<Home className="h-5 w-5 mt-1" />}
                 label="Início"
                 href="/dashboard"
               />
               <NavItem
-                icon={<Briefcase className="h-5 w-5" />}
+                icon={<Briefcase className="h-5 w-5 mt-1" />}
                 label="Vagas"
                 href="/vagas"
               />
               <NavItem
-                icon={<MessageSquare className="h-5 w-5" />}
+                icon={<MessageSquare className="h-5 w-5 mt-1" />}
                 label="Mensagens"
                 href="/chat"
               />
