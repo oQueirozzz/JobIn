@@ -350,7 +350,14 @@ export default function Vagas() {
                   ${vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26]' : ''}`}
                 onClick={() => setVagaSelecionada(vaga)}
               >
-                <h1 className="font-bold text-3xl">{vaga.nome_vaga}</h1>
+                <h1 className="font-bold text-3xl flex justify-between">
+                  {vaga.nome_vaga}
+                  <div className="w-12 h-12 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                </h1>
                 <h2 className="text-xl text-[#7B2D26]">{vaga.nome_empresa}</h2>
                 <div className="flex flex-wrap pt-2 text-gray-700 text-xl gap-2">
 
@@ -373,9 +380,10 @@ export default function Vagas() {
                   Área<span className="pl-2 text-lg">{vaga.categoria}</span>
                 </div>
 
-                <div className="flex pt-2 text-gray-700 text-lg">
+                <div className="flex pt-2 text-lg text-gray-700">
                   <img src="/img/vagas/money.svg" alt="money" className="h-7 w-7 text-[#7B2D26] mr-2" />
-                  Salário <span className="pl-2 text-lg font-semibold">R${vaga.salario}</span>
+                  R$
+                  <span className=" text-lg font-semibold text-[#7B2D26] pl-2">{vaga.salario}</span>
                 </div>
                 <hr className="bg-red-900 h-0.5 my-3" />
                 <div>
@@ -409,7 +417,14 @@ export default function Vagas() {
         >
           {vagaSelecionada ? (
             <>
-              <h1 className="font-bold text-3xl md:text-4xl">{vagaSelecionada.nome_vaga}</h1>
+              <h1 className="font-bold text-3xl md:text-4xl flex justify-between">
+                {vagaSelecionada.nome_vaga}
+                <div className="w-12 h-12 bg-[#7B2D26]/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              </h1>
               <h2 className="text-xl md:text-2xl text-[#7B2D26]">{vagaSelecionada.nome_empresa}</h2>
               <div className="flex flex-wrap pt-2 text-gray-700 gap-2 text-sm md:text-lg">
 
@@ -433,8 +448,9 @@ export default function Vagas() {
               </div>
 
               <div className="flex pt-2 text-sm md:text-lg">
-                <img src="/img/vagas/money.svg" alt="money" className="h-7 w-7 text-[#7B2D26] mr-2" />
-                Salário<span className="pl-2 font-semibold">R${vagaSelecionada.salario}</span>
+                <img src="/img/vagas/money.svg" alt="money" className="h-7 w-7 text-gray-700 mr-2" />
+                R$
+                <span className=" text-[#7B2D26] font-semibold pl-2">{vagaSelecionada.salario}</span>
               </div>
               <hr className="bg-red-900 h-0.5 my-3" />
               <p className="text-justify text-sm md:text-base max-w-full break-words px-1 md:px-0 whitespace-pre-line">

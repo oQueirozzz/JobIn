@@ -257,27 +257,37 @@ export default function Feed() {
               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
                 <div className="p-4">
                   <h2 className="font-semibold mb-3">Vagas recomendadas</h2>
-                  <div className="space-y-4">
-                    {vagas.map((vaga) => (
-                      <div
-                        key={vaga.id}
-                        className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors"
-                      >
-                        <div className="flex items-start">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-2sm transition-colors cursor-pointer">
-                              {vaga.nome_vaga.length > 30 ? vaga.nome_vaga.slice(0, 80) + '...' : vaga.nome_vaga}
-                            </h3>
-                            <p className="text-sm text-[#7B2D26] mt-1">{vaga.nome_empresa}</p>
-                            <div className="flex items-center text-xs text-gray-500 mt-2">
-                              <span>{vaga.local}</span>
-                              <span>R${vaga.salario}</span>
+
+
+                  <Link href="/vagas">
+                    <div className="space-y-4 cursor-pointer">
+                      {vagas.map((vaga) => (
+                        <div
+                          key={vaga.id}
+                          className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors"
+                        >
+                          <div className="flex items-start">
+                            <div className="flex-1">
+                              <h3 className="font-medium text-2sm transition-colors cursor-pointer">
+                                {vaga.nome_vaga.length > 30 ? vaga.nome_vaga.slice(0, 80) + '...' : vaga.nome_vaga}
+                              </h3>
+                              <p className="text-sm text-[#7B2D26] ">{vaga.nome_empresa}</p>
+                              <span className="text-xs text-gray-500 flex mt-1">
+                                {vaga.local_vaga}
+                                <span className="text-[#7B2D26] pr-1 pl-1">|</span>
+                                <span>{vaga.tipo_vaga}</span>
+                              </span>
+                              <h3 className="text-xs mt-1">{vaga.categoria}</h3>
+                              <div className="flex items-center text-sm mt-1">
+                                R$
+                                <span className="   text-[#7B2D26]  text-sm pl-1" >{vaga.salario}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </Link>
                   <Link
                     href="/vagas"
                     className="mt-4 block text-center text-sm text-[#7B2D26] hover:underline"

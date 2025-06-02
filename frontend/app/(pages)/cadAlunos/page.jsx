@@ -102,7 +102,7 @@ export default function CadastroAlunos() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-            <div className="w-full max-w-4xl mb-10">
+            <div className="w-full max-w-4xl mb-10 mt-20">
                 {/* Logo e Título */}
                 <div className="flex flex-col items-center mb-8">
                     <h1 className="text-3xl font-bold text-[#7B2D26]">Comece sua jornada profissional</h1>
