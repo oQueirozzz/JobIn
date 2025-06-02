@@ -42,6 +42,7 @@ class Vaga {
         nome_vaga, 
         nome_empresa, 
         descricao, 
+        requisitos, 
         salario, 
         local_vaga, 
         tipo_vaga, 
@@ -55,9 +56,9 @@ class Vaga {
       
       const query = `
         INSERT INTO vagas (
-          empresa_id, nome_vaga, nome_empresa, descricao, 
+          empresa_id, nome_vaga, nome_empresa, descricao, requisitos, 
           salario, local_vaga, tipo_vaga, categoria, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,  'aberta')
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberta')
       `;
       
       const values = [
@@ -65,6 +66,7 @@ class Vaga {
         nome_vaga, 
         nome_empresa, 
         descricao || null, 
+        requisitos || null,
         salario || null, 
         local_vaga || null, 
         tipo_vaga || null, 

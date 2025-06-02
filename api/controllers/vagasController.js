@@ -51,6 +51,7 @@ exports.createVaga = async (req, res) => {
       local_vaga,
       categoria,
       salario,
+      requisitos
     } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
@@ -64,7 +65,7 @@ exports.createVaga = async (req, res) => {
     const novaVaga = await Vaga.create(req.body);
 
     // Registrar log de criação de vaga
-    // await logsController.logCriacaoVaga(empresa_id, novaVaga.id, nome_vaga);
+    await logsController.logCriacaoVaga(empresa_id, novaVaga.id, nome_vaga);
 
     // Criar notificação
     await NotificacaoService.criarNotificacaoVagaCriada(empresa_id, novaVaga.id);
