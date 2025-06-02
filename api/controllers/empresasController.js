@@ -1,5 +1,7 @@
 const Empresa = require('../models/Empresa');
 const logsController = require('./logsController');
+const Log = require('../models/Log');
+const Notificacao = require('../models/Notificacao');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -32,56 +34,93 @@ exports.getEmpresaById = async (req, res) => {
 // Registrar uma nova empresa
 exports.registerEmpresa = async (req, res) => {
   try {
-    const { nome, email, senha, cnpj } = req.body;
-    
-
-    // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!nome || !email || !senha || !cnpj) {
-      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
-    }
-
-    // Verificar se a empresa já existe
-    const empresaExistente = await Empresa.findByEmail(email);
-    if (empresaExistente) {
-      return res.status(400).json({ message: 'Este email já está em uso' });
-    }
-
-    // Criar a empresa
-    const novaEmpresa = await Empresa.create(req.body);
-    
-    // Registrar log de criação de empresa
-    await logsController.registrarLog(
-      0, // Sem usuário associado
-      novaEmpresa.id,
-      'CRIAR',
-      'EMPRESA',
-      `Nova empresa registrada: ${nome}`,
-      { empresa_id: novaEmpresa.id }
-    );
-    
-    // Criar notificação para a empresa
-    const Notificacao = require('../models/Notificacao');
-    await Notificacao.create({
-      candidaturas_id: 0, // Sem candidatura associada
-      empresas_id: novaEmpresa.id,
-      usuarios_id: 0, // Sem usuário específico
-      mensagem_empresa: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso.`,
-      mensagem_usuario: null
-
-      
+    console.log('Recebendo requisição de registro de empresa:', {
+      ...req.body,
+      senha: '[REDACTED]'
     });
 
-    // Versão simplificada sem token
-    res.status(201).json({
+    const { nome, email, senha, cnpj, descricao, local, tipo } = req.body;
+
+    // Validar campos obrigatórios
+    if (!nome || !email || !senha || !cnpj) {
+      console.error('Campos obrigatórios faltando:', {
+        nome: !nome,
+        email: !email,
+        senha: !senha,
+        cnpj: !cnpj
+      });
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error('Email inválido:', email);
+      return res.status(400).json({ error: 'Email inválido' });
+    }
+
+    // Validar formato do CNPJ
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+      console.error('CNPJ inválido:', cnpj);
+      return res.status(400).json({ error: 'CNPJ deve conter 14 dígitos' });
+    }
+
+    // Verificar se já existe uma empresa com o mesmo email
+    const empresaExistente = await Empresa.findByEmail(email.toLowerCase());
+    if (empresaExistente) {
+      console.error('Email já cadastrado:', email);
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+
+    // Criar nova empresa
+    console.log('Criando nova empresa...');
+    const novaEmpresa = await Empresa.create({
+      nome,
+      email: email.toLowerCase(),
+      senha,
+      cnpj: cnpjLimpo,
+      descricao: descricao || '',
+      local: local || '',
+      tipo: tipo || 'empresa'
+    });
+
+    console.log('Empresa criada com sucesso:', {
       id: novaEmpresa.id,
       nome: novaEmpresa.nome,
-      email: novaEmpresa.email,
-      autenticado: true,
-      tipo: 'empresa'
+      email: novaEmpresa.email
     });
+
+    // Registrar ação no log
+    await Log.create({
+      usuario_id: 0,
+      empresa_id: novaEmpresa.id,
+      acao: 'REGISTER',
+      resourse: 'empresas',
+      descricao: 'Registro de nova empresa',
+      detalhes: {
+        nome: novaEmpresa.nome,
+        email: novaEmpresa.email,
+        cnpj: novaEmpresa.cnpj
+      }
+    });
+
+    // Retornar dados da empresa (exceto senha)
+    const { senha: _, ...empresaSemSenha } = novaEmpresa;
+    res.status(201).json(empresaSemSenha);
   } catch (error) {
-    console.error('Erro ao registrar empresa:', error);
-    res.status(500).json({ message: 'Erro ao registrar empresa' });
+    console.error('Erro ao registrar empresa:', {
+      message: error.message,
+      stack: error.stack,
+      body: {
+        ...req.body,
+        senha: '[REDACTED]'
+      }
+    });
+    res.status(500).json({ 
+      error: 'Erro ao registrar empresa',
+      details: error.message 
+    });
   }
 };
 
@@ -159,67 +198,68 @@ exports.loginEmpresa = async (req, res) => {
 // Atualizar uma empresa
 exports.updateEmpresa = async (req, res) => {
   try {
-    console.log('ID da empresa recebido:', req.params.id);
-    console.log('Dados recebidos para atualização:', req.body);
+    const { id } = req.params;
+    const empresa = await Empresa.findById(id);
     
-    // Verificar se a empresa existe antes de tentar atualizar
-    const empresaExistente = await Empresa.findById(req.params.id);
-    console.log('Empresa existente:', empresaExistente);
-    
-    if (!empresaExistente) {
-      console.error('Empresa não encontrada com ID:', req.params.id);
-      return res.status(404).json({ message: 'Empresa não encontrada' });
+    if (!empresa) {
+      return res.status(404).json({ error: 'Empresa não encontrada' });
     }
-    
-    // Atualizar a empresa
-    console.log('Iniciando atualização da empresa...');
-    const result = await Empresa.update(req.params.id, req.body);
-    console.log('Resultado da atualização:', result);
+
+    const result = await Empresa.update(id, req.body);
     
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Empresa não encontrada' });
+      return res.status(400).json({ error: 'Nenhum campo foi atualizado' });
     }
-    
-    // Buscar os dados atualizados da empresa para retornar ao cliente
-    console.log('Buscando dados atualizados da empresa...');
-    const empresaAtualizada = await Empresa.findById(req.params.id);
-    console.log('Dados atualizados encontrados:', empresaAtualizada);
-    
-    if (!empresaAtualizada) {
-      return res.status(404).json({ message: 'Erro ao buscar dados atualizados da empresa' });
-    }
-    
-    // Registrar log de atualização de perfil
-    await logsController.logAtualizacaoPerfil(0, req.params.id, 'empresa');
-    
-    // Retornar os dados atualizados da empresa
-    res.status(200).json(empresaAtualizada);
+
+    // Registrar ação no log
+    await Log.create({
+      usuario_id: 0,
+      empresa_id: id,
+      acao: 'UPDATE',
+      tabela: 'empresas',
+      registro_id: id,
+      detalhes: req.body
+    });
+
+    res.json({ message: 'Empresa atualizada com sucesso' });
   } catch (error) {
-    console.error('Erro detalhado ao atualizar empresa:', error);
-    res.status(500).json({ message: 'Erro ao atualizar empresa', error: error.message });
+    console.error('Erro ao atualizar empresa:', error);
+    res.status(500).json({ error: 'Erro ao atualizar empresa' });
   }
 };
 
 // Excluir uma empresa
 exports.deleteEmpresa = async (req, res) => {
   try {
-    // Registrar log antes de excluir a empresa
-    await logsController.registrarLog(
-      0,
-      req.params.id,
-      'EXCLUIR',
-      'EMPRESA',
-      `Empresa excluída: ID ${req.params.id}`,
-      { empresa_id: req.params.id }
-    );
+    const { id } = req.params;
+    const empresa = await Empresa.findById(id);
     
-    const result = await Empresa.delete(req.params.id);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Empresa não encontrada' });
+    if (!empresa) {
+      return res.status(404).json({ error: 'Empresa não encontrada' });
     }
-    res.status(200).json({ message: 'Empresa excluída com sucesso' });
+
+    const result = await Empresa.delete(id);
+    
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ error: 'Erro ao excluir empresa' });
+    }
+
+    // Registrar ação no log
+    await Log.create({
+      usuario_id: 0,
+      empresa_id: id,
+      acao: 'DELETE',
+      tabela: 'empresas',
+      registro_id: id,
+      detalhes: {
+        nome: empresa.nome,
+        email: empresa.email
+      }
+    });
+
+    res.json({ message: 'Empresa excluída com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir empresa:', error);
-    res.status(500).json({ message: 'Erro ao excluir empresa' });
+    res.status(500).json({ error: 'Erro ao excluir empresa' });
   }
 };

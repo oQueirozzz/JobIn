@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 class Usuario {
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados FROM usuarios');
+      const [rows] = await db.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios');
       return rows;
     } catch (error) {
       throw error;
@@ -32,7 +32,7 @@ class Usuario {
       }
 
       const [rows] = await db.query(
-        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados FROM usuarios WHERE id = ?', 
+        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios WHERE id = ?', 
         [parseInt(id, 10)]
       );
       console.log('Resultado da consulta:', rows);
@@ -65,7 +65,7 @@ class Usuario {
       });
 
       const [result] = await db.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           userData.nome,
           userData.email,
@@ -76,6 +76,7 @@ class Usuario {
           userData.descricao || null,
           userData.formacao || null,
           userData.area_interesse || null,
+          userData.tipo || null,
           userData.foto || null,
           userData.certificados || null
         ]
@@ -141,6 +142,10 @@ class Usuario {
       if ('area_interesse' in userData) {
         updateFields.push('area_interesse = ?');
         values.push(userData.area_interesse);
+      }
+      if ('tipo' in userData) {
+        updateFields.push('tipo = ?');
+        values.push(userData.tipo);
       }
       if ('foto' in userData) {
         updateFields.push('foto = ?');

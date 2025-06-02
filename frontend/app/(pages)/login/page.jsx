@@ -33,12 +33,12 @@ export default function Login() {
 
       if (authType === 'company' && userData.cnpj) {
         localStorage.setItem('authEntity', JSON.stringify({
-          id: userData.cnpj,
+          id: userData.id,
           tipo: 'empresa'
         }));
       } else if (authType === 'user' && userData.cpf) {
         localStorage.setItem('authEntity', JSON.stringify({
-          id: userData.cpf,
+          id: userData.id,
           tipo: 'usuario'
         }));
       }

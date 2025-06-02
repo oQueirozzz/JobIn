@@ -35,24 +35,44 @@ class Vaga {
 
   static async create(vagaData) {
     try {
-      console.log('Dados recebidos para criar vaga:', vagaData);
+      const { 
+        empresa_id, 
+        nome_vaga, 
+        nome_empresa, 
+        descricao, 
+        requisitos, 
+        salario, 
+        local_vaga, 
+        tipo_vaga, 
+        categoria
+      } = vagaData;
       
-      const [result] = await db.query(
-        'INSERT INTO vagas (empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria, salario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          vagaData.empresa_id,
-          vagaData.nome_vaga,
-          vagaData.nome_empresa,
-          vagaData.descricao || null,
-          vagaData.tipo_vaga || null,
-          vagaData.local_vaga || null,
-          vagaData.categoria || null,
-          vagaData.salario || null
-        ]
+      const query = `
+        INSERT INTO vagas (
+          empresa_id, nome_vaga, nome_empresa, descricao, requisitos, 
+          salario, local_vaga, tipo_vaga, categoria
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      
+      const [result] = await db.execute(query, [
+        empresa_id, 
+        nome_vaga, 
+        nome_empresa, 
+        descricao || null, 
+        requisitos || null,
+        salario || null, 
+        local_vaga || null, 
+        tipo_vaga || null, 
+        categoria || null
+      ]);
+
+      // Buscar a vaga criada para retornar com todos os dados
+      const [vagaCriada] = await db.query(
+        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = ?',
+        [result.insertId]
       );
 
-      console.log('Vaga criada com sucesso:', { id: result.insertId, ...vagaData });
-      return { id: result.insertId, ...vagaData };
+      return vagaCriada[0];
     } catch (error) {
       console.error('Erro ao criar vaga:', error);
       throw error;
@@ -61,56 +81,23 @@ class Vaga {
 
   static async update(id, vagaData) {
     try {
-      let query = 'UPDATE vagas SET ';
-      const values = [];
-      const updateFields = [];
+      const { nome_vaga, descricao, requisitos, salario, local_vaga, tipo_vaga, status } = vagaData;
+      
+      const query = `
+        UPDATE vagas 
+        SET nome_vaga = ?, descricao = ?, requisitos = ?,
+            salario = ?, local_vaga = ?, tipo_vaga = ?, status = ?
+        WHERE id = ?
+      `;
+      
+      const [result] = await db.execute(query, [
+        nome_vaga, descricao, requisitos,
+        salario, local_vaga, tipo_vaga, status || 'aberta', id
+      ]);
 
-      // Adiciona apenas os campos que foram fornecidos para atualização
-      if (vagaData.empresa_id) {
-        updateFields.push('empresa_id = ?');
-        values.push(vagaData.empresa_id);
-      }
-      if (vagaData.nome_vaga) {
-        updateFields.push('nome_vaga = ?');
-        values.push(vagaData.nome_vaga);
-      }
-      if (vagaData.nome_empresa) {
-        updateFields.push('nome_empresa = ?');
-        values.push(vagaData.nome_empresa);
-      }
-      if (vagaData.descricao !== undefined) {
-        updateFields.push('descricao = ?');
-        values.push(vagaData.descricao);
-      }
-      if (vagaData.tipo_vaga !== undefined) {
-        updateFields.push('tipo_vaga = ?');
-        values.push(vagaData.tipo_vaga);
-      }
-      if (vagaData.local_vaga !== undefined) {
-        updateFields.push('local_vaga = ?');
-        values.push(vagaData.local_vaga);
-      }
-      if (vagaData.categoria !== undefined) {
-        updateFields.push('categoria = ?');
-        values.push(vagaData.categoria);
-      }
-
-      if (updateFields.length === 0) {
-        return { message: 'Nenhum campo para atualizar' };
-      }
-
-      if (vagaData.salario !== undefined) {
-        updateFields.push('salario = ?');
-        values.push(vagaData.salario);
-      }
-
-      query += updateFields.join(', ');
-      query += ' WHERE id = ?';
-      values.push(id);
-
-      const [result] = await db.query(query, values);
-      return { affectedRows: result.affectedRows };
+      return result.affectedRows > 0;
     } catch (error) {
+      console.error('Erro ao atualizar vaga:', error);
       throw error;
     }
   }

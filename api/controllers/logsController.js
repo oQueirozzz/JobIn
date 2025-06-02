@@ -14,19 +14,26 @@ exports.getLogs = async (req, res) => {
 // Função utilitária para registrar logs em qualquer parte do sistema
 exports.registrarLog = async (usuarioId, empresaId, acao, resource, descricao, detalhes) => {
   try {
+    console.log('Registrando log:', { usuarioId, empresaId, acao, resource, descricao, detalhes });
+    
     // Garantir que usuarioId seja um número válido ou 0 quando não disponível
     const usuario_id = usuarioId || 0;
     // Se empresaId for 0, usar NULL para evitar violação de chave estrangeira
     const empresa_id = empresaId === 0 ? null : empresaId;
     
-    return await Log.create({
+    const logData = {
       usuario_id,
       empresa_id,
       acao,
-      resourse: resource,
+      resource,
       descricao,
       detalhes
-    });
+    };
+
+    console.log('Dados do log a serem salvos:', logData);
+    const log = await Log.create(logData);
+    console.log('Log registrado com sucesso:', log);
+    return log;
   } catch (error) {
     console.error('Erro ao registrar log:', error);
     return null;

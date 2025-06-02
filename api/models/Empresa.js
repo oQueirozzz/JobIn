@@ -4,9 +4,10 @@ const bcrypt = require('bcryptjs');
 class Empresa {
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT id, nome, email, cnpj, descricao, logo FROM empresas');
+      const [rows] = await db.query('SELECT id, nome, email, cnpj, descricao, local, tipo, logo FROM empresas');
       return rows;
     } catch (error) {
+      console.error('Erro ao buscar empresas:', error);
       throw error;
     }
   }
@@ -14,11 +15,12 @@ class Empresa {
   static async findById(id) {
     try {
       const [rows] = await db.query(
-        'SELECT id, nome, email, cnpj, descricao, logo FROM empresas WHERE id = ?', 
+        'SELECT id, nome, email, cnpj, descricao, local, tipo, logo FROM empresas WHERE id = ?', 
         [id]
       );
       return rows[0];
     } catch (error) {
+      console.error('Erro ao buscar empresa por ID:', error);
       throw error;
     }
   }
@@ -28,31 +30,68 @@ class Empresa {
       const [rows] = await db.query('SELECT * FROM empresas WHERE email = ?', [email]);
       return rows[0];
     } catch (error) {
+      console.error('Erro ao buscar empresa por email:', error);
       throw error;
     }
   }
 
   static async create(empresaData) {
     try {
+      console.log('Iniciando criação de empresa com dados:', {
+        ...empresaData,
+        senha: '[REDACTED]'
+      });
+
+      // Validar campos obrigatórios
+      if (!empresaData.nome || !empresaData.email || !empresaData.senha || !empresaData.cnpj) {
+        throw new Error('Campos obrigatórios faltando');
+      }
+
       // Hash da senha
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(empresaData.senha, salt);
+      console.log('Senha hasheada com sucesso');
 
-      const [result] = await db.query(
-        'INSERT INTO empresas (nome, email, cnpj, senha, descricao, logo,tipo) VALUES (?, ?, ?, ?, ?, ?,?)',
-        [
-          empresaData.nome,
-          empresaData.email,
-          empresaData.cnpj,
-          hashedPassword,
-          empresaData.descricao || null,
-          empresaData.logo || null,
-          empresaData.tipo
-        ]
-      );
+      const query = `
+        INSERT INTO empresas (nome, email, cnpj, senha, descricao, local, tipo, logo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `;
 
-      return { id: result.insertId, ...empresaData, senha: undefined };
+      const values = [
+        empresaData.nome,
+        empresaData.email.toLowerCase(), // Converter email para minúsculo
+        empresaData.cnpj.replace(/\D/g, ''), // Remover caracteres não numéricos do CNPJ
+        hashedPassword,
+        empresaData.descricao || '',
+        empresaData.local || '',
+        empresaData.tipo || 'empresa',
+        empresaData.logo || ''
+      ];
+
+      console.log('Executando query com valores:', {
+        ...values,
+        senha: '[REDACTED]'
+      });
+
+      const [result] = await db.query(query, values);
+      console.log('Empresa inserida com sucesso, ID:', result.insertId);
+
+      // Buscar a empresa recém-criada
+      const novaEmpresa = await this.findById(result.insertId);
+      if (!novaEmpresa) {
+        throw new Error('Erro ao recuperar empresa após criação');
+      }
+
+      return novaEmpresa;
     } catch (error) {
+      console.error('Erro detalhado ao criar empresa:', {
+        message: error.message,
+        stack: error.stack,
+        data: {
+          ...empresaData,
+          senha: '[REDACTED]'
+        }
+      });
       throw error;
     }
   }
@@ -70,11 +109,11 @@ class Empresa {
       }
       if (empresaData.email) {
         updateFields.push('email = ?');
-        values.push(empresaData.email);
+        values.push(empresaData.email.toLowerCase());
       }
       if (empresaData.cnpj) {
         updateFields.push('cnpj = ?');
-        values.push(empresaData.cnpj);
+        values.push(empresaData.cnpj.replace(/\D/g, ''));
       }
       if (empresaData.senha) {
         const salt = await bcrypt.genSalt(10);
@@ -85,6 +124,14 @@ class Empresa {
       if (empresaData.descricao !== undefined) {
         updateFields.push('descricao = ?');
         values.push(empresaData.descricao);
+      }
+      if (empresaData.local !== undefined) {
+        updateFields.push('local = ?');
+        values.push(empresaData.local);
+      }
+      if (empresaData.tipo !== undefined) {
+        updateFields.push('tipo = ?');
+        values.push(empresaData.tipo);
       }
       if (empresaData.logo !== undefined) {
         updateFields.push('logo = ?');
@@ -102,6 +149,7 @@ class Empresa {
       const [result] = await db.query(query, values);
       return { affectedRows: result.affectedRows };
     } catch (error) {
+      console.error('Erro ao atualizar empresa:', error);
       throw error;
     }
   }
@@ -111,6 +159,7 @@ class Empresa {
       const [result] = await db.query('DELETE FROM empresas WHERE id = ?', [id]);
       return { affectedRows: result.affectedRows };
     } catch (error) {
+      console.error('Erro ao excluir empresa:', error);
       throw error;
     }
   }

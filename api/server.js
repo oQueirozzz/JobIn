@@ -31,10 +31,16 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Configurar pasta de uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Criar pasta de uploads se não existir
-const uploadsDir = path.join(__dirname, 'uploads', 'posts');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Criar pastas de uploads se não existirem
+const uploadsPostsDir = path.join(__dirname, 'uploads', 'posts');
+const uploadsUsuariosDir = path.join(__dirname, 'uploads', 'usuarios');
+
+if (!fs.existsSync(uploadsPostsDir)) {
+  fs.mkdirSync(uploadsPostsDir, { recursive: true });
+}
+
+if (!fs.existsSync(uploadsUsuariosDir)) {
+  fs.mkdirSync(uploadsUsuariosDir, { recursive: true });
 }
 
 // Rotas

@@ -197,7 +197,6 @@ exports.loginUsuario = async (req, res) => {
 // Atualizar um usuário
 exports.updateUsuario = async (req, res) => {
   try {
-    // Obter ID do usuário dos parâmetros da URL ou do corpo da requisição
     let userId = parseInt(req.params.id, 10);
     
     // Se não houver ID nos parâmetros (rota /atualizar), buscar no corpo
@@ -208,6 +207,7 @@ exports.updateUsuario = async (req, res) => {
     console.log('ID do usuário recebido:', userId);
     console.log('Tipo do ID:', typeof userId);
     console.log('Dados recebidos para atualização:', req.body);
+    console.log('Arquivos recebidos:', req.files);
     
     if (!userId || isNaN(userId)) {
       console.error('ID inválido:', req.params.id || req.body.id);
@@ -223,9 +223,25 @@ exports.updateUsuario = async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     
+    // Preparar dados para atualização
+    const dadosAtualizacao = { ...req.body };
+    
+    // Processar arquivos enviados
+    if (req.files) {
+      if (req.files.foto && req.files.foto[0]) {
+        dadosAtualizacao.foto = req.files.foto[0].path.replace(/\\/g, '/');
+      }
+      if (req.files.curriculo && req.files.curriculo[0]) {
+        dadosAtualizacao.curriculo = req.files.curriculo[0].path.replace(/\\/g, '/');
+      }
+      if (req.files.certificados && req.files.certificados[0]) {
+        dadosAtualizacao.certificados = req.files.certificados[0].path.replace(/\\/g, '/');
+      }
+    }
+    
     // Atualizar o usuário
     console.log('Iniciando atualização do usuário...');
-    const result = await Usuario.update(userId, req.body);
+    const result = await Usuario.update(userId, dadosAtualizacao);
     console.log('Resultado da atualização:', result);
     
     if (result.affectedRows === 0) {

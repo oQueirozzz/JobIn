@@ -59,7 +59,11 @@ export default function Header() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/nao-lidas`);
+      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/nao-lidas`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
       const data = await response.json();
       setNotifications(data);
       setUnreadCount(data.length);
@@ -74,6 +78,7 @@ export default function Header() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
       });
       fetchNotifications();
@@ -89,6 +94,7 @@ export default function Header() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
       });
       fetchNotifications();
@@ -103,6 +109,7 @@ export default function Header() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
       });
       fetchNotifications();

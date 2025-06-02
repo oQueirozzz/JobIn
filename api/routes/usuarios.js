@@ -3,6 +3,44 @@ const router = express.Router();
 const usuariosController = require('../controllers/usuariosController');
 const db = require('../config/db');
 const { Resend } = require('resend');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configuração do Multer para upload de arquivos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '..', 'uploads', 'usuarios');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB
+  },
+  fileFilter: function (req, file, cb) {
+    // Permitir imagens para foto de perfil
+    if (file.fieldname === 'foto' && file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    }
+    // Permitir PDFs para currículo e certificados
+    else if ((file.fieldname === 'curriculo' || file.fieldname === 'certificados') && file.mimetype === 'application/pdf') {
+      cb(null, true);
+    }
+    else {
+      cb(new Error('Tipo de arquivo não permitido'), false);
+    }
+  }
+});
 
 // Middleware de autenticação simplificado
 const authMiddleware = (req, res, next) => {
@@ -17,8 +55,16 @@ router.get('/:id', usuariosController.getUsuarioById);
 
 // Rotas de perfil
 router.get('/perfil', usuariosController.getPerfil);
-router.put('/atualizar', usuariosController.updateUsuario); // Nova rota para atualização de perfil
-router.put('/:id', usuariosController.updateUsuario);
+router.put('/atualizar', upload.fields([
+  { name: 'foto', maxCount: 1 },
+  { name: 'curriculo', maxCount: 1 },
+  { name: 'certificados', maxCount: 1 }
+]), usuariosController.updateUsuario); // Nova rota para atualização de perfil com upload
+router.put('/:id', upload.fields([
+  { name: 'foto', maxCount: 1 },
+  { name: 'curriculo', maxCount: 1 },
+  { name: 'certificados', maxCount: 1 }
+]), usuariosController.updateUsuario);
 router.delete('/:id', usuariosController.deleteUsuario);
 
 // Inicializar o Resend para envio de emails

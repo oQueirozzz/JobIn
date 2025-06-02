@@ -95,6 +95,45 @@ export default function Perfil() {
         }
     };
 
+    // Função para converter base64 em File
+    const base64ToFile = (base64String, filename) => {
+        return new Promise((resolve, reject) => {
+            try {
+                // Extrair o tipo MIME e os dados base64
+                const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                if (!matches || matches.length !== 3) {
+                    reject(new Error('Formato inválido de base64'));
+                    return;
+                }
+
+                const mimeType = matches[1];
+                const base64Data = matches[2];
+
+                // Converter base64 para blob
+                const byteCharacters = atob(base64Data);
+                const byteArrays = [];
+
+                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                    const slice = byteCharacters.slice(offset, offset + 512);
+                    const byteNumbers = new Array(slice.length);
+                    
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i);
+                    }
+                    
+                    const byteArray = new Uint8Array(byteNumbers);
+                    byteArrays.push(byteArray);
+                }
+
+                const blob = new Blob(byteArrays, { type: mimeType });
+                const file = new File([blob], filename, { type: mimeType });
+                resolve(file);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
     // Função para comprimir imagem
     const compressImage = (base64String, maxWidth = 800) => {
         return new Promise((resolve, reject) => {
@@ -358,7 +397,7 @@ export default function Perfil() {
                 ? `http://localhost:3001/api/empresas/${userId}`
                 : `http://localhost:3001/api/usuarios/atualizar`; // Rota corrigida
 
-            // Incluir todos os dados do formulário, incluindo arquivos
+            // Preparar dados para envio
             const dadosParaEnviar = { ...formData };
             
             // Para usuários, incluir o ID no corpo da requisição
@@ -385,16 +424,63 @@ export default function Perfil() {
                 return;
             }
 
-            console.log('URL:', apiUrl, 'ID:', userId, 'Body:', dadosFiltrados);
+            // Verificar se há arquivos para upload
+            const hasFiles = dadosFiltrados.foto?.startsWith?.('data:') || 
+                           dadosFiltrados.curriculo?.startsWith?.('data:') || 
+                           dadosFiltrados.certificados?.startsWith?.('data:');
 
-            const response = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(dadosFiltrados)
-            });
+            let response;
+            
+            if (hasFiles) {
+                // Usar FormData para upload de arquivos
+                const formDataToSend = new FormData();
+                
+                // Adicionar campos de texto
+                Object.keys(dadosFiltrados).forEach(key => {
+                    if (key !== 'foto' && key !== 'curriculo' && key !== 'certificados') {
+                        formDataToSend.append(key, dadosFiltrados[key] || '');
+                    }
+                });
+                
+                // Converter base64 para File e adicionar ao FormData
+                if (dadosFiltrados.foto?.startsWith?.('data:')) {
+                    const fotoFile = await base64ToFile(dadosFiltrados.foto, 'foto.jpg');
+                    formDataToSend.append('foto', fotoFile);
+                }
+                
+                if (dadosFiltrados.curriculo?.startsWith?.('data:')) {
+                    const curriculoFile = await base64ToFile(dadosFiltrados.curriculo, 'curriculo.pdf');
+                    formDataToSend.append('curriculo', curriculoFile);
+                }
+                
+                if (dadosFiltrados.certificados?.startsWith?.('data:')) {
+                    const certificadosFile = await base64ToFile(dadosFiltrados.certificados, 'certificados.pdf');
+                    formDataToSend.append('certificados', certificadosFile);
+                }
+                
+                console.log('Enviando com FormData:', Array.from(formDataToSend.entries()));
+                
+                response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                        // Não definir Content-Type para FormData
+                    },
+                    body: formDataToSend
+                });
+            } else {
+                // Usar JSON para dados sem arquivos
+                console.log('Enviando com JSON:', dadosFiltrados);
+                
+                response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dadosFiltrados)
+                });
+            }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -407,9 +493,19 @@ export default function Perfil() {
             // Criar um objeto atualizado combinando os dados existentes com os retornados pelo servidor
             const updatedEntity = {
                 ...authInfo.entity,
-                ...dadosFiltrados,  // Mantém os dados enviados (incluindo arquivos em base64)
-                ...dadosAtualizados // Sobrescreve com dados do servidor quando disponíveis
+                ...dadosAtualizados // Usar dados do servidor como prioridade
             };
+            
+            // Para arquivos, manter a versão base64 local se o servidor não retornou o caminho
+            if (dadosFiltrados.foto?.startsWith?.('data:') && !updatedEntity.foto) {
+                updatedEntity.foto = dadosFiltrados.foto;
+            }
+            if (dadosFiltrados.curriculo?.startsWith?.('data:') && !updatedEntity.curriculo) {
+                updatedEntity.curriculo = dadosFiltrados.curriculo;
+            }
+            if (dadosFiltrados.certificados?.startsWith?.('data:') && !updatedEntity.certificados) {
+                updatedEntity.certificados = dadosFiltrados.certificados;
+            }
 
             // Atualizar o localStorage
             localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
@@ -444,10 +540,8 @@ export default function Perfil() {
             // Mostrar mensagem de sucesso
             showMessage('Perfil atualizado com sucesso!', 'success');
 
-            // Forçar uma atualização da página para garantir que as alterações sejam exibidas
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // Forçar re-render do componente para mostrar as mudanças imediatamente
+            // Removido o reload da página para melhor UX
 
         } catch (error) {
             console.error('Erro ao atualizar perfil:', error);

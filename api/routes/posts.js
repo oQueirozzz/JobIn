@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
     `;
 
     const [posts] = await db.execute(query);
-    res.json(posts);
+    res.json(Array.isArray(posts) ? posts : []);
   } catch (error) {
     console.error('Erro ao buscar posts:', error);
     res.status(500).json({ error: 'Erro ao buscar posts' });

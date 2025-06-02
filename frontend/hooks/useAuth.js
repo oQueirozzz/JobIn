@@ -79,10 +79,13 @@ export function AuthProvider({ children }) {
       }
 
       const data = await response.json();
+      console.log('Resposta do login:', data);
+      
       const { token } = data;
       const entity = authType === 'user' ? data.usuario : data.empresa;
 
       if (!token || !entity) {
+        console.error('Dados de login inválidos:', { token: !!token, entity: !!entity, data });
         throw new Error('Dados de login inválidos');
       }
 

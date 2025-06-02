@@ -12,21 +12,28 @@ export default function CriarVaga() {
 
   useEffect(() => {
     const authData = localStorage.getItem('authEntity');
-
+    console.log('Dados de autenticação:', authData);
 
     if (authData) {
       try {
         const parsed = JSON.parse(authData);
+        console.log('Dados parseados:', parsed);
         if (parsed?.id) {
           setEmpresaId(parsed.id);
+          console.log('ID da empresa definido:', parsed.id);
         } else {
           setMensagem('ID da empresa não encontrado nos dados de autenticação.');
           setTipoMensagem('erro');
         }
       } catch (error) {
+        console.error('Erro ao interpretar dados de autenticação:', error);
         setMensagem('Erro ao interpretar os dados de autenticação.');
         setTipoMensagem('erro');
       }
+    } else {
+      console.log('Nenhum dado de autenticação encontrado');
+      setMensagem('Dados de autenticação não encontrados. Faça login novamente.');
+      setTipoMensagem('erro');
     }
   }, []);
 
@@ -44,28 +51,34 @@ export default function CriarVaga() {
     setTipoMensagem('');
 
     const formData = new FormData(event.target);
+    console.log('Empresa ID:', empresaId);
 
     const dadosVagas = {
-      empresa_id: empresaId,
+      empresa_id: parseInt(empresaId),
       nome_vaga: formData.get('nome'),
       nome_empresa: formData.get('nome_empresa'),
       descricao: formData.get('descricao'),
-      tipo_vaga: formData.get('tipo_vaga'),
+      requisitos: formData.get('requisitos'),
+      salario: formData.get('salario'),
       local_vaga: formData.get('local_vaga'),
-      categoria: formData.get('categoria'),
-      salario: formData.get('salario')
+      tipo_vaga: formData.get('tipo_vaga'),
+      categoria: formData.get('categoria')
     };
+
+    console.log('Dados da vaga a serem enviados:', dadosVagas);
 
     try {
       const response = await fetch('http://localhost:3001/api/vagas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify(dadosVagas),
       });
 
       const data = await response.json();
+      console.log('Resposta do servidor:', data);
 
       if (response.ok) {
         setTipoMensagem('sucesso');
@@ -76,9 +89,10 @@ export default function CriarVaga() {
         }, 1500);
       } else {
         setTipoMensagem('erro');
-        setMensagem(data.message || data.mensagem || 'Erro ao criar vaga.');
+        setMensagem(data.error || data.message || 'Erro ao criar vaga.');
       }
     } catch (error) {
+      console.error('Erro na requisição:', error);
       setTipoMensagem('erro');
       setMensagem(`Erro ao conectar com o servidor: ${error.message}`);
     } finally {
@@ -255,6 +269,25 @@ export default function CriarVaga() {
               className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
             >
               Descrição da vaga
+            </label>
+          </div>
+
+          <div className="relative z-0 w-full mb-5 group">
+            <textarea
+              name="requisitos"
+              id="requisitos"
+              maxLength="500"
+              rows="3"
+              required
+              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
+              placeholder=" "
+              disabled={carregando}
+            ></textarea>
+            <label
+              htmlFor="requisitos"
+              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
+            >
+              Requisitos da vaga
             </label>
           </div>
 

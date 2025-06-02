@@ -7,7 +7,11 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'jobin',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  maxAllowedPacket: 1073741824, // 1GB
+  acquireTimeout: 60000,
+  timeout: 60000,
+  reconnect: true
 });
 
-module.exports = pool; 
+module.exports = pool;

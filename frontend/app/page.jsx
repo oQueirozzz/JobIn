@@ -142,9 +142,10 @@ export default function Feed() {
       try {
         const response = await fetch('http://localhost:3001/api/posts');
         const data = await response.json();
-        setPosts(data);
+        setPosts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Erro ao carregar posts:', error);
+        setPosts([]);
       } finally {
         setIsLoadingPosts(false);
       }

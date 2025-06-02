@@ -42,7 +42,8 @@ CREATE TABLE `vagas` (
 	`tipo_vaga` VARCHAR(30),
 	`local_vaga` VARCHAR(50),
 	`categoria` VARCHAR(50),
-    `salario` VARCHAR(255),
+    `requisitos` text,
+    `salario` varchar (255),
 	PRIMARY KEY(`id`)
 );
 
@@ -310,5 +311,5 @@ select * from usuarios;
 select * from logs;
 select * from candidaturas;
 select * from empresas;
-
+ALTER TABLE vagas ADD COLUMN status VARCHAR(20) DEFAULT 'aberta';
 ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;

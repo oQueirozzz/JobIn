@@ -192,26 +192,23 @@ class NotificacaoService {
   }
 
   // Notificação de vaga criada
-  static async criarNotificacaoVagaCriada(empresaId, vagaId) {
+  static async criarNotificacaoVagaCriada(empresa_id, vaga_id) {
     try {
-      const vaga = await Vaga.findById(vagaId);
+      const vaga = await Vaga.findById(vaga_id);
       if (!vaga) {
         throw new Error('Vaga não encontrada');
       }
 
-      const empresa = await Empresa.findById(empresaId);
-      if (!empresa) {
-        throw new Error('Empresa não encontrada');
-      }
-      
-      return await Notificacao.create({
+      const notificacao = {
+        candidaturas_id: 0,
+        empresas_id: empresa_id,
         usuarios_id: 0,
-        empresas_id: empresaId,
-        candidaturas_id: vagaId,
         mensagem_usuario: null,
-        mensagem_empresa: `Você criou uma nova vaga: "${vaga.nome_vaga}"`,
+        mensagem_empresa: `Nova vaga "${vaga.nome_vaga}" criada com sucesso!`,
         status_candidatura: 'PENDENTE'
-      });
+      };
+
+      return await Notificacao.create(notificacao);
     } catch (error) {
       console.error('Erro ao criar notificação de vaga criada:', error);
       throw error;

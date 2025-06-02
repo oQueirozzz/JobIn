@@ -22,10 +22,39 @@ export default function CadastroEmpresas() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        if (name === 'cnpj') {
+            // Remove caracteres não numéricos
+            const cnpjLimpo = value.replace(/\D/g, '');
+            
+            // Limita a 14 dígitos
+            const cnpjLimitado = cnpjLimpo.slice(0, 14);
+            
+            // Formata o CNPJ enquanto digita
+            let cnpjFormatado = cnpjLimitado;
+            if (cnpjLimitado.length > 2) {
+                cnpjFormatado = cnpjLimitado.slice(0, 2) + '.' + cnpjLimitado.slice(2);
+            }
+            if (cnpjLimitado.length > 5) {
+                cnpjFormatado = cnpjFormatado.slice(0, 6) + '.' + cnpjFormatado.slice(6);
+            }
+            if (cnpjLimitado.length > 8) {
+                cnpjFormatado = cnpjFormatado.slice(0, 10) + '/' + cnpjFormatado.slice(10);
+            }
+            if (cnpjLimitado.length > 12) {
+                cnpjFormatado = cnpjFormatado.slice(0, 15) + '-' + cnpjFormatado.slice(15);
+            }
+            
+            setFormData(prev => ({
+                ...prev,
+                [name]: cnpjFormatado
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -47,6 +76,23 @@ export default function CadastroEmpresas() {
         }
 
         try {
+            // Formatar o CNPJ para ter 14 dígitos (adicionar zeros à esquerda se necessário)
+            const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
+            if (cnpjLimpo.length !== 14) {
+                setError('CNPJ deve conter 14 dígitos');
+                setIsLoading(false);
+                return;
+            }
+
+            console.log('Enviando dados para registro:', {
+                nome: formData.nome,
+                email: formData.email,
+                cnpj: cnpjLimpo,
+                local: formData.local || '',
+                descricao: formData.descricao,
+                tipo: 'empresa'
+            });
+
             const response = await fetch('http://localhost:3001/api/empresas/register', {
                 method: 'POST',
                 headers: {
@@ -56,22 +102,19 @@ export default function CadastroEmpresas() {
                     nome: formData.nome,
                     email: formData.email,
                     senha: formData.senha,
-                    cnpj: formData.cnpj,
-                    local: formData.local,
-                    descricao: formData.descricao
+                    cnpj: cnpjLimpo,
+                    local: formData.local || '',
+                    descricao: formData.descricao,
+                    tipo: 'empresa'
                 })
             });
 
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                console.error('Erro ao processar resposta do servidor:', jsonError);
-                throw new Error('Erro ao processar resposta do servidor. Verifique se o servidor está rodando.');
-            }
+            const data = await response.json();
+            console.log('Resposta do servidor:', data);
+            console.log('Status da resposta:', response.status);
 
             if (!response.ok) {
-                throw new Error(data.message || 'Erro ao cadastrar empresa');
+                throw new Error(data.error || 'Erro ao cadastrar empresa');
             }
 
             setSuccess('Cadastro realizado com sucesso! Redirecionando...');
@@ -81,18 +124,21 @@ export default function CadastroEmpresas() {
                     throw new Error('Email e senha são obrigatórios para login');
                 }
 
-                await login(formData.email, formData.senha, 'company');
+                await login(formData.email, formData.senha, 'empresa');
                 setTimeout(() => {
                     router.push('/');
                 }, 1500);
             } catch (loginError) {
                 console.error('Erro no login automático:', loginError);
-                setError(loginError.message || 'Erro durante o login automático');
-                router.push('/login');
+                // Não mostrar erro se o cadastro foi bem-sucedido
+                setSuccess('Cadastro realizado com sucesso! Redirecionando para o login...');
+                setTimeout(() => {
+                    router.push('/login');
+                }, 2000);
             }
         } catch (error) {
             console.error('Erro detalhado:', error);
-            setError(error.message || 'Erro ao cadastrar empresa. Verifique se o servidor está rodando.');
+            setError(error.message || 'Erro ao cadastrar empresa');
         } finally {
             setIsLoading(false);
         }
@@ -173,7 +219,7 @@ export default function CadastroEmpresas() {
                                             </svg>
                                         </div>
                                         <input
-                                            type="number"
+                                            type="text"
                                             id="cnpj"
                                             name="cnpj"
                                             required
@@ -181,7 +227,6 @@ export default function CadastroEmpresas() {
                                             onChange={handleChange}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             placeholder="00.000.000/0000-00"
-                                            maxLength={13}
                                         />
                                     </div>
                                 </div>

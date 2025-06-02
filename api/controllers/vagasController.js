@@ -50,12 +50,15 @@ exports.createVaga = async (req, res) => {
       tipo_vaga,
       local_vaga,
       categoria,
-      salario
+      salario,
+      requisitos
     } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!empresa_id || !nome_vaga || !nome_empresa) {
-      return res.status(400).json({ message: 'Por favor, forneça os campos obrigatórios: empresa_id, nome_vaga e nome_empresa.' });
+    if (!empresa_id || !nome_vaga || !nome_empresa || !tipo_vaga || !local_vaga || !categoria) {
+      return res.status(400).json({ 
+        message: 'Por favor, forneça todos os campos obrigatórios: empresa_id, nome_vaga, nome_empresa, tipo_vaga, local_vaga e categoria.' 
+      });
     }
 
     // Criar a vaga
