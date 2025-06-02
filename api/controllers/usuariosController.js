@@ -36,80 +36,64 @@ exports.getUsuarioById = async (req, res) => {
   }
 };
 
-// Registrar um novo usuário
+// Registrar usuário
 exports.registerUsuario = async (req, res) => {
   try {
-    const { nome, email, senha, cpf, data_nascimento, formacao, area_interesse, habilidades, descricao } = req.body;
-    
-    console.log('Dados recebidos no registro:', { ...req.body, senha: '[PROTEGIDA]' });
+    const { nome, email, senha, cpf, local, descricao } = req.body;
 
-    // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!nome || !email || !senha || !cpf || !data_nascimento) {
-      console.log('Campos obrigatórios faltando:', { nome: !!nome, email: !!email, senha: !!senha, cpf: !!cpf, data_nascimento: !!data_nascimento });
-      return res.status(400).json({ message: 'Por favor, forneça todos os campos obrigatórios' });
+    // Validar campos obrigatórios
+    if (!nome || !email || !senha || !cpf) {
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
 
-    // Verificar se o email é válido
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: 'Email inválido' });
-    }
-
-    // Verificar se o CPF é válido (apenas formato básico)
-    if (cpf.length !== 11 || !/^\d+$/.test(cpf)) {
-      return res.status(400).json({ message: 'CPF inválido' });
-    }
-
-    // Verificar se o usuário já existe
+    // Verificar se o email já está em uso
     const usuarioExistente = await Usuario.findByEmail(email);
     if (usuarioExistente) {
-      return res.status(400).json({ message: 'Este email já está em uso' });
+      return res.status(400).json({ message: 'Email já está em uso' });
+    }
+
+    // Verificar se o CPF já está em uso
+    const cpfExistente = await Usuario.findByCPF(cpf);
+    if (cpfExistente) {
+      return res.status(400).json({ message: 'CPF já está em uso' });
     }
 
     // Criar o usuário
-    const novoUsuario = await Usuario.create({
+    const usuario = await Usuario.create({
       nome,
       email,
       senha,
       cpf,
-      data_nascimento,
-      formacao,
-      area_interesse,
-      habilidades,
-      descricao
-    });
-    
-    // Registrar log de criação de usuário
-    await logsController.registrarLog(
-      novoUsuario.id,
-      0, // Sem empresa associada
-      'CRIAR',
-      'USUARIO',
-      `Novo usuário registrado: ${nome}`,
-      { usuario_id: novoUsuario.id }
-    );
-    
-    // Criar notificação para o usuário
-    const Notificacao = require('../models/Notificacao');
-    await Notificacao.create({
-      candidaturas_id: 0, // Sem candidatura associada
-      empresas_id: 0, // Sem empresa associada
-      usuarios_id: novoUsuario.id,
-      mensagem_empresa: null,
-      mensagem_usuario: `Bem-vindo ao JobIn! Sua conta foi criada com sucesso. Comece a buscar vagas agora mesmo!`
+      local,
+      descricao,
+      tipo: 'usuario'
     });
 
-    // Retornar dados do usuário criado (sem a senha)
+    // Criar notificação de senha alterada
+    await NotificacaoService.criarNotificacaoSenhaAlterada(usuario.id, 0, false);
+
+    // Registrar log sem empresa (usando 0 como ID do sistema)
+    await logsController.registrarLog(
+      usuario.id,
+      0, // ID do sistema
+      'CRIAR',
+      'USUARIO',
+      `Usuário "${nome}" criado`,
+      { usuario_id: usuario.id }
+    );
+
     res.status(201).json({
-      id: novoUsuario.id,
-      nome: novoUsuario.nome,
-      email: novoUsuario.email,
-      autenticado: true,
-      tipo: 'usuario'
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      cpf: usuario.cpf,
+      local: usuario.local,
+      descricao: usuario.descricao,
+      tipo: usuario.tipo
     });
   } catch (error) {
     console.error('Erro ao registrar usuário:', error);
-    res.status(500).json({ message: 'Erro ao registrar usuário. Por favor, tente novamente.' });
+    res.status(500).json({ message: 'Erro ao registrar usuário' });
   }
 };
 

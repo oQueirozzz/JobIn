@@ -52,6 +52,16 @@ class Usuario {
     }
   }
 
+  static async findByCPF(cpf) {
+    try {
+      const [rows] = await db.query('SELECT * FROM usuarios WHERE cpf = ?', [cpf]);
+      return rows[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário por CPF:', error);
+      throw error;
+    }
+  }
+
   static async create(userData) {
     try {
       // Hash da senha
@@ -64,6 +74,9 @@ class Usuario {
         senha: '[PROTEGIDA]'
       });
 
+      // Definir data_nascimento padrão se não fornecida
+      const dataNascimento = userData.data_nascimento || '2000-01-01';
+
       const [result] = await db.query(
         'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
@@ -71,12 +84,12 @@ class Usuario {
           userData.email,
           hashedPassword,
           userData.cpf,
-          userData.data_nascimento,
+          dataNascimento,
           userData.habilidades || null,
           userData.descricao || null,
           userData.formacao || null,
           userData.area_interesse || null,
-          userData.tipo || null,
+          userData.tipo || 'usuario',
           userData.foto || null,
           userData.certificados || null
         ]

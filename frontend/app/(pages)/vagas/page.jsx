@@ -12,6 +12,8 @@ export default function Vagas() {
   const [candidaturas, setCandidaturas] = useState([]);
   const [mensagem, setMensagem] = useState(null);
   const [isCandidato, setIsCandidato] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [candidaturaToRemove, setCandidaturaToRemove] = useState(null);
 
   const detalhesRef = useRef(null);
 
@@ -102,8 +104,6 @@ export default function Vagas() {
         curriculo_usuario: parsed.curriculo || null
       };
 
-      console.log('Enviando candidatura:', candidaturaPayload);
-
       const res = await fetch('http://localhost:3001/api/candidaturas', {
         method: 'POST',
         headers: {
@@ -115,7 +115,14 @@ export default function Vagas() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Erro ao enviar candidatura');
+        if (data.error === 'LIMITE_EXCEDIDO') {
+          mostrarMensagem(data.message, 'error');
+        } else if (data.error === 'CANDIDATURA_ATIVA_EXISTENTE') {
+          mostrarMensagem(data.message, 'error');
+        } else {
+          throw new Error(data.message || 'Erro ao enviar candidatura');
+        }
+        return;
       }
 
       mostrarMensagem('Candidatura enviada com sucesso!', 'success');
@@ -138,23 +145,48 @@ export default function Vagas() {
       const parsed = JSON.parse(authData);
       const usuarioId = parsed.id;
 
-      const res = await fetch('http://localhost:3001/api/candidaturas', {
+      // Primeiro, buscar a candidatura para obter o ID
+      const resCandidatura = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
+      if (!resCandidatura.ok) {
+        throw new Error('Erro ao buscar candidatura');
+      }
+
+      const candidaturas = await resCandidatura.json();
+      const candidatura = candidaturas.find(c => c.id_vaga === vagaSelecionada.id);
+
+      if (!candidatura) {
+        throw new Error('Candidatura não encontrada');
+      }
+
+      // Mostrar modal de confirmação
+      setCandidaturaToRemove(candidatura);
+      setShowConfirmModal(true);
+    } catch (error) {
+      console.error('Erro ao buscar candidatura:', error);
+      mostrarMensagem('Erro ao buscar candidatura. Tente novamente.', 'error');
+    }
+  }
+
+  async function confirmarRemocaoCandidatura() {
+    try {
+      const res = await fetch(`http://localhost:3001/api/candidaturas/${candidaturaToRemove.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          id_usuario: usuarioId,
-          id_vaga: vagaSelecionada.id,
-        }),
+        body: JSON.stringify({ confirmacao: true })
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error('Erro ao remover candidatura');
+        throw new Error(data.message || 'Erro ao remover candidatura');
       }
 
       mostrarMensagem('Candidatura removida com sucesso!', 'success');
       setCandidaturas(prev => prev.filter(id => id !== vagaSelecionada.id));
+      setShowConfirmModal(false);
+      setCandidaturaToRemove(null);
     } catch (error) {
       console.error('Erro ao remover candidatura:', error);
       mostrarMensagem('Erro ao remover candidatura. Tente novamente.', 'error');
@@ -172,6 +204,78 @@ export default function Vagas() {
 
   return (
     <section className="bg-gray-50 flex flex-col items-center min-h-screen">
+      {/* Mensagem de erro/sucesso */}
+      {mensagem && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-in-out ${
+          mensagem.tipo === 'error' 
+            ? 'bg-white border-l-4 border-red-500 text-red-700' 
+            : mensagem.tipo === 'success' 
+            ? 'bg-white border-l-4 border-green-500 text-green-700'
+            : 'bg-white border-l-4 border-blue-500 text-blue-700'
+        }`}>
+          <div className="flex items-center">
+            {mensagem.tipo === 'error' ? (
+              <svg className="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : mensagem.tipo === 'success' ? (
+              <svg className="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <div>
+              <p className="font-semibold">
+                {mensagem.tipo === 'error' ? 'Atenção!' : 
+                 mensagem.tipo === 'success' ? 'Sucesso!' : 'Informação'}
+              </p>
+              <p className="text-sm mt-1">{mensagem.texto}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-in-out">
+            <div className="flex items-center mb-4">
+              <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Confirmar Remoção</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Tem certeza que deseja remover sua candidatura para a vaga <span className="font-semibold text-gray-800">"{vagaSelecionada?.nome_vaga}"</span>?
+              Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setCandidaturaToRemove(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-300 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarRemocaoCandidatura}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 font-medium flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Confirmar Remoção
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filtros */}
       <div className="w-11/12 md:w-9/12 bg-white rounded-xl shadow-sm mt-5 border border-gray-100 flex flex-col md:flex-row items-center justify-around p-4 gap-4">
         <div className="flex flex-col w-full md:w-1/3 px-2 md:px-0">

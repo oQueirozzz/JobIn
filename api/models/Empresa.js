@@ -35,6 +35,16 @@ class Empresa {
     }
   }
 
+  static async findByCNPJ(cnpj) {
+    try {
+      const [rows] = await db.query('SELECT * FROM empresas WHERE cnpj = ?', [cnpj]);
+      return rows[0];
+    } catch (error) {
+      console.error('Erro ao buscar empresa por CNPJ:', error);
+      throw error;
+    }
+  }
+
   static async create(empresaData) {
     try {
       console.log('Iniciando criação de empresa com dados:', {

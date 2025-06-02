@@ -2,6 +2,7 @@ const Notificacao = require('../models/Notificacao');
 const Usuario = require('../models/Usuario');
 const Vaga = require('../models/Vaga');
 const Empresa = require('../models/Empresa');
+const logsController = require('../controllers/logsController');
 
 class NotificacaoService {
   // Notificação de perfil visitado
@@ -192,23 +193,34 @@ class NotificacaoService {
   }
 
   // Notificação de vaga criada
-  static async criarNotificacaoVagaCriada(empresa_id, vaga_id) {
+  static async criarNotificacaoVagaCriada(empresaId, vagaId) {
     try {
-      const vaga = await Vaga.findById(vaga_id);
+      // Buscar a vaga para obter o nome
+      const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
         throw new Error('Vaga não encontrada');
       }
 
-      const notificacao = {
+      // Criar notificação para a empresa
+      await Notificacao.create({
         candidaturas_id: 0,
-        empresas_id: empresa_id,
-        usuarios_id: 0,
+        empresas_id: empresaId,
+        usuarios_id: 0, // Usando 0 como ID padrão para notificações do sistema
         mensagem_usuario: null,
         mensagem_empresa: `Nova vaga "${vaga.nome_vaga}" criada com sucesso!`,
-        status_candidatura: 'PENDENTE'
-      };
+        status_candidatura: 'PENDENTE',
+        lida: false
+      });
 
-      return await Notificacao.create(notificacao);
+      // Registrar log
+      await logsController.registrarLog(
+        0, // Sem usuário
+        empresaId,
+        'CRIAR',
+        'VAGA',
+        `Vaga "${vaga.nome_vaga}" criada`,
+        { vaga_id: vagaId }
+      );
     } catch (error) {
       console.error('Erro ao criar notificação de vaga criada:', error);
       throw error;

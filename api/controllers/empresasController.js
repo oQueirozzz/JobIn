@@ -2,6 +2,7 @@ const Empresa = require('../models/Empresa');
 const logsController = require('./logsController');
 const Log = require('../models/Log');
 const Notificacao = require('../models/Notificacao');
+const notificacaoService = require('../services/notificacaoService');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -34,93 +35,61 @@ exports.getEmpresaById = async (req, res) => {
 // Registrar uma nova empresa
 exports.registerEmpresa = async (req, res) => {
   try {
-    console.log('Recebendo requisição de registro de empresa:', {
-      ...req.body,
-      senha: '[REDACTED]'
-    });
-
-    const { nome, email, senha, cnpj, descricao, local, tipo } = req.body;
+    const { nome, email, senha, cnpj, local, descricao } = req.body;
 
     // Validar campos obrigatórios
     if (!nome || !email || !senha || !cnpj) {
-      console.error('Campos obrigatórios faltando:', {
-        nome: !nome,
-        email: !email,
-        senha: !senha,
-        cnpj: !cnpj
-      });
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
 
-    // Validar formato do email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      console.error('Email inválido:', email);
-      return res.status(400).json({ error: 'Email inválido' });
-    }
-
-    // Validar formato do CNPJ
-    const cnpjLimpo = cnpj.replace(/\D/g, '');
-    if (cnpjLimpo.length !== 14) {
-      console.error('CNPJ inválido:', cnpj);
-      return res.status(400).json({ error: 'CNPJ deve conter 14 dígitos' });
-    }
-
-    // Verificar se já existe uma empresa com o mesmo email
-    const empresaExistente = await Empresa.findByEmail(email.toLowerCase());
+    // Verificar se o email já está em uso
+    const empresaExistente = await Empresa.findByEmail(email);
     if (empresaExistente) {
-      console.error('Email já cadastrado:', email);
-      return res.status(400).json({ error: 'Email já cadastrado' });
+      return res.status(400).json({ message: 'Email já está em uso' });
     }
 
-    // Criar nova empresa
-    console.log('Criando nova empresa...');
-    const novaEmpresa = await Empresa.create({
+    // Verificar se o CNPJ já está em uso
+    const cnpjExistente = await Empresa.findByCNPJ(cnpj);
+    if (cnpjExistente) {
+      return res.status(400).json({ message: 'CNPJ já está em uso' });
+    }
+
+    // Criar a empresa
+    const empresa = await Empresa.create({
       nome,
-      email: email.toLowerCase(),
+      email,
       senha,
-      cnpj: cnpjLimpo,
-      descricao: descricao || '',
-      local: local || '',
-      tipo: tipo || 'empresa'
+      cnpj,
+      local,
+      descricao,
+      tipo: 'empresa'
     });
 
-    console.log('Empresa criada com sucesso:', {
-      id: novaEmpresa.id,
-      nome: novaEmpresa.nome,
-      email: novaEmpresa.email
-    });
+    // Criar notificação de senha alterada
+    await notificacaoService.criarNotificacaoSenhaAlterada(0, empresa.id, true);
 
-    // Registrar ação no log
-    await Log.create({
-      usuario_id: 0,
-      empresa_id: novaEmpresa.id,
-      acao: 'REGISTER',
-      resourse: 'empresas',
-      descricao: 'Registro de nova empresa',
-      detalhes: {
-        nome: novaEmpresa.nome,
-        email: novaEmpresa.email,
-        cnpj: novaEmpresa.cnpj
-      }
-    });
+    // Registrar log sem usuário (usando 0 como ID do sistema)
+    await logsController.registrarLog(
+      0, // ID do sistema
+      empresa.id,
+      'CRIAR',
+      'EMPRESA',
+      `Empresa "${nome}" criada`,
+      { empresa_id: empresa.id }
+    );
 
-    // Retornar dados da empresa (exceto senha)
-    const { senha: _, ...empresaSemSenha } = novaEmpresa;
-    res.status(201).json(empresaSemSenha);
+    res.status(201).json({
+      id: empresa.id,
+      nome: empresa.nome,
+      email: empresa.email,
+      cnpj: empresa.cnpj,
+      local: empresa.local,
+      descricao: empresa.descricao,
+      tipo: empresa.tipo
+    });
   } catch (error) {
-    console.error('Erro ao registrar empresa:', {
-      message: error.message,
-      stack: error.stack,
-      body: {
-        ...req.body,
-        senha: '[REDACTED]'
-      }
-    });
-    res.status(500).json({ 
-      error: 'Erro ao registrar empresa',
-      details: error.message 
-    });
+    console.error('Erro ao registrar empresa:', error);
+    res.status(500).json({ message: 'Erro ao registrar empresa' });
   }
 };
 

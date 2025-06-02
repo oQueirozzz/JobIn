@@ -147,6 +147,27 @@ static async delete(id) {
   }
 }
 
+static async countCandidaturasByUsuarioEVaga(id_usuario, id_vaga) {
+  try {
+    // Contar candidaturas ativas
+    const [candidaturasAtivas] = await db.query(
+      'SELECT COUNT(*) as total FROM candidaturas WHERE id_usuario = ? AND id_vaga = ?',
+      [id_usuario, id_vaga]
+    );
+
+    // Contar candidaturas removidas
+    const [candidaturasRemovidas] = await db.query(
+      'SELECT COUNT(*) as total FROM candidaturas_removidas WHERE id_usuario = ? AND id_vaga = ?',
+      [id_usuario, id_vaga]
+    );
+
+    // Retornar a soma total
+    return candidaturasAtivas[0].total + candidaturasRemovidas[0].total;
+  } catch (error) {
+    throw error;
+  }
+}
+
 }
 
 

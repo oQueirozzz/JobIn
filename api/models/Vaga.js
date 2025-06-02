@@ -35,6 +35,8 @@ class Vaga {
 
   static async create(vagaData) {
     try {
+      console.log('Dados recebidos para criar vaga:', vagaData);
+      
       const { 
         empresa_id, 
         nome_vaga, 
@@ -46,15 +48,20 @@ class Vaga {
         tipo_vaga, 
         categoria
       } = vagaData;
+
+      // Validar campos obrigatórios
+      if (!empresa_id || !nome_vaga || !nome_empresa) {
+        throw new Error('Campos obrigatórios faltando: empresa_id, nome_vaga, nome_empresa');
+      }
       
       const query = `
         INSERT INTO vagas (
           empresa_id, nome_vaga, nome_empresa, descricao, requisitos, 
-          salario, local_vaga, tipo_vaga, categoria
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          salario, local_vaga, tipo_vaga, categoria, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberta')
       `;
       
-      const [result] = await db.execute(query, [
+      const values = [
         empresa_id, 
         nome_vaga, 
         nome_empresa, 
@@ -64,7 +71,12 @@ class Vaga {
         local_vaga || null, 
         tipo_vaga || null, 
         categoria || null
-      ]);
+      ];
+
+      console.log('Executando query com valores:', values);
+
+      const [result] = await db.query(query, values);
+      console.log('Vaga criada com sucesso, ID:', result.insertId);
 
       // Buscar a vaga criada para retornar com todos os dados
       const [vagaCriada] = await db.query(
@@ -74,7 +86,11 @@ class Vaga {
 
       return vagaCriada[0];
     } catch (error) {
-      console.error('Erro ao criar vaga:', error);
+      console.error('Erro detalhado ao criar vaga:', {
+        message: error.message,
+        stack: error.stack,
+        data: vagaData
+      });
       throw error;
     }
   }

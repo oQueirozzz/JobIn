@@ -105,6 +105,16 @@ CREATE TABLE `posts` (
     FOREIGN KEY (`empresa_id`) REFERENCES `empresas`(`id`) ON DELETE CASCADE
 );
 
+-- Tabela para histórico de candidaturas removidas
+CREATE TABLE IF NOT EXISTS candidaturas_removidas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_vaga INT NOT NULL,
+    data_remocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
+    FOREIGN KEY (id_vaga) REFERENCES vagas(id)
+);
+
 -- Chaves estrangeiras
 
 ALTER TABLE `posts`
@@ -240,6 +250,15 @@ BEGIN
             NEW.status
         );
     END IF;
+END$$
+
+-- Trigger para registrar candidaturas removidas
+CREATE TRIGGER after_delete_candidatura
+AFTER DELETE ON candidaturas
+FOR EACH ROW
+BEGIN
+    INSERT INTO candidaturas_removidas (id_usuario, id_vaga)
+    VALUES (OLD.id_usuario, OLD.id_vaga);
 END$$
 
 DELIMITER ;

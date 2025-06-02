@@ -59,19 +59,43 @@ exports.createCandidatura = async (req, res) => {
 
     // Validar campos obrigatórios
     if (!id_usuario || !id_vaga) {
-      return res.status(400).json({ message: 'ID do usuário e ID da vaga são obrigatórios' });
+      return res.status(400).json({ 
+        message: 'ID do usuário e ID da vaga são obrigatórios',
+        error: 'CAMPOS_OBRIGATORIOS'
+      });
     }
 
-    // Verificar se já existe uma candidatura
-    const candidaturaExistente = await Candidatura.findByUsuarioEVaga(id_usuario, id_vaga);
-    if (candidaturaExistente) {
-      return res.status(400).json({ message: 'Você já se candidatou para esta vaga' });
-    }
-
-    // Buscar detalhes da vaga para obter o empresa_id
+    // Contar quantas vezes o usuário já se candidatou para esta vaga (incluindo candidaturas removidas)
+    const totalCandidaturas = await Candidatura.countCandidaturasByUsuarioEVaga(id_usuario, id_vaga);
+    
+    // Buscar detalhes da vaga para mensagens mais informativas
     const vaga = await Vaga.findById(id_vaga);
     if (!vaga) {
-      return res.status(404).json({ message: 'Vaga não encontrada' });
+      return res.status(404).json({ 
+        message: 'Vaga não encontrada',
+        error: 'VAGA_NAO_ENCONTRADA'
+      });
+    }
+
+    if (totalCandidaturas >= 2) {
+      return res.status(400).json({ 
+        message: `Você já atingiu o limite máximo de candidaturas para a vaga "${vaga.nome_vaga}". Você não pode mais se candidatar para esta vaga, mesmo removendo candidaturas anteriores.`,
+        error: 'LIMITE_EXCEDIDO',
+        candidaturasRestantes: 0,
+        vaga: vaga.nome_vaga,
+        empresa: vaga.nome_empresa
+      });
+    }
+
+    // Verificar se já existe uma candidatura ativa
+    const candidaturaExistente = await Candidatura.findByUsuarioEVaga(id_usuario, id_vaga);
+    if (candidaturaExistente) {
+      return res.status(400).json({ 
+        message: `Você já tem uma candidatura ativa para a vaga "${vaga.nome_vaga}"`,
+        error: 'CANDIDATURA_ATIVA_EXISTENTE',
+        vaga: vaga.nome_vaga,
+        empresa: vaga.nome_empresa
+      });
     }
 
     // Criar a candidatura
@@ -85,10 +109,19 @@ exports.createCandidatura = async (req, res) => {
     // Criar notificação
     await NotificacaoService.criarNotificacaoCandidaturaCriada(id_usuario, vaga.empresa_id, id_vaga);
 
-    res.status(201).json(candidatura);
+    res.status(201).json({
+      ...candidatura,
+      message: `Candidatura criada com sucesso para a vaga "${vaga.nome_vaga}"`,
+      candidaturasRestantes: 2 - (totalCandidaturas + 1),
+      vaga: vaga.nome_vaga,
+      empresa: vaga.nome_empresa
+    });
   } catch (error) {
     console.error('Erro ao criar candidatura:', error);
-    res.status(500).json({ message: 'Erro ao criar candidatura' });
+    res.status(500).json({ 
+      message: 'Erro ao criar candidatura',
+      error: 'ERRO_INTERNO'
+    });
   }
 };
 
@@ -151,6 +184,15 @@ exports.updateStatusCandidatura = async (req, res) => {
 exports.deleteCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
+    const { confirmacao } = req.body;
+
+    // Verificar se a confirmação foi fornecida
+    if (!confirmacao) {
+      return res.status(400).json({ 
+        message: 'Por favor, confirme a remoção da candidatura',
+        requiresConfirmation: true
+      });
+    }
 
     // Buscar a candidatura antes de excluir
     const candidatura = await Candidatura.findById(id);
@@ -171,7 +213,10 @@ exports.deleteCandidatura = async (req, res) => {
       candidatura.id_vaga
     );
 
-    res.status(200).json({ message: 'Candidatura removida com sucesso' });
+    res.status(200).json({ 
+      message: 'Candidatura removida com sucesso',
+      candidaturasRestantes: await Candidatura.countCandidaturasByUsuarioEVaga(candidatura.id_usuario, candidatura.id_vaga)
+    });
   } catch (error) {
     console.error('Erro ao remover candidatura:', error);
     res.status(500).json({ message: 'Erro ao remover candidatura' });
