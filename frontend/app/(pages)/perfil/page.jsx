@@ -655,12 +655,12 @@ export default function Perfil() {
                                 </div>
                             )
                         )}
-                        <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                        <div className="absolute inset-0 rounded-full bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
                             <button 
                                 onClick={() => setIsModalOpen(true)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white p-2 rounded-full shadow-lg"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-full shadow-lg"
                             >
-                                <img className="h-6 w-6" src="/img/perfil/pencil.svg" alt="Editar" />
+                                
                             </button>
                         </div>
                     </div>
