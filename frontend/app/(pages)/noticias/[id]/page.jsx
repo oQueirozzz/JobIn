@@ -7,50 +7,51 @@ export default function Noticias({ params }) {
   const { id } = use(params);
   const parsedId = parseInt(id);
 
-  const noticias = [
-    {
-      id: 1,
-      imagem: "/img/noticias/noticia1.webp",
-      titulo: "Mercado de TI segue aquecido em 2025",
-      meta: "há 2h • 1.245 leitores",
-      texto: "O mercado de Tecnologia da Informação (TI) manteve-se intensamente aquecido em 2025, superando até mesmo projeções otimistas de analistas do setor. A digitalização contínua dos negócios, aliada à crescente demanda por inovação tecnológica, impulsionou contratações em ritmo acelerado. Setores como fintechs, healthtechs, agritechs e indústrias 4.0 expandiram suas equipes para atender à transformação digital, com destaque para o aumento no investimento em automação de processos, machine learning e integração de sistemas baseados em cloud computing. A carência de mão de obra qualificada permanece como um dos principais desafios, levando empresas a investirem em programas de capacitação interna, parcerias com universidades e até importação de talentos internacionais. Profissionais especializados em DevOps, segurança da informação, ciência de dados, e inteligência artificial são os mais requisitados. Em paralelo, cresce a valorização das certificações técnicas e do domínio de metodologias ágeis. A expectativa é de que esse cenário se intensifique em 2026, à medida que novas tecnologias emergentes, como computação quântica e 6G, entrem no radar das corporações."
-    },
-    {
-      id: 2,
-      imagem: "/img/noticias/noticia2.webp",
-      titulo: "Novas tendências em entrevistas de emprego",
-      meta: "há 5h • 876 leitores",
-      texto: "O processo de recrutamento tem passado por uma verdadeira revolução. As entrevistas de emprego, tradicionalmente centradas em perguntas-padrão e análise de currículo, vêm sendo reformuladas com o uso de tecnologias e novas metodologias. Ferramentas de inteligência artificial agora ajudam a filtrar candidatos, analisar padrões de comportamento e prever compatibilidade com a cultura organizacional da empresa. Além disso, muitas companhias vêm adotando o conceito de candidate experience, preocupando-se com a jornada do candidato desde o primeiro contato. Isso inclui feedbacks mais rápidos, entrevistas mais humanizadas e maior transparência sobre o processo. Entrevistas assíncronas em vídeo, desafios técnicos gamificados e até avaliações em realidade virtual são algumas das inovações em curso. As chamadas soft skills têm se tornado protagonistas nas decisões finais: resiliência, empatia, pensamento crítico e liderança situacional são avaliadas com tanto peso quanto as competências técnicas. Empresas buscam profissionais com perfil colaborativo, flexível e com capacidade de inovação constante."
-    },
-    {
-      id: 3,
-      imagem: "/img/noticias/noticia3.webp",
-      titulo: "Como se destacar no LinkedIn",
-      meta: "há 1d • 3.421 leitores",
-      texto: "Com mais de 65 milhões de usuários no Brasil e mais de 900 milhões no mundo, o LinkedIn consolidou-se como a principal rede profissional global. Para se destacar nesse ambiente competitivo, é essencial ir além de um simples perfil atualizado. Especialistas recomendam a construção de uma marca pessoal forte, com uma imagem de capa atrativa, um resumo estratégico e a inclusão de palavras-chave relevantes para seu setor. Postagens regulares com insights, artigos autorais e comentários pertinentes em discussões do setor ajudam a aumentar o engajamento. Participar de grupos profissionais, interagir com publicações de líderes da indústria e solicitar recomendações de colegas e gestores são estratégias eficazes para ampliar a visibilidade e credibilidade.Também é importante seguir empresas do seu interesse e se candidatar diretamente por meio da plataforma, utilizando os filtros avançados de busca. A adesão ao LinkedIn Learning, para adquirir novas competências e obter certificações, também é um diferencial cada vez mais valorizado por recrutadores. "
-    },
-    {
-      id: 4,
-      imagem: "/img/noticias/noticia4.jpg",
-      titulo: "Salários em alta para desenvolvedores",
-      meta: "há 3h • 2.156 leitores",
-      texto: "A escassez de profissionais de TI altamente qualificados resultou em uma valorização acelerada dos salários, especialmente para desenvolvedores. Segundo levantamentos de empresas de consultoria em RH, houve um aumento médio de 20% nos salários base em áreas como desenvolvimento full-stack, mobile e backend em 2024, tendência que se manteve em 2025. As tecnologias mais valorizadas incluem JavaScript (React, Node.js), Python, Go, Rust e Kotlin, bem como experiência com plataformas como AWS, Azure e Google Cloud. Além disso, profissionais com expertise em integração contínua, containers (Docker, Kubernetes) e arquitetura de microsserviços estão em alta demanda. Empresas, para atrair e reter esses talentos, têm oferecido pacotes robustos: bônus por performance, participação em lucros, ações (stock options), plano de carreira claro e políticas de trabalho remoto integral. A valorização também reflete a pressão de empresas internacionais, que têm recrutado desenvolvedores brasileiros com salários em dólar, ampliando a competição."
-    },
-    {
-      id: 5,
-      imagem: "/img/noticias/noticia5.jpg",
-      titulo: "Empresas buscam profissionais com soft skills",
-      meta: "há 6h • 1.890 leitores",
-      texto: "A transformação digital, aliada ao surgimento de modelos de trabalho mais colaborativos e flexíveis, fez com que as soft skills se tornassem prioridade nas contratações. Empresas de todos os segmentos perceberam que o sucesso de seus times depende não apenas do conhecimento técnico, mas da habilidade de se comunicar com clareza, resolver problemas complexos, agir com empatia e lidar com situações de pressão. De acordo com pesquisas recentes, habilidades como pensamento crítico, adaptabilidade, criatividade e escuta ativa estão entre as mais procuradas pelos recrutadores. Programas de desenvolvimento de lideranças e treinamentos em inteligência emocional têm sido incorporados às estratégias de recursos humanos para fortalecer essas competências entre os colaboradores. Muitas empresas utilizam hoje ferramentas específicas de análise comportamental, como DISC, MBTI e avaliações de inteligência emocional. Essa mudança cultural também influencia os modelos de avaliação de desempenho, que passaram a considerar indicadores subjetivos, como capacidade de cooperação e influência positiva no ambiente de trabalho."
-    },
-    {
-      id: 6,
-      imagem: "/img/noticias/noticia6.jpg",
-      titulo: "Tendências de trabalho remoto em 2025",
-      meta: "há 4h • 3.245 leitores",
-      texto: "O modelo de trabalho remoto evoluiu significativamente desde seu início emergencial durante a pandemia, e em 2025 ele se consolidou como pilar estratégico em muitas organizações. Modelos híbridos, com liberdade para escolher dias presenciais, tornaram-se padrão em empresas de tecnologia, finanças, educação e até indústrias criativas. A infraestrutura digital também evoluiu: ferramentas de colaboração como Notion, Miro, Slack, Zoom e plataformas de gestão ágil como Jira e Trello estão mais integradas, promovendo comunicação eficiente e produtividade. A segurança cibernética ganhou ainda mais importância, levando empresas a adotar políticas de VPN, autenticação multifator e governança de dados para proteger operações remotas. Além da tecnologia, o fator humano passou a ser central. Organizações têm investido em ações de bem-estar, saúde mental, ergonomia e formação de líderes capazes de gerir equipes distribuídas. A cultura da confiança substitui o controle rígido, com foco nos resultados e na autonomia. Esse modelo tem se mostrado eficaz não apenas na retenção de talentos, mas também na expansão geográfica das empresas, que passaram a contratar profissionais em qualquer lugar do mundo."
-    }
-  ];
+ const noticias = [
+  {
+    id: 1,
+    imagem: "/img/noticias/noticia1.webp",
+    titulo: "Mercado de TI segue aquecido em 2025",
+    meta: "há 2h • 1.245 leitores",
+    texto: "O mercado de Tecnologia da Informação (TI) manteve-se intensamente aquecido em 2025, superando até mesmo projeções otimistas de analistas do setor. A digitalização contínua dos negócios, aliada à crescente demanda por inovação tecnológica, impulsionou contratações em ritmo acelerado. Setores como fintechs, healthtechs, agritechs e indústrias 4.0 expandiram suas equipes para atender à transformação digital, com destaque para o aumento no investimento em automação de processos, machine learning e integração de sistemas baseados em cloud computing. A carência de mão de obra qualificada permanece como um dos principais desafios, levando empresas a investirem em programas de capacitação interna, parcerias com universidades e até importação de talentos internacionais. Profissionais especializados em DevOps, segurança da informação, ciência de dados, e inteligência artificial são os mais requisitados. Em paralelo, cresce a valorização das certificações técnicas e do domínio de metodologias ágeis. A expectativa é de que esse cenário se intensifique em 2026, à medida que novas tecnologias emergentes, como computação quântica e 6G, entrem no radar das corporações. Além disso, fusões e aquisições em setores tecnológicos continuam impulsionando o ecossistema de startups, o que gera ainda mais demanda por engenheiros de software, gestores de produto e especialistas em cloud. Em ambientes corporativos mais maduros, o investimento em requalificação de times internos e integração entre áreas de TI e negócio torna-se fundamental para garantir a sustentabilidade da inovação. Organizações que conseguirem alinhar tecnologia e estratégia de negócios terão maior competitividade no cenário nacional e internacional."
+  },
+  {
+    id: 2,
+    imagem: "/img/noticias/noticia2.webp",
+    titulo: "Novas tendências em entrevistas de emprego",
+    meta: "há 5h • 876 leitores",
+    texto: "O processo de recrutamento tem passado por uma verdadeira revolução. As entrevistas de emprego, tradicionalmente centradas em perguntas-padrão e análise de currículo, vêm sendo reformuladas com o uso de tecnologias e novas metodologias. Ferramentas de inteligência artificial agora ajudam a filtrar candidatos, analisar padrões de comportamento e prever compatibilidade com a cultura organizacional da empresa. Além disso, muitas companhias vêm adotando o conceito de candidate experience, preocupando-se com a jornada do candidato desde o primeiro contato. Isso inclui feedbacks mais rápidos, entrevistas mais humanizadas e maior transparência sobre o processo. Entrevistas assíncronas em vídeo, desafios técnicos gamificados e até avaliações em realidade virtual são algumas das inovações em curso. Soft skills como resiliência, empatia, pensamento crítico e liderança situacional são avaliadas com tanto peso quanto as competências técnicas. Essa abordagem visa criar um ambiente mais inclusivo, adaptado às necessidades contemporâneas dos trabalhadores e à busca por talentos alinhados a valores organizacionais. A diversidade e inclusão também se tornaram pilares fundamentais nos processos seletivos, com a implementação de entrevistas anônimas e análise cega de currículos. Além disso, plataformas automatizadas de vídeo-entrevistas com análise emocional e de linguagem estão cada vez mais sendo utilizadas, gerando dados comportamentais que auxiliam na tomada de decisão. Empresas que adotam essas práticas relatam maior engajamento dos candidatos, redução de turnover e melhoria na reputação da marca empregadora."
+  },
+  {
+    id: 3,
+    imagem: "/img/noticias/noticia3.webp",
+    titulo: "Como se destacar no LinkedIn",
+    meta: "há 1d • 3.421 leitores",
+    texto: "Com mais de 65 milhões de usuários no Brasil e mais de 900 milhões no mundo, o LinkedIn consolidou-se como a principal rede profissional global. Para se destacar nesse ambiente competitivo, é essencial ir além de um simples perfil atualizado. Especialistas recomendam a construção de uma marca pessoal forte, com uma imagem de capa atrativa, um resumo estratégico e a inclusão de palavras-chave relevantes para seu setor. Postagens regulares com insights, artigos autorais e comentários pertinentes em discussões do setor ajudam a aumentar o engajamento. Participar de grupos profissionais, interagir com publicações de líderes da indústria e solicitar recomendações de colegas e gestores são estratégias eficazes para ampliar a visibilidade e credibilidade. Também é importante seguir empresas do seu interesse e se candidatar diretamente por meio da plataforma. A adesão ao LinkedIn Learning, para adquirir novas competências e obter certificações, é um diferencial valorizado. Além disso, o algoritmo da plataforma favorece usuários ativos, que interagem de forma consistente com conteúdos de relevância. Investir em storytelling profissional, mostrando resultados reais, trajetória de carreira e valores, gera identificação com recrutadores. A curadoria de conexões e a troca de experiências autênticas também fortalecem o networking. Especialistas recomendam revisar o perfil a cada três meses, destacando conquistas recentes e ajustando palavras-chave às vagas pretendidas. Quem usa a plataforma de forma estratégica tende a ser abordado por recrutadores com mais frequência, muitas vezes antes mesmo de abrir processos seletivos."
+  },
+  {
+    id: 4,
+    imagem: "/img/noticias/noticia4.jpg",
+    titulo: "Salários em alta para desenvolvedores",
+    meta: "há 3h • 2.156 leitores",
+    texto: "A escassez de profissionais de TI altamente qualificados resultou em uma valorização acelerada dos salários, especialmente para desenvolvedores. Segundo levantamentos de empresas de consultoria em RH, houve um aumento médio de 20% nos salários base em áreas como desenvolvimento full-stack, mobile e backend em 2024, tendência que se manteve em 2025. As tecnologias mais valorizadas incluem JavaScript (React, Node.js), Python, Go, Rust e Kotlin, bem como experiência com plataformas como AWS, Azure e Google Cloud. Profissionais com domínio de containers (Docker, Kubernetes), arquitetura de microsserviços, e práticas de DevSecOps também são extremamente valorizados. A competição com empresas internacionais aumentou, muitas delas oferecendo salários em moeda forte e modelos remotos. Como resposta, empresas brasileiras estão adotando políticas de benefícios mais robustas, com bônus por desempenho, participação nos lucros, stock options, jornadas flexíveis, licenças estendidas e foco em bem-estar físico e mental. Startups e empresas de médio porte têm inovado em pacotes personalizados para atrair talentos específicos, oferecendo planos de desenvolvimento profissional, mentorias e subsídios para cursos e certificações. A tendência é que essa valorização continue crescendo, especialmente em áreas como inteligência artificial, realidade aumentada e blockchain, onde a demanda global ainda supera em muito a oferta."
+  },
+  {
+    id: 5,
+    imagem: "/img/noticias/noticia5.jpg",
+    titulo: "Empresas buscam profissionais com soft skills",
+    meta: "há 6h • 1.890 leitores",
+    texto: "A transformação digital, aliada ao surgimento de modelos de trabalho mais colaborativos e flexíveis, fez com que as soft skills se tornassem prioridade nas contratações. Empresas perceberam que o sucesso dos times depende não apenas do conhecimento técnico, mas da habilidade de se comunicar com clareza, resolver problemas complexos, agir com empatia e lidar com situações de pressão. Pensamento crítico, adaptabilidade, criatividade e escuta ativa estão entre as habilidades mais procuradas. Programas de desenvolvimento de lideranças e treinamentos em inteligência emocional têm sido incorporados às estratégias de RH. Ferramentas como DISC, MBTI e avaliações de inteligência emocional são utilizadas para mapear comportamentos e desenvolver planos personalizados de crescimento. Além disso, a cultura do feedback contínuo e da aprendizagem constante tem substituído avaliações tradicionais de desempenho. Empregadores estão cada vez mais preocupados com o fit cultural e a capacidade de trabalhar em equipes diversas e multidisciplinares. As soft skills também impactam diretamente a experiência do cliente, sendo valorizadas mesmo em áreas técnicas. Colaboradores com inteligência emocional elevada costumam gerar mais confiança e engajamento nos times, o que reflete em melhor performance organizacional. Essa mudança cultural também impulsiona a revisão dos processos seletivos, tornando-os mais inclusivos, humanos e focados em propósito e valores."
+  },
+  {
+    id: 6,
+    imagem: "/img/noticias/noticia6.jpg",
+    titulo: "Tendências de trabalho remoto em 2025",
+    meta: "há 4h • 3.245 leitores",
+    texto: "O modelo de trabalho remoto evoluiu significativamente desde seu início emergencial durante a pandemia. Em 2025, consolidou-se como um dos pilares da estratégia organizacional em diversas empresas. Modelos híbridos com liberdade para escolha dos dias presenciais tornaram-se padrão em setores como tecnologia, finanças, educação e economia criativa. Ferramentas como Slack, Zoom, Notion, Miro, Jira e Trello foram aprimoradas e integradas, criando ecossistemas digitais completos que sustentam a colaboração remota. A segurança da informação tornou-se prioridade, com políticas de VPN, autenticação multifator, gestão de dispositivos e governança de dados rígidas. Mais do que infraestrutura tecnológica, o fator humano passou a ocupar o centro das discussões. Empresas investem em programas de bem-estar, saúde mental, ergonomia e formação de líderes para gestão remota. A cultura da confiança vem substituindo o controle rígido, com foco em entregas e autonomia. Profissionais têm mais liberdade geográfica, o que ampliou a diversidade nos times. Empresas que adotaram políticas remotas permanentes relatam redução de custos operacionais, aumento da produtividade e maior retenção de talentos. Para 2026, espera-se a ampliação do uso de ambientes imersivos, como escritórios virtuais em realidade aumentada, e maior integração de inteligência artificial nas rotinas de trabalho remoto."
+  }
+];
+
 
   const noticia = noticias.find((n) => n.id === parsedId);
 
