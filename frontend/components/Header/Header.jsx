@@ -48,15 +48,7 @@ export default function Header() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (authInfo?.entity?.id) {
-      fetchNotifications();
-      // Atualizar notificações a cada 5 minutos
-      const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [authInfo?.entity?.id]);
-
+  // Função para buscar notificações
   const fetchNotifications = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/nao-lidas`, {
@@ -70,6 +62,33 @@ export default function Header() {
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
     }
+  };
+
+  useEffect(() => {
+    if (authInfo?.entity?.id) {
+      // Busca inicial
+      fetchNotifications();
+
+      // Atualiza a cada 5 segundos
+      const interval = setInterval(fetchNotifications, 5 * 1000);
+
+      // Adiciona listener para o evento personalizado
+      const handleNotificationUpdate = () => {
+        fetchNotifications();
+      };
+
+      window.addEventListener('notificationUpdate', handleNotificationUpdate);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notificationUpdate', handleNotificationUpdate);
+      };
+    }
+  }, [authInfo?.entity?.id]);
+
+  // Função para disparar evento de atualização
+  const triggerNotificationUpdate = () => {
+    window.dispatchEvent(new Event('notificationUpdate'));
   };
 
   const handleNotificationClick = async (notificationId) => {
@@ -234,6 +253,7 @@ export default function Header() {
                           <div
                             key={notification.id}
                             className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                            onClick={() => handleNotificationClick(notification.id)}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex items-start flex-1">
@@ -244,10 +264,15 @@ export default function Header() {
                                   notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
                                   notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
                                   notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
+                                  notification.tipo === 'VAGA_CRIADA' ? 'bg-green-500' :
                                   'bg-gray-500'
                                 }`} />
                                 <div className="flex-1">
-                                  <p className="text-sm">{notification.mensagem}</p>
+                                  <p className="text-sm">
+                                    {authInfo?.entity?.tipo === 'EMPRESA' 
+                                      ? notification.mensagem_empresa 
+                                      : notification.mensagem_usuario}
+                                  </p>
                                   <p className="text-xs text-gray-500 mt-1">
                                     {new Date(notification.data_notificacao).toLocaleDateString('pt-BR', {
                                       day: '2-digit',

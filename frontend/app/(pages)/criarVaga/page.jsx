@@ -1,338 +1,339 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CriarVaga() {
-  const [mensagem, setMensagem] = useState('');
-  const [carregando, setCarregando] = useState(false);
-  const [tipoMensagem, setTipoMensagem] = useState('');
-  const [empresaId, setEmpresaId] = useState(null);
   const router = useRouter();
+  const [carregando, setCarregando] = useState(false);
+  const [notificacao, setNotificacao] = useState({ mostrar: false, tipo: '', mensagem: '' });
+  const [formData, setFormData] = useState({
+    nome_vaga: '',
+    nome_empresa: '',
+    descricao: '',
+    tipo_vaga: '',
+    local_vaga: '',
+    categoria: '',
+    requisitos: '',
+    salario: ''
+  });
 
-  useEffect(() => {
-    const authData = localStorage.getItem('authEntity');
-    console.log('Dados de autenticação:', authData);
+  const mostrarNotificacao = (tipo, mensagem) => {
+    setNotificacao({ mostrar: true, tipo, mensagem });
+    setTimeout(() => {
+      setNotificacao({ mostrar: false, tipo: '', mensagem: '' });
+    }, 3000);
+  };
 
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData);
-        console.log('Dados parseados:', parsed);
-        if (parsed?.id) {
-          setEmpresaId(parsed.id);
-          console.log('ID da empresa definido:', parsed.id);
-        } else {
-          setMensagem('ID da empresa não encontrado nos dados de autenticação.');
-          setTipoMensagem('erro');
-        }
-      } catch (error) {
-        console.error('Erro ao interpretar dados de autenticação:', error);
-        setMensagem('Erro ao interpretar os dados de autenticação.');
-        setTipoMensagem('erro');
-      }
-    } else {
-      console.log('Nenhum dado de autenticação encontrado');
-      setMensagem('Dados de autenticação não encontrados. Faça login novamente.');
-      setTipoMensagem('erro');
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+    
+    // Notificação para cada campo preenchido
+    if (value.trim()) {
+      mostrarNotificacao('info', `Campo ${name.replace('_', ' ')} atualizado`);
     }
-  }, []);
+  };
 
-  async function cadVagas(event) {
-    event.preventDefault();
-
-    if (!empresaId) {
-      setTipoMensagem('erro');
-      setMensagem('ID da empresa não encontrado. Faça login novamente.');
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setCarregando(true);
-    setMensagem('');
-    setTipoMensagem('');
-
-    const formData = new FormData(event.target);
-    console.log('Empresa ID:', empresaId);
-
-    const dadosVagas = {
-      empresa_id: parseInt(empresaId),
-      nome_vaga: formData.get('nome'),
-      nome_empresa: formData.get('nome_empresa'),
-      descricao: formData.get('descricao'),
-      requisitos: formData.get('requisitos'),
-      salario: formData.get('salario'),
-      local_vaga: formData.get('local_vaga'),
-      tipo_vaga: formData.get('tipo_vaga'),
-      categoria: formData.get('categoria')
-    };
-
-    console.log('Dados da vaga a serem enviados:', dadosVagas);
+    mostrarNotificacao('info', 'Iniciando criação da vaga...');
 
     try {
-      const response = await fetch('http://localhost:3001/api/vagas', {
+      const authData = localStorage.getItem('authEntity');
+      if (!authData) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const parsed = JSON.parse(authData);
+      if (!parsed.id) {
+        throw new Error('ID da empresa não encontrado');
+      }
+
+      const vagaData = {
+        ...formData,
+        empresa_id: parsed.id,
+        nome_empresa: parsed.nome
+      };
+
+      mostrarNotificacao('info', 'Enviando dados para o servidor...');
+
+      const res = await fetch('http://localhost:3001/api/vagas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify(dadosVagas),
+        body: JSON.stringify(vagaData),
       });
 
-      const data = await response.json();
-      console.log('Resposta do servidor:', data);
-
-      if (response.ok) {
-        setTipoMensagem('sucesso');
-        setMensagem('Vaga cadastrada com sucesso!');
-
-        setTimeout(() => {
-          router.push('/vagas');
-        }, 1500);
-      } else {
-        setTipoMensagem('erro');
-        setMensagem(data.error || data.message || 'Erro ao criar vaga.');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Erro ao criar vaga');
       }
+
+      mostrarNotificacao('success', 'Vaga criada com sucesso!');
+      
+      // Dispara evento para atualizar notificações
+      window.dispatchEvent(new Event('notificationUpdate'));
+      
+      setTimeout(() => {
+        router.push('/vagas');
+      }, 1500);
+
     } catch (error) {
-      console.error('Erro na requisição:', error);
-      setTipoMensagem('erro');
-      setMensagem(`Erro ao conectar com o servidor: ${error.message}`);
+      console.error('Erro ao criar vaga:', error);
+      mostrarNotificacao('error', error.message);
     } finally {
       setCarregando(false);
     }
-  }
+  };
+
+  const getNotificacaoEstilo = (tipo) => {
+    switch (tipo) {
+      case 'success':
+        return 'bg-green-100 border-green-500 text-green-700';
+      case 'error':
+        return 'bg-red-100 border-red-500 text-red-700';
+      case 'info':
+        return 'bg-blue-100 border-blue-500 text-blue-700';
+      default:
+        return 'bg-gray-100 border-gray-500 text-gray-700';
+    }
+  };
+
+  const getNotificacaoIcone = (tipo) => {
+    switch (tipo) {
+      case 'success':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+        );
+      case 'error':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+        );
+      case 'info':
+        return (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow-xl p-6 sm:p-10 my-20 sm:my-20">
-        <div className="flex justify-center mb-6">
-          <img src="/img/global/logo_completa.svg" alt="Logo" className="h-16" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      {notificacao.mostrar && (
+        <div className={`fixed top-4 right-4 border-l-4 p-4 rounded-lg shadow-lg z-50 animate-fade-in ${getNotificacaoEstilo(notificacao.tipo)}`}>
+          <div className="flex items-center">
+            <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {getNotificacaoIcone(notificacao.tipo)}
+            </svg>
+            <p className="font-medium">{notificacao.mensagem}</p>
+          </div>
         </div>
-
-        {mensagem && (
-          <div
-            className={`mb-4 p-3 rounded-md text-center ${tipoMensagem === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}
-          >
-            {mensagem}
-          </div>
-        )}
-
-        <form className="w-full" id="novaVaga" onSubmit={cadVagas}>
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              type="text"
-              name="nome"
-              id="nome"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-            />
-            <label
-              htmlFor="nome"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Nome da vaga
-            </label>
+      )}
+      
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">Criar Nova Vaga</h1>
+            <p className="text-gray-600 text-lg">Preencha os detalhes da vaga para encontrar o candidato ideal</p>
           </div>
 
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              type="text"
-              name="nome_empresa"
-              id="empresa"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-            />
-            <label
-              htmlFor="nome"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Nome da Empresa
-            </label>
-          </div>
-
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              type="text"
-              name="local_vaga"
-              id="local_vaga"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-            />
-            <label
-              htmlFor="local_vaga"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Localização
-            </label>
-          </div>
-
-          {/* Tipo vaga */}
-          <div className="relative z-0 w-full mb-5 group">
-            <select
-              name="tipo_vaga"
-              id="tipo_vaga"
-              required
-              disabled={carregando}
-              className="block appearance-none w-full bg-white border-0 border-b-2 border-gray-300 text-gray-500 py-2.5 px-0 text-sm focus:border-transparent"
-              style={{ lineHeight: '1.25rem', height: '2.5rem' }}
-              defaultValue=""
-            >
-              <option value="" disabled hidden>Tipo da Vaga</option>
-              <option value="Presencial">Presencial</option>
-              <option value="Hibrido">Híbrido</option>
-              <option value="Remoto">Remoto</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <svg
-                className="w-4 h-4 text-vinho"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Nome da Vaga */}
+            <div className="relative z-0 w-full group">
+              <input
+                type="text"
+                name="nome_vaga"
+                id="nome_vaga"
+                required
+                disabled={carregando}
+                className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                placeholder=" "
+                value={formData.nome_vaga}
+                onChange={handleInputChange}
+              />
+              <label
+                htmlFor="nome_vaga"
+                className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-[#7B2D26] peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-1"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+                Nome da Vaga
+              </label>
             </div>
-          </div>
 
-          <div className="relative z-0 w-full mb-5 group">
-            <select
-              name="categoria"
-              id="categoria"
-              required
-              disabled={carregando}
-              className="block appearance-none w-full bg-white border-0 border-b-2 border-gray-300 text-gray-500 py-2.5 px-0 text-sm focus:border-none"
-              style={{ lineHeight: '1.25rem', height: '2.5rem' }}
-              defaultValue=""
-            >
-              <option value="" disabled hidden>Categoria</option>
-              <option value="Técnologia">Tecnologia</option>
-              <option value="Administração">Administração</option>
-              <option value="Engenharia">Engenharia</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <svg
-                className="w-4 h-4 text-vinho"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              type="number"
-              name="salario"
-              id="salario"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-              maxLength={5}
-              inputMode="numeric"
-              pattern="\d*"
-            />
-            <label
-              htmlFor="salario"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Salário
-            </label>
-          </div>
-
-
-          <div className="relative z-0 w-full mb-5 group">
-            <textarea
-              name="descricao"
-              id="descricao"
-              maxLength="500"
-              rows="3"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-            ></textarea>
-            <label
-              htmlFor="descricao"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Descrição da vaga
-            </label>
-          </div>
-
-          <div className="relative z-0 w-full mb-5 group">
-            <textarea
-              name="requisitos"
-              id="requisitos"
-              maxLength="500"
-              rows="3"
-              required
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent resize-none border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-              placeholder=" "
-              disabled={carregando}
-            ></textarea>
-            <label
-              htmlFor="requisitos"
-              className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-            >
-              Requisitos da vaga
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={carregando || !empresaId}
-            className="cursor-pointer text-white bg-[#7B2D26] hover:bg-red-800 font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center"
-          >
-            {carregando ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
+            {/* Tipo de Vaga e Categoria */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="relative z-0 w-full group">
+                <select
+                  name="tipo_vaga"
+                  id="tipo_vaga"
+                  required
+                  disabled={carregando}
+                  className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300 appearance-none"
+                  value={formData.tipo_vaga}
+                  onChange={handleInputChange}
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Processando...
-              </>
-            ) : (
-              'Criar Vaga'
-            )}
-          </button>
+                  <option value="" disabled hidden>Modalidade de Trabalho</option>
+                  <option value="PRESENCIAL">Presencial</option>
+                  <option value="HIBRIDO">Híbrido</option>
+                  <option value="REMOTO">Remoto</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
 
-          <div className="flex items-center justify-center">
-            <a href="/vagas" className="text-xs hover:text-[#7B2D26] text-gray-500 text-center mt-4 cursor-pointer">
-              Voltar
-            </a>
-          </div>
-        </form>
+              <div className="relative z-0 w-full group">
+                <select
+                  name="categoria"
+                  id="categoria"
+                  required
+                  disabled={carregando}
+                  className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300 appearance-none"
+                  value={formData.categoria}
+                  onChange={handleInputChange}
+                >
+                  <option value="" disabled hidden>Selecione a Categoria</option>
+                  <option value="TI">Tecnologia da Informação</option>
+                  <option value="Mecânica">Mecânica</option>
+                  <option value="Design">Design</option>
+                  <option value="Administração">Administração</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Vendas">Vendas</option>
+                  <option value="Saúde">Saúde</option>
+                  <option value="Educação">Educação</option>
+                  <option value="Engenharia">Engenharia</option>
+                  <option value="Outros">Outros</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Descrição */}
+            <div className="relative z-0 w-full group">
+              <textarea
+                name="descricao"
+                id="descricao"
+                required
+                disabled={carregando}
+                rows="4"
+                className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300 resize-none"
+                placeholder=" "
+                value={formData.descricao}
+                onChange={handleInputChange}
+              />
+              <label
+                htmlFor="descricao"
+                className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-[#7B2D26] peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-1"
+              >
+                Descrição da Vaga
+              </label>
+            </div>
+
+            {/* Salário e Localização */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="relative z-0 w-full group">
+                <input
+                  type="text"
+                  name="salario"
+                  id="salario"
+                  required
+                  disabled={carregando}
+                  className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                  placeholder=" "
+                  value={formData.salario}
+                  onChange={handleInputChange}
+                />
+                <label
+                  htmlFor="salario"
+                  className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-[#7B2D26] peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-1"
+                >
+                  Salário
+                </label>
+              </div>
+
+              <div className="relative z-0 w-full group">
+                <input
+                  type="text"
+                  name="local_vaga"
+                  id="local_vaga"
+                  required
+                  disabled={carregando}
+                  className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                  placeholder=" "
+                  value={formData.local_vaga}
+                  onChange={handleInputChange}
+                />
+                <label
+                  htmlFor="local_vaga"
+                  className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-[#7B2D26] peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-1"
+                >
+                  Localização
+                </label>
+              </div>
+            </div>
+
+            {/* Requisitos */}
+            <div className="relative z-0 w-full group">
+              <textarea
+                name="requisitos"
+                id="requisitos"
+                required
+                disabled={carregando}
+                rows="4"
+                className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300 resize-none"
+                placeholder=" "
+                value={formData.requisitos}
+                onChange={handleInputChange}
+              />
+              <label
+                htmlFor="requisitos"
+                className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-[#7B2D26] peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 left-1"
+              >
+                Requisitos
+              </label>
+            </div>
+
+            {/* Botão de Envio */}
+            <div className="flex justify-center pt-4">
+              <button
+                type="submit"
+                disabled={carregando}
+                className="px-8 py-4 bg-[#7B2D26] text-white rounded-xl hover:bg-[#7B2D26]/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                {carregando ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Criando...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Criar Vaga
+                  </span>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
 

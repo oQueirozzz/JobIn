@@ -50,14 +50,14 @@ exports.createVaga = async (req, res) => {
       tipo_vaga,
       local_vaga,
       categoria,
-      salario,
-      requisitos
+      requisitos,
+      salario
     } = req.body;
 
     // Verificar se todos os campos obrigatórios foram fornecidos
-    if (!empresa_id || !nome_vaga || !nome_empresa || !tipo_vaga || !local_vaga || !categoria) {
+    if (!empresa_id || !nome_vaga || !nome_empresa || !descricao || !tipo_vaga || !local_vaga || !categoria || !requisitos) {
       return res.status(400).json({ 
-        message: 'Por favor, forneça todos os campos obrigatórios: empresa_id, nome_vaga, nome_empresa, tipo_vaga, local_vaga e categoria.' 
+        message: 'Por favor, forneça todos os campos obrigatórios: empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria e requisitos.' 
       });
     }
 
@@ -92,7 +92,7 @@ exports.updateVaga = async (req, res) => {
     // Atualizar a vaga
     const resultado = await Vaga.update(id, dadosAtualizados);
     
-    if (resultado.affectedRows === 0) {
+    if (!resultado) {
       return res.status(404).json({ message: 'Vaga não encontrada' });
     }
 

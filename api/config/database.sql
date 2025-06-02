@@ -44,6 +44,8 @@ CREATE TABLE `vagas` (
 	`categoria` VARCHAR(50),
     `requisitos` text,
     `salario` varchar (255),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	PRIMARY KEY(`id`)
 );
 
@@ -86,8 +88,9 @@ CREATE TABLE `notificacao` (
 	`candidaturas_id` INTEGER NOT NULL,
 	`empresas_id` INTEGER NOT NULL,
     `usuarios_id` INTEGER NOT NULL,
-	`mensagem_usuario` VARCHAR(100),
-    `mensagem_empresa` VARCHAR(100),
+	`mensagem_usuario` VARCHAR(255),
+    `mensagem_empresa` VARCHAR(255),
+	`tipo` ENUM('LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA', 'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO', 'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO') NOT NULL,
 	`status_candidatura` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'),
 	`data_notificacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
 	`lida` BOOLEAN DEFAULT FALSE,
@@ -332,3 +335,7 @@ select * from candidaturas;
 select * from empresas;
 ALTER TABLE vagas ADD COLUMN status VARCHAR(20) DEFAULT 'aberta';
 ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;
+ALTER TABLE notificacao MODIFY usuarios_id INT NULL;
+ALTER TABLE logs MODIFY usuario_id INT NULL;
+ALTER TABLE notificacao MODIFY empresas_id INT NULL;
+
