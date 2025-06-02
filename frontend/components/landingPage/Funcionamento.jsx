@@ -45,7 +45,7 @@ export default function Funcionamento() {
                             Explore oportunidades de estágio em diversas áreas e empresas. Filtre por localização, área de atuação e mais.
                         </p>
                         <Link 
-                            href="/login"
+                            href="/vagas"
                             className="inline-flex items-center text-[#7B2D26] font-medium hover:text-[#7B2D26]/80 transition-colors duration-300 group"
                         >
                             Buscar vagas
