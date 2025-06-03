@@ -4,7 +4,9 @@ const bcrypt = require('bcryptjs');
 class Empresa {
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT id, nome, email, cnpj, descricao, local, tipo, logo FROM empresas');
+      console.log('Iniciando busca de empresas...');
+      const [rows] = await db.execute('SELECT id, nome, email, cnpj, descricao, local, tipo, logo FROM empresas');
+      console.log('Número de empresas encontradas:', rows.length);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar empresas:', error);
@@ -14,7 +16,7 @@ class Empresa {
 
   static async findById(id) {
     try {
-      const [rows] = await db.query(
+      const [rows] = await db.execute(
         'SELECT id, nome, email, cnpj, descricao, local, tipo, logo FROM empresas WHERE id = ?', 
         [id]
       );
@@ -27,7 +29,7 @@ class Empresa {
 
   static async findByEmail(email) {
     try {
-      const [rows] = await db.query('SELECT * FROM empresas WHERE email = ?', [email]);
+      const [rows] = await db.execute('SELECT * FROM empresas WHERE email = ?', [email]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar empresa por email:', error);
@@ -37,7 +39,7 @@ class Empresa {
 
   static async findByCNPJ(cnpj) {
     try {
-      const [rows] = await db.query('SELECT * FROM empresas WHERE cnpj = ?', [cnpj]);
+      const [rows] = await db.execute('SELECT * FROM empresas WHERE cnpj = ?', [cnpj]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar empresa por CNPJ:', error);
@@ -83,7 +85,7 @@ class Empresa {
         senha: '[REDACTED]'
       });
 
-      const [result] = await db.query(query, values);
+      const [result] = await db.execute(query, values);
       console.log('Empresa inserida com sucesso, ID:', result.insertId);
 
       // Buscar a empresa recém-criada
@@ -156,7 +158,7 @@ class Empresa {
       query += ' WHERE id = ?';
       values.push(id);
 
-      const [result] = await db.query(query, values);
+      const [result] = await db.execute(query, values);
       return { affectedRows: result.affectedRows };
     } catch (error) {
       console.error('Erro ao atualizar empresa:', error);
@@ -166,7 +168,7 @@ class Empresa {
 
   static async delete(id) {
     try {
-      const [result] = await db.query('DELETE FROM empresas WHERE id = ?', [id]);
+      const [result] = await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
       return { affectedRows: result.affectedRows };
     } catch (error) {
       console.error('Erro ao excluir empresa:', error);

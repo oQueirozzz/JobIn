@@ -6,11 +6,19 @@ const NotificacaoService = require('../services/notificacaoService');
 // Obter todas as vagas
 exports.getVagas = async (req, res) => {
   try {
+    console.log('Iniciando busca de vagas no controlador...');
     const vagas = await Vaga.findAll();
-    res.status(200).json(vagas);
+    console.log('Vagas encontradas:', vagas);
+    
+    // Garantir que sempre retornamos um array
+    const resultado = Array.isArray(vagas) ? vagas : [];
+    console.log('Resultado final a ser enviado:', resultado);
+    
+    res.status(200).json(resultado);
   } catch (error) {
     console.error('Erro ao buscar vagas:', error);
-    res.status(500).json({ message: 'Erro ao buscar vagas' });
+    // Em caso de erro, retornar um array vazio
+    res.status(200).json([]);
   }
 };
 

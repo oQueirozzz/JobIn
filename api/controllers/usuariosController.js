@@ -69,8 +69,8 @@ exports.registerUsuario = async (req, res) => {
       tipo: 'usuario'
     });
 
-    // Criar notificação de senha alterada
-    await NotificacaoService.criarNotificacaoSenhaAlterada(usuario.id, 0, false);
+    // Criar notificação de conta criada
+    await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
 
     // Registrar log sem empresa (usando 0 como ID do sistema)
     await logsController.registrarLog(
@@ -243,6 +243,9 @@ exports.updateUsuario = async (req, res) => {
     
     // Registrar log de atualização de perfil
     await logsController.logAtualizacaoPerfil(userId, 0, 'usuario');
+    
+    // Criar notificação de perfil atualizado
+    await NotificacaoService.criarNotificacaoPerfilAtualizado(userId, 0, false);
     
     // Retornar os dados atualizados do usuário
     res.status(200).json(usuarioAtualizado);

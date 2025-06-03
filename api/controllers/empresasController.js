@@ -65,8 +65,8 @@ exports.registerEmpresa = async (req, res) => {
       tipo: 'empresa'
     });
 
-    // Criar notificação de senha alterada
-    await notificacaoService.criarNotificacaoSenhaAlterada(0, empresa.id, true);
+    // Criar notificação de conta criada
+    await notificacaoService.criarNotificacaoContaCriada(0, empresa.id, true);
 
     // Registrar log sem usuário (usando 0 como ID do sistema)
     await logsController.registrarLog(

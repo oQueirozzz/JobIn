@@ -7,6 +7,7 @@ const logsController = require('../controllers/logsController');
 class NotificacaoService {
   // Notificação de perfil visitado
   static async criarNotificacaoPerfilVisitado(usuarioId, visitanteId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoPerfilVisitado', { usuarioId, visitanteId });
     try {
       const visitante = await Usuario.findById(visitanteId);
       if (!visitante) {
@@ -31,6 +32,7 @@ class NotificacaoService {
 
   // Notificação de candidatura criada
   static async criarNotificacaoCandidaturaCriada(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaCriada', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -58,6 +60,7 @@ class NotificacaoService {
 
   // Notificação de candidatura removida
   static async criarNotificacaoCandidaturaRemovida(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRemovida', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -85,6 +88,7 @@ class NotificacaoService {
 
   // Notificação de candidatura aprovada
   static async criarNotificacaoCandidaturaAprovada(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaAprovada', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -112,6 +116,7 @@ class NotificacaoService {
 
   // Notificação de vaga excluída
   static async criarNotificacaoVagaExcluida(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaExcluida', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -134,6 +139,7 @@ class NotificacaoService {
 
   // Notificação de vaga atualizada
   static async criarNotificacaoVagaAtualizada(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaAtualizada', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -154,8 +160,9 @@ class NotificacaoService {
     }
   }
 
-  // Notificação de senha alterada
-  static async criarNotificacaoSenhaAlterada(usuarioId, empresaId, isEmpresa = false) {
+  // Notificação de conta criada
+  static async criarNotificacaoContaCriada(usuarioId, empresaId, isEmpresa = false) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoContaCriada', { usuarioId, empresaId, isEmpresa });
     try {
       if (isEmpresa) {
         const empresa = await Empresa.findById(empresaId);
@@ -168,7 +175,7 @@ class NotificacaoService {
           empresas_id: empresaId,
           candidaturas_id: 0,
           mensagem_usuario: null,
-          mensagem_empresa: 'Sua senha foi alterada com sucesso',
+          mensagem_empresa: 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.',
           status_candidatura: 'PENDENTE'
         });
       } else {
@@ -181,7 +188,46 @@ class NotificacaoService {
           usuarios_id: usuarioId,
           empresas_id: 0,
           candidaturas_id: 0,
-          mensagem_usuario: 'Sua senha foi alterada com sucesso',
+          mensagem_usuario: 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.',
+          mensagem_empresa: null,
+          status_candidatura: 'PENDENTE'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao criar notificação de conta criada:', error);
+      throw error;
+    }
+  }
+
+  // Notificação de senha alterada
+  static async criarNotificacaoSenhaAlterada(usuarioId, empresaId, isEmpresa = false) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoSenhaAlterada', { usuarioId, empresaId, isEmpresa });
+    try {
+      if (isEmpresa) {
+        const empresa = await Empresa.findById(empresaId);
+        if (!empresa) {
+          throw new Error('Empresa não encontrada');
+        }
+
+        return await Notificacao.create({
+          usuarios_id: 0,
+          empresas_id: empresaId,
+          candidaturas_id: 0,
+          mensagem_usuario: null,
+          mensagem_empresa: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
+          status_candidatura: 'PENDENTE'
+        });
+      } else {
+        const usuario = await Usuario.findById(usuarioId);
+        if (!usuario) {
+          throw new Error('Usuário não encontrado');
+        }
+
+        return await Notificacao.create({
+          usuarios_id: usuarioId,
+          empresas_id: 0,
+          candidaturas_id: 0,
+          mensagem_usuario: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
           mensagem_empresa: null,
           status_candidatura: 'PENDENTE'
         });
@@ -194,6 +240,7 @@ class NotificacaoService {
 
   // Notificação de vaga criada
   static async criarNotificacaoVagaCriada(empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaCriada', { empresaId, vagaId });
     try {
       // Buscar a vaga para obter o nome
       const vaga = await Vaga.findById(vagaId);
@@ -229,6 +276,7 @@ class NotificacaoService {
 
   // Notificação de candidatura rejeitada
   static async criarNotificacaoCandidaturaRejeitada(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRejeitada', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -256,6 +304,7 @@ class NotificacaoService {
 
   // Notificação de candidatura em espera
   static async criarNotificacaoCandidaturaEmEspera(usuarioId, empresaId, vagaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaEmEspera', { usuarioId, empresaId, vagaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -288,6 +337,45 @@ class NotificacaoService {
     
     if (visitanteAleatorio && visitanteAleatorio.id !== usuarioId) {
       return await this.criarNotificacaoPerfilVisitado(usuarioId, visitanteAleatorio.id);
+    }
+  }
+
+  // Notificação de perfil atualizado
+  static async criarNotificacaoPerfilAtualizado(usuarioId, empresaId, isEmpresa = false) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoPerfilAtualizado', { usuarioId, empresaId, isEmpresa });
+    try {
+      if (isEmpresa) {
+        const empresa = await Empresa.findById(empresaId);
+        if (!empresa) {
+          throw new Error('Empresa não encontrada');
+        }
+
+        return await Notificacao.create({
+          usuarios_id: 0,
+          empresas_id: empresaId,
+          candidaturas_id: 0,
+          mensagem_usuario: null,
+          mensagem_empresa: 'Seu perfil foi atualizado com sucesso.',
+          status_candidatura: 'PENDENTE'
+        });
+      } else {
+        const usuario = await Usuario.findById(usuarioId);
+        if (!usuario) {
+          throw new Error('Usuário não encontrado');
+        }
+
+        return await Notificacao.create({
+          usuarios_id: usuarioId,
+          empresas_id: 0,
+          candidaturas_id: 0,
+          mensagem_usuario: 'Seu perfil foi atualizado com sucesso.',
+          mensagem_empresa: null,
+          status_candidatura: 'PENDENTE'
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao criar notificação de perfil atualizado:', error);
+      throw error;
     }
   }
 }

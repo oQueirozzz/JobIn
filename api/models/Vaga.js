@@ -3,12 +3,38 @@ const db = require('../config/db');
 class Vaga {
   static async findAll() {
     try {
-      const [rows] = await db.execute(
-        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id'
-      );
-      return rows;
+      console.log('Iniciando busca de vagas...');
+      
+      // Testar a conexão antes de executar a query
+      const connection = await db.getConnection();
+      console.log('Conexão com o banco estabelecida com sucesso');
+      
+      try {
+        const [rows] = await connection.execute(
+          'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id ORDER BY v.created_at DESC'
+        );
+        console.log('Query executada com sucesso');
+        console.log('Número de vagas encontradas:', rows.length);
+        console.log('Primeira vaga (se houver):', rows[0]);
+        
+        // Garantir que sempre retornamos um array
+        const resultado = Array.isArray(rows) ? rows : [];
+        console.log('Resultado final:', resultado);
+        
+        return resultado;
+      } finally {
+        connection.release();
+        console.log('Conexão liberada');
+      }
     } catch (error) {
-      throw error;
+      console.error('Erro detalhado ao buscar vagas:', {
+        message: error.message,
+        code: error.code,
+        errno: error.errno,
+        sqlState: error.sqlState,
+        sqlMessage: error.sqlMessage
+      });
+      return [];
     }
   }
 

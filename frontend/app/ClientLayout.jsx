@@ -23,6 +23,7 @@ export function useLoading() {
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   // Escondemos o header na página de dashboard, pois ela já tem seu próprio HeaderLanding
   const hideHeaderRoutes = ["/dashboard"];
@@ -31,6 +32,12 @@ export default function ClientLayout({ children }) {
   // Rotas que devem usar o HeaderLanding em vez do Header padrão
   const landingHeaderRoutes = ["/login", "/cadAlunos", "/cadEmpresas", "/novaSenha"];
   const shouldUseLandingHeader = landingHeaderRoutes.includes(pathname);
+
+  // Verificar autenticação
+  useEffect(() => {
+    const authData = localStorage.getItem('authEntity');
+    setIsAuthenticated(!!authData);
+  }, [pathname]);
   
   // Simular carregamento inicial da aplicação
   useEffect(() => {
@@ -53,7 +60,7 @@ export default function ClientLayout({ children }) {
         ) : (
           <>
             {!shouldHideHeader && (
-              shouldUseLandingHeader ? <HeaderLanding /> : <Header />
+              shouldUseLandingHeader || (pathname === '/vagas' && !isAuthenticated) ? <HeaderLanding /> : <Header />
             )}
             {children}
             <Footer />

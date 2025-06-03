@@ -278,24 +278,35 @@ export default function NovaSenha() {
             return;
         }
 
+        if (!tokenRedefinicao) {
+            setTipoMensagem('erro');
+            setMensagem('Token de redefinição inválido. Por favor, solicite um novo código.');
+            return;
+        }
+
         setCarregando(true);
         setMensagem('');
 
         try {
+            const dadosRequisicao = {
+                email: email.trim().toLowerCase(),
+                token: tokenRedefinicao,
+                novaSenha: novaSenha
+            };
+
+            console.log('Enviando dados para redefinição:', dadosRequisicao);
+
             // Chamar a API para atualizar a senha no backend
             const response = await fetch('http://localhost:3001/api/usuarios/redefinir-senha', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    email: email.trim().toLowerCase(),
-                    token: tokenRedefinicao,
-                    novaSenha: novaSenha
-                }),
+                body: JSON.stringify(dadosRequisicao),
             });
 
             const data = await response.json();
+            console.log('Resposta da API:', data);
 
             if (response.ok) {
                 // Enviar email de confirmação
@@ -306,10 +317,9 @@ export default function NovaSenha() {
                     message: 'Sua senha foi redefinida com sucesso no JobIn.'
                 };
                 
-                // Usando o padrão correto para EmailJS
                 await emailjs.send(
                     'service_r9l70po',
-                    'template_0t894rd',  // TEMPLATE_ID do EmailJS
+                    'template_0t894rd',
                     templateParams
                 );
                
@@ -334,9 +344,9 @@ export default function NovaSenha() {
             }
 
         } catch (error) {
+            console.error('Erro na redefinição:', error);
             setTipoMensagem('erro');
             setMensagem(error.message || 'Erro ao atualizar senha');
-            console.error('Redefinição falhou:', error);
         } finally {
             setCarregando(false);
         }

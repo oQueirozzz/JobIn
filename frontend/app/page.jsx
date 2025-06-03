@@ -259,11 +259,10 @@ export default function Feed() {
                   <h2 className="font-semibold mb-3">Vagas recomendadas</h2>
 
 
-                  <Link href="/vagas">
-                    <div className="space-y-4 cursor-pointer">
-                      {vagas.map((vaga) => (
+                  <div className="space-y-4 cursor-pointer">
+                    {vagas.map((vaga) => (
+                      <Link href={`/vagas?vaga=${vaga.id}`} key={vaga.id}>
                         <div
-                          key={vaga.id}
                           className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors"
                         >
                           <div className="flex items-start">
@@ -285,9 +284,9 @@ export default function Feed() {
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </Link>
+                      </Link>
+                    ))}
+                  </div>
                   <Link
                     href="/vagas"
                     className="mt-4 block text-center text-sm text-[#7B2D26] hover:underline"

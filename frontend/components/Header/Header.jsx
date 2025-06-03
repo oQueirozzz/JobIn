@@ -51,14 +51,15 @@ export default function Header() {
   // Função para buscar notificações
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/nao-lidas`, {
+      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
       const data = await response.json();
       setNotifications(data);
-      setUnreadCount(data.length);
+      // Conta apenas as notificações não lidas para o contador
+      setUnreadCount(data.filter(notification => !notification.lida).length);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
     }
@@ -234,26 +235,17 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
                     <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                       <h3 className="font-semibold text-sm">Notificações</h3>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={handleMarkAllAsRead}
-                          className="text-[#7B2D26] text-xs hover:underline"
-                        >
-                          Marcar todas como lidas
-                        </button>
-                      )}
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                          Nenhuma notificação não lida
+                          Nenhuma notificação
                         </div>
                       ) : (
                         notifications.map(notification => (
                           <div
                             key={notification.id}
-                            className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
-                            onClick={() => handleNotificationClick(notification.id)}
+                            className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex items-start flex-1">
@@ -284,13 +276,6 @@ export default function Header() {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2 ml-2">
-                                <button
-                                  onClick={(e) => handleNotificationClick(notification.id)}
-                                  className="p-1 text-gray-400 hover:text-[#7B2D26] transition-colors"
-                                  title="Marcar como lida"
-                                >
-                                  <Check className="h-4 w-4" />
-                                </button>
                                 <button
                                   onClick={(e) => handleDeleteNotification(notification.id, e)}
                                   className="p-1 text-gray-400 hover:text-red-500 transition-colors"

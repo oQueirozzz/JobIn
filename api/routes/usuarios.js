@@ -6,6 +6,7 @@ const { Resend } = require('resend');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const NotificacaoService = require('../services/NotificacaoService');
 
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
@@ -51,29 +52,8 @@ const authMiddleware = (req, res, next) => {
 router.post('/register', usuariosController.registerUsuario);
 router.post('/login', usuariosController.loginUsuario);
 router.get('/', usuariosController.getUsuarios);
-router.get('/:id', usuariosController.getUsuarioById);
 
-// Rotas de perfil
-router.get('/perfil', usuariosController.getPerfil);
-router.put('/atualizar', upload.fields([
-  { name: 'foto', maxCount: 1 },
-  { name: 'curriculo', maxCount: 1 },
-  { name: 'certificados', maxCount: 1 }
-]), usuariosController.updateUsuario); // Nova rota para atualização de perfil com upload
-router.put('/:id', upload.fields([
-  { name: 'foto', maxCount: 1 },
-  { name: 'curriculo', maxCount: 1 },
-  { name: 'certificados', maxCount: 1 }
-]), usuariosController.updateUsuario);
-router.delete('/:id', usuariosController.deleteUsuario);
-
-// Inicializar o Resend para envio de emails
-
-
-// Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
-const codigosVerificacao = {};
-
-// Rota para solicitar código de verificação
+// Rotas de redefinição de senha
 router.post('/solicitar-codigo', async (req, res) => {
   const { email, codigo } = req.body;
   console.log('Solicitação de código para:', email, 'Código:', codigo);
@@ -115,78 +95,168 @@ router.post('/solicitar-codigo', async (req, res) => {
   }
 });
 
-// Rota para verificar código
-router.post('/verificar-codigo', (req, res) => {
+router.post('/verificar-codigo', async (req, res) => {
   const { email, codigo } = req.body;
+  console.log('Verificando código para:', email, 'Código:', codigo);
   
-  // Verificar se existe um código para este email
-  if (!codigosVerificacao[email]) {
-    return res.status(400).json({ 
-      message: 'Nenhum código solicitado para este email ou código expirado' 
-    });
-  }
-  
-  const verificacao = codigosVerificacao[email];
-  
-  // Verificar se o código expirou
-  if (Date.now() > verificacao.expiraEm) {
-    delete codigosVerificacao[email];
-    return res.status(400).json({ message: 'Código expirado. Solicite um novo código' });
-  }
-  
-  // Verificar se o código está correto
-  if (verificacao.codigo !== codigo) {
-    return res.status(400).json({ message: 'Código inválido' });
-  }
-  
-  // Código válido - gerar token temporário para redefinição de senha
-  const tokenRedefinicao = Math.random().toString(36).substring(2, 15);
-  verificacao.tokenRedefinicao = tokenRedefinicao;
-  
-  return res.status(200).json({ 
-    message: 'Código verificado com sucesso',
-    token: tokenRedefinicao
-  });
-});
-
-// Rota para redefinir senha
-router.put('/redefinir-senha', async (req, res) => {
-  const { email, token, novaSenha } = req.body;
-  console.log('Dados recebidos para redefinição:', { email });
-
   try {
-    // Verificar token de redefinição
-    if (!codigosVerificacao[email] || codigosVerificacao[email].tokenRedefinicao !== token) {
-      return res.status(400).json({ message: 'Token inválido ou expirado' });
+    const emailNormalizado = email.trim().toLowerCase();
+    
+    // Verificar se existe um código para este email
+    if (!codigosVerificacao[emailNormalizado]) {
+      console.log('Nenhum código encontrado para:', emailNormalizado);
+      return res.status(400).json({ 
+        message: 'Nenhum código solicitado para este email ou código expirado' 
+      });
     }
     
-    // Buscar usuário
-    const [usuarios] = await db.query(
-      'SELECT id, email FROM usuarios WHERE email = ?', 
-      [email]
-    );
+    const verificacao = codigosVerificacao[emailNormalizado];
+    console.log('Verificação encontrada:', verificacao);
+    
+    // Verificar se o código expirou
+    if (Date.now() > verificacao.expiraEm) {
+      console.log('Código expirado:', {
+        agora: Date.now(),
+        expiraEm: verificacao.expiraEm
+      });
+      delete codigosVerificacao[emailNormalizado];
+      return res.status(400).json({ message: 'Código expirado. Solicite um novo código' });
+    }
+    
+    // Verificar se o código está correto
+    if (verificacao.codigo !== codigo) {
+      console.log('Código incorreto:', {
+        recebido: codigo,
+        esperado: verificacao.codigo
+      });
+      return res.status(400).json({ message: 'Código inválido' });
+    }
+    
+    // Código válido - gerar token temporário para redefinição de senha
+    const tokenRedefinicao = Math.random().toString(36).substring(2, 15);
+    console.log('Novo token gerado:', tokenRedefinicao);
+    
+    // Atualizar a verificação com o novo token
+    codigosVerificacao[emailNormalizado] = {
+      ...verificacao,
+      tokenRedefinicao: tokenRedefinicao,
+      expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos
+    };
+    
+    console.log('Verificação atualizada:', codigosVerificacao[emailNormalizado]);
+    
+    return res.status(200).json({ 
+      message: 'Código verificado com sucesso',
+      token: tokenRedefinicao
+    });
+  } catch (error) {
+    console.error('Erro na verificação:', error);
+    return res.status(500).json({
+      message: 'Erro no servidor',
+      error: error.message
+    });
+  }
+});
 
-    if (usuarios.length === 0) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
+router.put('/redefinir-senha', async (req, res) => {
+  console.log('=== ENDPOINT REDEFINIR SENHA CHAMADO ===');
+  console.log('URL completa:', req.originalUrl);
+  console.log('Método:', req.method);
+  console.log('Body completo:', req.body);
+  
+  const { email, token, novaSenha } = req.body;
+  console.log('Dados recebidos para redefinição:', { email, token });
+
+  try {
+    // Verificar se o email e token existem
+    if (!email || !token || !novaSenha) {
+      console.log('Dados faltando:', { email: !!email, token: !!token, novaSenha: !!novaSenha });
+      return res.status(400).json({ 
+        message: 'Email, token e nova senha são obrigatórios' 
+      });
     }
 
-    const userId = usuarios[0].id;
+    const emailNormalizado = email.trim().toLowerCase();
+    console.log('Email normalizado:', emailNormalizado);
+
+    // Verificar token de redefinição
+    if (!codigosVerificacao[emailNormalizado]) {
+      console.log('Códigos de verificação:', codigosVerificacao);
+      console.log('Email não encontrado nos códigos:', emailNormalizado);
+      return res.status(400).json({ 
+        message: 'Nenhuma solicitação de redefinição encontrada para este email' 
+      });
+    }
+
+    const verificacao = codigosVerificacao[emailNormalizado];
+    console.log('Verificação encontrada:', verificacao);
+    
+    if (!verificacao.tokenRedefinicao) {
+      console.log('Token de redefinição não encontrado na verificação');
+      return res.status(400).json({ 
+        message: 'Token de redefinição inválido' 
+      });
+    }
+
+    if (verificacao.tokenRedefinicao !== token) {
+      console.log('Token não corresponde:', { 
+        recebido: token, 
+        esperado: verificacao.tokenRedefinicao 
+      });
+      return res.status(400).json({ 
+        message: 'Token inválido' 
+      });
+    }
+
+    // Verificar se o token expirou (15 minutos)
+    if (Date.now() > verificacao.expiraEm) {
+      console.log('Token expirado:', { 
+        agora: Date.now(), 
+        expiraEm: verificacao.expiraEm 
+      });
+      delete codigosVerificacao[emailNormalizado];
+      return res.status(400).json({ 
+        message: 'Token expirado. Solicite um novo código' 
+      });
+    }
+
+    // Verificar se o usuário existe
+    const [usuario] = await db.query('SELECT id FROM usuarios WHERE email = ?', [emailNormalizado]);
+    if (!usuario || usuario.length === 0) {
+      return res.status(404).json({ 
+        message: 'Usuário não encontrado' 
+      });
+    }
     
     // Hash da nova senha
     const bcrypt = require('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const senhaHash = await bcrypt.hash(novaSenha, salt);
 
-    // Atualizar senha no banco
+    // Atualizar senha no banco usando o email
     const [result] = await db.query(
-      'UPDATE usuarios SET senha = ? WHERE id = ?',
-      [senhaHash, userId]  
+      'UPDATE usuarios SET senha = ? WHERE email = ?',
+      [senhaHash, emailNormalizado]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ 
+        message: 'Erro ao atualizar senha' 
+      });
+    }
     
     // Limpar código de verificação após uso
-    delete codigosVerificacao[email];
+    delete codigosVerificacao[emailNormalizado];
 
-    return res.json({ message: 'Senha atualizada com sucesso!' });
+    // Criar notificação de senha alterada usando o email
+    const [usuarioNotificacao] = await db.query('SELECT id FROM usuarios WHERE email = ?', [emailNormalizado]);
+    if (usuarioNotificacao && usuarioNotificacao.length > 0) {
+      await NotificacaoService.criarNotificacaoSenhaAlterada(usuarioNotificacao[0].id, 0, false);
+    }
+
+    return res.json({ 
+      message: 'Senha atualizada com sucesso!' 
+    });
   } catch (error) {
     console.error('Erro completo:', error);
     return res.status(500).json({ 
@@ -195,5 +265,28 @@ router.put('/redefinir-senha', async (req, res) => {
     });
   }
 });
+
+// Rotas de perfil
+router.get('/perfil', usuariosController.getPerfil);
+router.put('/atualizar', upload.fields([
+  { name: 'foto', maxCount: 1 },
+  { name: 'curriculo', maxCount: 1 },
+  { name: 'certificados', maxCount: 1 }
+]), usuariosController.updateUsuario);
+
+// Rotas com ID (devem vir por último)
+router.get('/:id', usuariosController.getUsuarioById);
+router.put('/:id', upload.fields([
+  { name: 'foto', maxCount: 1 },
+  { name: 'curriculo', maxCount: 1 },
+  { name: 'certificados', maxCount: 1 }
+]), usuariosController.updateUsuario);
+router.delete('/:id', usuariosController.deleteUsuario);
+
+// Inicializar o Resend para envio de emails
+
+
+// Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
+const codigosVerificacao = {};
 
 module.exports = router;

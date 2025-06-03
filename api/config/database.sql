@@ -155,6 +155,11 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `logs`
 ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE vagas ADD COLUMN status VARCHAR(20) DEFAULT 'aberta';
+ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;
+ALTER TABLE notificacao MODIFY usuarios_id INT NULL;
+ALTER TABLE logs MODIFY usuario_id INT NULL;
+ALTER TABLE notificacao MODIFY empresas_id INT NULL;
 
 # Triggers
 
@@ -333,9 +338,5 @@ select * from usuarios;
 select * from logs;
 select * from candidaturas;
 select * from empresas;
-ALTER TABLE vagas ADD COLUMN status VARCHAR(20) DEFAULT 'aberta';
-ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;
-ALTER TABLE notificacao MODIFY usuarios_id INT NULL;
-ALTER TABLE logs MODIFY usuario_id INT NULL;
-ALTER TABLE notificacao MODIFY empresas_id INT NULL;
+
 
