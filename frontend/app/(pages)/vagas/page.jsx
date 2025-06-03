@@ -125,13 +125,13 @@ export default function Vagas() {
     fetchVagas();
   }, [vagaId]);
 
-  // Função para mostrar mensagem temporária
+
   function mostrarMensagem(texto, tipo = 'info') {
     setMensagem({ texto, tipo });
     setTimeout(() => setMensagem(null), 4000);
   }
 
-  // Função para redirecionar para login
+  
   function redirecionarParaLogin() {
     window.location.href = '/login';
   }
@@ -338,7 +338,7 @@ export default function Vagas() {
       )}
 
       {/* Header da página */}
-      <div className="bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] text-white py-12 ">
+      <div className="bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] text-white py-25">
         <div className="max-w-7xl mx-auto px-4 md:px-12 lg:px-24">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Encontre sua próxima oportunidade</h1>
           <p className="text-lg md:text-xl text-gray-100">Explore vagas de emprego e dê o próximo passo na sua carreira</p>
@@ -480,7 +480,7 @@ export default function Vagas() {
                   </p>
 
                   <button
-                    className="w-full bg-[#7B2D26] hover:bg-[#9B3D26] text-white py-2 rounded-lg shadow transition-colors duration-300 flex items-center justify-center"
+                    className="w-full bg-[#7B2D26] hover:bg-[#9B3D26] text-white py-2 rounded-lg shadow transition-colors duration-300 flex items-center justify-center cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       setVagaSelecionada(vaga);

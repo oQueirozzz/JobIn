@@ -5,6 +5,34 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function CadastroAlunos() {
+    const cpf = (e) => {
+        const { name, value } = e.target;
+    
+        if (name === 'cpf') {
+            const cpfLimpo = value.replace(/\D/g, '').slice(0, 11); // Apenas números, até 11 dígitos
+    
+            let cpfFormatado = cpfLimpo;
+    
+            if (cpfLimpo.length > 9) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+            } else if (cpfLimpo.length > 6) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+            } else if (cpfLimpo.length > 3) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+            }
+    
+            setFormData(prev => ({
+                ...prev,
+                [name]: cpfFormatado
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+    
     const [formData, setFormData] = useState({
         nome: '',
         email: '',
@@ -175,15 +203,15 @@ export default function CadastroAlunos() {
                                             </svg>
                                         </div>
                                         <input
-                                            type="number"
+                                            type="text"
                                             id="cpf"
                                             name="cpf"
                                             required
                                             value={formData.cpf}
-                                            onChange={handleChange}
+                                            onChange={cpf}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             placeholder="000.000.000-00"
-                                            maxLength={11}
+                                           
                                         />
                                     </div>
                                 </div>
