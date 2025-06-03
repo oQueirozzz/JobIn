@@ -348,7 +348,7 @@ export default function CadastroEmpresas() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full md:w-auto px-8 py-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center"
+                                className="w-full md:w-auto px-8 py-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center cursor-pointer"
                             >
                                 {isLoading ? (
                                     <>

@@ -7,12 +7,12 @@ import { useAuth } from '../../../hooks/useAuth';
 export default function CadastroAlunos() {
     const cpf = (e) => {
         const { name, value } = e.target;
-    
+
         if (name === 'cpf') {
             const cpfLimpo = value.replace(/\D/g, '').slice(0, 11); // Apenas números, até 11 dígitos
-    
+
             let cpfFormatado = cpfLimpo;
-    
+
             if (cpfLimpo.length > 9) {
                 cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
             } else if (cpfLimpo.length > 6) {
@@ -20,7 +20,7 @@ export default function CadastroAlunos() {
             } else if (cpfLimpo.length > 3) {
                 cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{1,3})/, "$1.$2");
             }
-    
+
             setFormData(prev => ({
                 ...prev,
                 [name]: cpfFormatado
@@ -32,7 +32,7 @@ export default function CadastroAlunos() {
             }));
         }
     };
-    
+
     const [formData, setFormData] = useState({
         nome: '',
         email: '',
@@ -211,7 +211,7 @@ export default function CadastroAlunos() {
                                             onChange={cpf}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             placeholder="000.000.000-00"
-                                           
+
                                         />
                                     </div>
                                 </div>
@@ -230,6 +230,8 @@ export default function CadastroAlunos() {
                                             type="date"
                                             id="data_nascimento"
                                             name="data_nascimento"
+                                            max="2025-12-31"
+                                            min="1950-01-01"
                                             required
                                             value={formData.data_nascimento}
                                             onChange={handleChange}
@@ -401,7 +403,7 @@ export default function CadastroAlunos() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full md:w-auto px-8 py-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center"
+                                className="w-full md:w-auto px-8 py-4 bg-[#7B2D26] text-white rounded-xl font-medium shadow-lg shadow-[#7B2D26]/20 hover:bg-[#9B3D36] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B2D26] transition-all duration-300 flex items-center justify-center cursor-pointer"
                             >
                                 {isLoading ? (
                                     <>
