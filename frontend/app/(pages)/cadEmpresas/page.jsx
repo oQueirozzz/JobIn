@@ -27,10 +27,9 @@ export default function CadastroEmpresas() {
             // Remove caracteres não numéricos
             const cnpjLimpo = value.replace(/\D/g, '');
             
-            // Limita a 14 dígitos
             const cnpjLimitado = cnpjLimpo.slice(0, 14);
             
-            // Formata o CNPJ enquanto digita
+           
             let cnpjFormatado = cnpjLimitado;
             if (cnpjLimitado.length > 2) {
                 cnpjFormatado = cnpjLimitado.slice(0, 2) + '.' + cnpjLimitado.slice(2);

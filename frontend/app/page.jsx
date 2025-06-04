@@ -503,7 +503,14 @@ export default function Feed() {
                   </div>
                 </div>
                 <h2 className="font-semibold text-lg mt-3">{authInfo?.entity?.nome || 'Usuário'}</h2>
-                <p className="text-sm text-gray-600 mt-1">{authInfo?.entity?.formacao || 'Adicione sua formação'}</p>
+
+                {!isCompany ? (
+                  <p className="text-sm text-gray-600 mt-1">Aluno</p>
+
+                ) : (<p className="text-sm text-gray-600 mt-1">Empresa</p>)
+                }
+
+
 
                 {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && (
                   <div className="mt-4 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 border border-amber-100 text-left">
