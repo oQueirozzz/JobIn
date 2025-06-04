@@ -1,5 +1,5 @@
-import pool from '../config/db.js';
-import bcrypt from 'bcryptjs';
+const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 class Usuario {
   static async findAll() {
@@ -212,4 +212,4 @@ class Usuario {
   }
 }
 
-export default Usuario;
+module.exports = Usuario;

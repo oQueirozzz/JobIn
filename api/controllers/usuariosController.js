@@ -39,26 +39,35 @@ exports.getUsuarioById = async (req, res) => {
 // Registrar usuário
 exports.registerUsuario = async (req, res) => {
   try {
+    console.log('=== INÍCIO DO REGISTRO DE USUÁRIO ===');
+    console.log('Body recebido:', req.body);
+    
     const { nome, email, senha, cpf, local, descricao } = req.body;
 
     // Validar campos obrigatórios
     if (!nome || !email || !senha || !cpf) {
+      console.log('Campos obrigatórios faltando:', { nome: !!nome, email: !!email, senha: !!senha, cpf: !!cpf });
       return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
 
     // Verificar se o email já está em uso
+    console.log('Verificando email existente:', email);
     const usuarioExistente = await Usuario.findByEmail(email);
     if (usuarioExistente) {
+      console.log('Email já em uso:', email);
       return res.status(400).json({ message: 'Email já está em uso' });
     }
 
     // Verificar se o CPF já está em uso
+    console.log('Verificando CPF existente:', cpf);
     const cpfExistente = await Usuario.findByCPF(cpf);
     if (cpfExistente) {
+      console.log('CPF já em uso:', cpf);
       return res.status(400).json({ message: 'CPF já está em uso' });
     }
 
     // Criar o usuário
+    console.log('Criando usuário com dados:', { nome, email, cpf, local, descricao });
     const usuario = await Usuario.create({
       nome,
       email,
@@ -68,6 +77,8 @@ exports.registerUsuario = async (req, res) => {
       descricao,
       tipo: 'usuario'
     });
+
+    console.log('Usuário criado com sucesso:', usuario);
 
     // Criar notificação de conta criada
     await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
@@ -82,6 +93,7 @@ exports.registerUsuario = async (req, res) => {
       { usuario_id: usuario.id }
     );
 
+    console.log('=== REGISTRO CONCLUÍDO COM SUCESSO ===');
     res.status(201).json({
       id: usuario.id,
       nome: usuario.nome,
@@ -92,8 +104,14 @@ exports.registerUsuario = async (req, res) => {
       tipo: usuario.tipo
     });
   } catch (error) {
-    console.error('Erro ao registrar usuário:', error);
-    res.status(500).json({ message: 'Erro ao registrar usuário' });
+    console.error('=== ERRO NO REGISTRO DE USUÁRIO ===');
+    console.error('Erro detalhado:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      message: 'Erro ao registrar usuário',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
