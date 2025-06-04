@@ -18,8 +18,31 @@ require('./jobs/notificacaoTeste');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middlewares
-app.use(cors());
+const allowedOrigins = [
+  'https://jobin-mu.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir requisições sem origin (como de mobile apps ou curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Lidar explicitamente com preflight requests
+app.options('*', cors());
+
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
