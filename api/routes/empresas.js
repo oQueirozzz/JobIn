@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const empresasController = require('../controllers/empresasController.js');
-const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas públicas
 router.post('/register', empresasController.registerEmpresa);

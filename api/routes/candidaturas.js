@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const candidaturasController = require('../controllers/candidaturasController.js');
-const { protect } = require('../middleware/authMiddleware.js');
 
 // Todas as rotas são públicas
 router.get('/', candidaturasController.getCandidaturas);

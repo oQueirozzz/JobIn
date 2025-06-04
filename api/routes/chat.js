@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController.js');
-const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas públicas
 router.get('/', chatController.getMensagens);

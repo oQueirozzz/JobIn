@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const vagasController = require('../controllers/vagasController.js');
-const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas públicas
 router.get('/', vagasController.getVagas);
