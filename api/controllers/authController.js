@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
-const Usuario = require('../models/Usuario');
-const Empresa = require('../models/Empresa');
-const NotificacaoService = require('../services/notificacaoService');
+const Usuario = require('../models/Usuario.js');
+const Empresa = require('../models/Empresa.js');
+const NotificacaoService = require('../services/notificacaoService.js');
 
 // Alterar senha
 exports.alterarSenha = async (req, res) => {

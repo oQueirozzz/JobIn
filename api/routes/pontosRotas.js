@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pontosRotasController = require('../controllers/pontosRotasController');
-const { protect } = require('../middleware/authMiddleware');
+const pontosRotasController = require('../controllers/pontosRotasController.js');
+const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas públicas
 router.get('/', pontosRotasController.getPontosRotas);

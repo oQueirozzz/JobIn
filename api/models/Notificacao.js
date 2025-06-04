@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require('../config/db.js');
 
 class Notificacao {
   // Buscar todas as notificações

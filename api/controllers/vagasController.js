@@ -1,7 +1,6 @@
-const Vaga = require('../models/Vaga');
-const Notificacao = require('../models/Notificacao');
-const logsController = require('./logsController');
-const NotificacaoService = require('../services/notificacaoService');
+const Vaga = require('../models/Vaga.js');
+const logsController = require('./logsController.js');
+const NotificacaoService = require('../services/notificacaoService.js');
 
 // Obter todas as vagas
 exports.getVagas = async (req, res) => {

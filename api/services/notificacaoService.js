@@ -1,8 +1,8 @@
-const Notificacao = require('../models/Notificacao');
-const Usuario = require('../models/Usuario');
-const Vaga = require('../models/Vaga');
-const Empresa = require('../models/Empresa');
-const logsController = require('../controllers/logsController');
+const Notificacao = require('../models/Notificacao.js');
+const Usuario = require('../models/Usuario.js');
+const Vaga = require('../models/Vaga.js');
+const Empresa = require('../models/Empresa.js');
+const logsController = require('../controllers/logsController.js');
 
 class NotificacaoService {
   // Notificação de perfil visitado

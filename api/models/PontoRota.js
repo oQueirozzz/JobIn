@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('../config/db.js');
 
 class PontoRota {
   // Buscar todos os pontos de rotas

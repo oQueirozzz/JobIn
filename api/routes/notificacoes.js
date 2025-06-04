@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const notificacoesController = require('../controllers/notificacoesController');
-const { protect } = require('../middleware/authMiddleware');
+const notificacoesController = require('../controllers/notificacoesController.js');
+const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas protegidas
 router.get('/', protect, notificacoesController.getNotificacoes);

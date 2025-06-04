@@ -1,4 +1,4 @@
-const PontoRota = require('../models/PontoRota');
+const PontoRota = require('../models/PontoRota.js');
 
 // Obter todos os pontos de rotas
 exports.getPontosRotas = async (req, res) => {

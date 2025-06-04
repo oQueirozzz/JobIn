@@ -1,8 +1,8 @@
-const Empresa = require('../models/Empresa');
-const logsController = require('./logsController');
-const Log = require('../models/Log');
-const Notificacao = require('../models/Notificacao');
-const notificacaoService = require('../services/notificacaoService');
+const Empresa = require('../models/Empresa.js');
+const logsController = require('./logsController.js');
+const Log = require('../models/Log.js');
+const Notificacao = require('../models/Notificacao.js');
+const notificacaoService = require('../services/notificacaoService.js');
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API

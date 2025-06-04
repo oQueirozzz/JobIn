@@ -1,4 +1,4 @@
-const Rota = require('../models/Rota');
+const Rota = require('../models/Rota.js');
 
 // Obter todas as rotas
 exports.getRotas = async (req, res) => {

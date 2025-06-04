@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const logsController = require('../controllers/logsController');
-const { protect } = require('../middleware/authMiddleware');
+const logsController = require('../controllers/logsController.js');
+const { protect } = require('../middleware/authMiddleware.js');
 
 // Rotas protegidas
 router.get('/', protect, logsController.getLogs);

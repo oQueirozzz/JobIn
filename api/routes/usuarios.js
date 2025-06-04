@@ -2,11 +2,10 @@ const express = require('express');
 const router = express.Router();
 const usuariosController = require('../controllers/usuariosController');
 const db = require('../config/db');
-const { Resend } = require('resend');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const NotificacaoService = require('../services/NotificacaoService');
+const NotificacaoService = require('../services/notificacaoService.js');
 
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({

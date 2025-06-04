@@ -1,4 +1,4 @@
-const Chat = require('../models/Chat');
+const Chat = require('../models/Chat.js');
 
 // Obter todas as mensagens
 exports.getMensagens = async (req, res) => {

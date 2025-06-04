@@ -1,9 +1,9 @@
-const Candidatura = require('../models/Candidatura');
-const Vaga = require('../models/Vaga');
-const Usuario = require('../models/Usuario');
-const Notificacao = require('../models/Notificacao');
-const logsController = require('./logsController');
-const NotificacaoService = require('../services/notificacaoService');
+const Candidatura = require('../models/Candidatura.js');
+const Vaga = require('../models/Vaga.js');
+const Usuario = require('../models/Usuario.js');
+const Notificacao = require('../models/Notificacao.js');
+const logsController = require('./logsController.js');
+const NotificacaoService = require('../services/notificacaoService.js');
 
 // Obter todas as candidaturas
 exports.getCandidaturas = async (req, res) => {

@@ -1,5 +1,5 @@
-const Notificacao = require('../models/Notificacao');
-const Log = require('../models/Log');
+const Notificacao = require('../models/Notificacao.js');
+const Log = require('../models/Log.js');
 
 // Obter todas as notificações
 exports.getNotificacoes = async (req, res) => {
