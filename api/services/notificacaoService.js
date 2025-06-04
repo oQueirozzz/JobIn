@@ -1,8 +1,8 @@
-const Notificacao = require('../models/Notificacao.js');
-const Usuario = require('../models/Usuario.js');
-const Vaga = require('../models/Vaga.js');
-const Empresa = require('../models/Empresa.js');
-const logsController = require('../controllers/logsController.js');
+import Notificacao from '../models/Notificacao.js';
+import Usuario from '../models/Usuario.js';
+import Vaga from '../models/Vaga.js';
+import Empresa from '../models/Empresa.js';
+import logsController from '../controllers/logsController.js';
 
 class NotificacaoService {
   // Notificação de perfil visitado
@@ -380,4 +380,4 @@ class NotificacaoService {
   }
 }
 
-module.exports = NotificacaoService; 
+export default NotificacaoService; 

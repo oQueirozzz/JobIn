@@ -1,10 +1,10 @@
-const db = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Notificacao {
   // Buscar todas as notificações
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT * FROM notificacao ORDER BY data_notificacao DESC');
+      const { rows } = await pool.query('SELECT * FROM notificacao ORDER BY data_notificacao DESC');
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
@@ -15,7 +15,7 @@ class Notificacao {
   // Buscar notificação por ID
   static async findById(id) {
     try {
-      const [rows] = await db.query('SELECT * FROM notificacao WHERE id = ?', [id]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE id = $1', [id]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar notificação por ID:', error);
@@ -26,7 +26,7 @@ class Notificacao {
   // Buscar notificações por usuário
   static async findByUsuario(usuarioId) {
     try {
-      const [rows] = await db.query('SELECT * FROM notificacao WHERE usuarios_id = ? ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por usuário:', error);
@@ -37,7 +37,7 @@ class Notificacao {
   // Buscar notificações não lidas por usuário
   static async findNaoLidasByUsuario(usuarioId) {
     try {
-      const [rows] = await db.query('SELECT * FROM notificacao WHERE usuarios_id = ? AND lida = 0 ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações não lidas:', error);
@@ -48,7 +48,7 @@ class Notificacao {
   // Buscar notificações por empresa
   static async findByEmpresa(empresaId) {
     try {
-      const [rows] = await db.query('SELECT * FROM notificacao WHERE empresas_id = ? ORDER BY data_notificacao DESC', [empresaId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE empresas_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por empresa:', error);
@@ -58,7 +58,7 @@ class Notificacao {
 
   // Buscar notificações por candidatura
   static async findByCandidatura(candidaturaId) {
-    const [rows] = await db.query('SELECT * FROM notificacao WHERE candidaturas_id = ? ORDER BY id DESC', [candidaturaId]);
+    const { rows } = await pool.query('SELECT * FROM notificacao WHERE candidaturas_id = $1 ORDER BY id DESC', [candidaturaId]);
     return rows;
   }
 
@@ -77,7 +77,8 @@ class Notificacao {
           status_candidatura,
           data_notificacao,
           lida
-        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+        ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7)
+        RETURNING *
       `;
 
       const values = [
@@ -92,10 +93,10 @@ class Notificacao {
 
       console.log('Executando query com valores:', values);
 
-      const [result] = await db.query(query, values);
-      console.log('Notificação criada com sucesso, ID:', result.insertId);
+      const { rows } = await pool.query(query, values);
+      console.log('Notificação criada com sucesso, ID:', rows[0].id);
 
-      return this.findById(result.insertId);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao criar notificação:', error);
       throw error;
@@ -105,8 +106,8 @@ class Notificacao {
   // Marcar notificação como lida
   static async marcarComoLida(id) {
     try {
-      const [result] = await db.query('UPDATE notificacao SET lida = true WHERE id = ?', [id]);
-      return { affectedRows: result.affectedRows };
+      const { rows } = await pool.query('UPDATE notificacao SET lida = true WHERE id = $1 RETURNING *', [id]);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
       throw error;
@@ -115,11 +116,11 @@ class Notificacao {
 
   // Marcar todas as notificações do usuário como lidas
   static async marcarTodasComoLidas(usuarioId) {
-    const [result] = await db.query(
-      'UPDATE notificacao SET lida = TRUE WHERE usuarios_id = ?',
+    const { rows } = await pool.query(
+      'UPDATE notificacao SET lida = TRUE WHERE usuarios_id = $1 RETURNING *',
       [usuarioId]
     );
-    return result.affectedRows;
+    return rows.length;
   }
 
   // Atualizar notificação
@@ -129,20 +130,24 @@ class Notificacao {
     let query = 'UPDATE notificacao SET ';
     const values = [];
     const updateFields = [];
+    let paramCount = 1;
 
     if (mensagem_usuario !== undefined) {
-      updateFields.push('mensagem_usuario = ?');
+      updateFields.push(`mensagem_usuario = $${paramCount}`);
       values.push(mensagem_usuario);
+      paramCount++;
     }
 
     if (mensagem_empresa !== undefined) {
-      updateFields.push('mensagem_empresa = ?');
+      updateFields.push(`mensagem_empresa = $${paramCount}`);
       values.push(mensagem_empresa);
+      paramCount++;
     }
 
     if (status_candidatura !== undefined) {
-      updateFields.push('status_candidatura = ?');
+      updateFields.push(`status_candidatura = $${paramCount}`);
       values.push(status_candidatura);
+      paramCount++;
     }
 
     if (updateFields.length === 0) {
@@ -150,18 +155,18 @@ class Notificacao {
     }
 
     query += updateFields.join(', ');
-    query += ' WHERE id = ?';
+    query += ` WHERE id = $${paramCount} RETURNING *`;
     values.push(id);
 
-    const [result] = await db.query(query, values);
-    return { affectedRows: result.affectedRows };
+    const { rows } = await pool.query(query, values);
+    return rows[0];
   }
 
   // Excluir notificação
   static async delete(id) {
     try {
-      const [result] = await db.query('DELETE FROM notificacao WHERE id = ?', [id]);
-      return { affectedRows: result.affectedRows };
+      const { rows } = await pool.query('DELETE FROM notificacao WHERE id = $1 RETURNING *', [id]);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao excluir notificação:', error);
       throw error;
@@ -169,4 +174,4 @@ class Notificacao {
   }
 }
 
-module.exports = Notificacao;
+export default Notificacao;

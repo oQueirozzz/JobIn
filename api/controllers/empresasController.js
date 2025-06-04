@@ -1,14 +1,16 @@
-const Empresa = require('../models/Empresa.js');
-const logsController = require('./logsController.js');
-const Log = require('../models/Log.js');
-const Notificacao = require('../models/Notificacao.js');
-const notificacaoService = require('../services/notificacaoService.js');
+import Empresa from '../models/Empresa.js';
+import logsController from './logsController.js';
+import Log from '../models/Log.js';
+import Notificacao from '../models/Notificacao.js';
+import notificacaoService from '../services/notificacaoService.js';
+import Usuario from '../models/Usuario.js';
+import jwt from 'jsonwebtoken';
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
 
 // Obter todas as empresas
-exports.getEmpresas = async (req, res) => {
+export const getEmpresas = async (req, res) => {
   try {
     const empresas = await Empresa.findAll();
     res.status(200).json(empresas);
@@ -19,7 +21,7 @@ exports.getEmpresas = async (req, res) => {
 };
 
 // Obter uma empresa pelo ID
-exports.getEmpresaById = async (req, res) => {
+export const getEmpresaById = async (req, res) => {
   try {
     const empresa = await Empresa.findById(req.params.id);
     if (!empresa) {
@@ -33,7 +35,7 @@ exports.getEmpresaById = async (req, res) => {
 };
 
 // Registrar uma nova empresa
-exports.registerEmpresa = async (req, res) => {
+export const registerEmpresa = async (req, res) => {
   try {
     const { nome, email, senha, cnpj, local, descricao } = req.body;
 
@@ -94,7 +96,7 @@ exports.registerEmpresa = async (req, res) => {
 };
 
 // Login de empresa
-exports.loginEmpresa = async (req, res) => {
+export const loginEmpresa = async (req, res) => {
   try {
     const { email, senha } = req.body;
 
@@ -106,7 +108,6 @@ exports.loginEmpresa = async (req, res) => {
     }
 
     // Verificar se o email pertence a um usuário
-    const Usuario = require('../models/Usuario');
     const usuarioComMesmoEmail = await Usuario.findByEmail(email);
     if (usuarioComMesmoEmail) {
       return res.status(401).json({ 
@@ -146,7 +147,6 @@ exports.loginEmpresa = async (req, res) => {
     };
 
     // Gerar token JWT
-    const jwt = require('jsonwebtoken');
     const token = jwt.sign(
       { id: empresa.id, type: 'company' },
       process.env.JWT_SECRET || 'sua-chave-secreta',
@@ -165,7 +165,7 @@ exports.loginEmpresa = async (req, res) => {
 };
 
 // Atualizar uma empresa
-exports.updateEmpresa = async (req, res) => {
+export const updateEmpresa = async (req, res) => {
   try {
     const { id } = req.params;
     const empresa = await Empresa.findById(id);
@@ -174,9 +174,9 @@ exports.updateEmpresa = async (req, res) => {
       return res.status(404).json({ error: 'Empresa não encontrada' });
     }
 
-    const result = await Empresa.update(id, req.body);
+    const updatedEmpresa = await Empresa.update(id, req.body);
     
-    if (result.affectedRows === 0) {
+    if (!updatedEmpresa) {
       return res.status(400).json({ error: 'Nenhum campo foi atualizado' });
     }
 
@@ -198,7 +198,7 @@ exports.updateEmpresa = async (req, res) => {
 };
 
 // Excluir uma empresa
-exports.deleteEmpresa = async (req, res) => {
+export const deleteEmpresa = async (req, res) => {
   try {
     const { id } = req.params;
     const empresa = await Empresa.findById(id);
@@ -207,9 +207,9 @@ exports.deleteEmpresa = async (req, res) => {
       return res.status(404).json({ error: 'Empresa não encontrada' });
     }
 
-    const result = await Empresa.delete(id);
+    const deletedEmpresa = await Empresa.delete(id);
     
-    if (result.affectedRows === 0) {
+    if (!deletedEmpresa) {
       return res.status(400).json({ error: 'Erro ao excluir empresa' });
     }
 

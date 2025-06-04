@@ -1,10 +1,10 @@
-const db = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Log {
   // Buscar todos os logs
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT * FROM logs ORDER BY data_acao DESC');
+      const { rows } = await pool.query('SELECT * FROM logs ORDER BY created_at DESC');
       return rows;
     } catch (error) {
       console.error('Erro ao buscar logs:', error);
@@ -15,7 +15,7 @@ class Log {
   // Buscar log por ID
   static async findById(id) {
     try {
-      const [rows] = await db.query('SELECT * FROM logs WHERE id = ?', [id]);
+      const { rows } = await pool.query('SELECT * FROM logs WHERE id = $1', [id]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar log por ID:', error);
@@ -26,7 +26,7 @@ class Log {
   // Buscar logs por usuário
   static async findByUsuario(usuarioId) {
     try {
-      const [rows] = await db.query('SELECT * FROM logs WHERE usuario_id = ? ORDER BY data_acao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM logs WHERE usuario_id = $1 ORDER BY created_at DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar logs por usuário:', error);
@@ -37,7 +37,7 @@ class Log {
   // Buscar logs por empresa
   static async findByEmpresa(empresaId) {
     try {
-      const [rows] = await db.query('SELECT * FROM logs WHERE empresa_id = ? ORDER BY data_acao DESC', [empresaId]);
+      const { rows } = await pool.query('SELECT * FROM logs WHERE empresa_id = $1 ORDER BY created_at DESC', [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar logs por empresa:', error);
@@ -48,7 +48,7 @@ class Log {
   // Buscar logs por ação
   static async findByAcao(acao) {
     try {
-      const [rows] = await db.query('SELECT * FROM logs WHERE acao = ? ORDER BY created_at DESC', [acao]);
+      const { rows } = await pool.query('SELECT * FROM logs WHERE acao = $1 ORDER BY created_at DESC', [acao]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar logs por ação:', error);
@@ -70,7 +70,8 @@ class Log {
           descricao,
           detalhes,
           created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+        RETURNING *
       `;
 
       const values = [
@@ -79,15 +80,15 @@ class Log {
         logData.acao,
         logData.resourse || logData.resource,
         logData.descricao || null,
-        JSON.stringify(logData.detalhes) || null
+        logData.detalhes || null
       ];
 
       console.log('Executando query com valores:', values);
 
-      const [result] = await db.query(query, values);
-      console.log('Log criado com sucesso, ID:', result.insertId);
+      const { rows } = await pool.query(query, values);
+      console.log('Log criado com sucesso, ID:', rows[0].id);
 
-      return this.findById(result.insertId);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao criar log:', error);
       throw error;
@@ -99,8 +100,15 @@ class Log {
     try {
       const query = `
         UPDATE logs 
-        SET usuario_id = ?, empresa_id = ?, acao = ?, resourse = ?, descricao = ?, detalhes = ?, updated_at = NOW()
-        WHERE id = ?
+        SET usuario_id = $1, 
+            empresa_id = $2, 
+            acao = $3, 
+            resourse = $4, 
+            descricao = $5, 
+            detalhes = $6, 
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $7
+        RETURNING *
       `;
 
       const values = [
@@ -109,12 +117,12 @@ class Log {
         logData.acao,
         logData.resourse || logData.resource,
         logData.descricao || null,
-        JSON.stringify(logData.detalhes) || null,
+        logData.detalhes || null,
         id
       ];
 
-      const [result] = await db.query(query, values);
-      return { affectedRows: result.affectedRows };
+      const { rows } = await pool.query(query, values);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao atualizar log:', error);
       throw error;
@@ -124,8 +132,8 @@ class Log {
   // Excluir log
   static async delete(id) {
     try {
-      const [result] = await db.query('DELETE FROM logs WHERE id = ?', [id]);
-      return { affectedRows: result.affectedRows };
+      const { rows } = await pool.query('DELETE FROM logs WHERE id = $1 RETURNING *', [id]);
+      return rows[0];
     } catch (error) {
       console.error('Erro ao excluir log:', error);
       throw error;
@@ -133,4 +141,4 @@ class Log {
   }
 }
 
-module.exports = Log;
+export default Log;

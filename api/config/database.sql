@@ -1,278 +1,181 @@
-create database jobin;
+CREATE DATABASE jobin;
 
-use jobin;
+\c jobin;
 
-CREATE TABLE `usuarios` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`nome` VARCHAR(100) NOT NULL,
-	`email` VARCHAR(100) NOT NULL,
-	`senha` VARCHAR(100) NOT NULL,
-	`cpf` VARCHAR(14) NOT NULL UNIQUE,
-	`data_nascimento` VARCHAR(100) NOT NULL,
-	`habilidades` VARCHAR(50),
-	`descricao` TEXT(200),
-	`formacao` VARCHAR(50),
-	`curriculo` longtext,
-	`area_interesse` VARCHAR(50),
-    `tipo` varchar(50),
-	`foto` longtext,
-	`certificados` longtext,
-	PRIMARY KEY(`id`)
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    senha VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) NOT NULL UNIQUE,
+    data_nascimento VARCHAR(100) NOT NULL,
+    habilidades VARCHAR(50),
+    descricao TEXT,
+    formacao VARCHAR(50),
+    curriculo TEXT,
+    area_interesse VARCHAR(50),
+    tipo VARCHAR(50),
+    foto TEXT,
+    certificados TEXT
 );
 
-CREATE TABLE `empresas` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`nome` VARCHAR(50) NOT NULL,
-	`email` VARCHAR(100) NOT NULL,
-	`cnpj` VARCHAR(14) NOT NULL UNIQUE,
-	`senha` VARCHAR(100) NOT NULL,
-	`descricao` TEXT,
-    `local` varchar(100),
-    `tipo` varchar(50),
-	`logo` longtext,
-	PRIMARY KEY(`id`)
+CREATE TABLE empresas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    cnpj VARCHAR(14) NOT NULL UNIQUE,
+    senha VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    local VARCHAR(100),
+    tipo VARCHAR(50),
+    logo TEXT
 );
 
-CREATE TABLE `vagas` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`empresa_id` INTEGER,
-	`nome_vaga` VARCHAR(50) NOT NULL,
-	`nome_empresa` VARCHAR(50) NOT NULL,
-	`descricao` TEXT,
-	`tipo_vaga` VARCHAR(30),
-	`local_vaga` VARCHAR(50),
-	`categoria` VARCHAR(50),
-    `requisitos` text,
-    `salario` varchar (255),
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	PRIMARY KEY(`id`)
+CREATE TABLE vagas (
+    id SERIAL PRIMARY KEY,
+    empresa_id INTEGER REFERENCES empresas(id),
+    nome_vaga VARCHAR(50) NOT NULL,
+    nome_empresa VARCHAR(50) NOT NULL,
+    descricao TEXT,
+    tipo_vaga VARCHAR(30),
+    local_vaga VARCHAR(50),
+    categoria VARCHAR(50),
+    requisitos TEXT,
+    salario VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'aberta',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `candidaturas` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`id_usuario` INTEGER NOT NULL,
-	`id_vaga` INTEGER NOT NULL,
-    `empresa_id` integer not null,
-	`curriculo_usuario` longtext,
-	`status` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA') DEFAULT 'PENDENTE',
-	`data_atualizacao` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-	PRIMARY KEY(`id`)
+CREATE TABLE candidaturas (
+    id SERIAL PRIMARY KEY,
+    id_usuario INTEGER REFERENCES usuarios(id),
+    id_vaga INTEGER REFERENCES vagas(id),
+    empresa_id INTEGER NOT NULL,
+    curriculo_usuario TEXT,
+    status VARCHAR(20) DEFAULT 'PENDENTE' CHECK (status IN ('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA')),
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `chat` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`usuario_id` INTEGER NOT NULL,
-	`empresa_id` INTEGER NOT NULL,
-	`vaga_id` INTEGER,
-	`mensagem` TEXT,
-	`data` DATE NOT NULL,
-	PRIMARY KEY(`id`)
+CREATE TABLE chat (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    empresa_id INTEGER REFERENCES empresas(id),
+    vaga_id INTEGER REFERENCES vagas(id),
+    mensagem TEXT,
+    data DATE NOT NULL
 );
 
-CREATE TABLE `logs` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`usuario_id` INTEGER NOT NULL,
-	`empresa_id` INTEGER NOT NULL,
-	`acao` VARCHAR(100) NOT NULL,
-	`resourse` VARCHAR(100) NOT NULL,
-	`descricao` TEXT,
-	`detalhes` JSON,
-	`created_at` DATETIME NOT NULL,
-	`updated_at` DATETIME,
-	PRIMARY KEY(`id`)
+CREATE TABLE logs (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id),
+    empresa_id INTEGER REFERENCES empresas(id),
+    acao VARCHAR(100) NOT NULL,
+    resourse VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    detalhes JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
 );
 
-CREATE TABLE `notificacao` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`candidaturas_id` INTEGER NOT NULL,
-	`empresas_id` INTEGER NOT NULL,
-    `usuarios_id` INTEGER NOT NULL,
-	`mensagem_usuario` VARCHAR(255),
-    `mensagem_empresa` VARCHAR(255),
-	`tipo` ENUM('LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA', 'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO', 'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO') NOT NULL,
-	`status_candidatura` ENUM('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'),
-	`data_notificacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
-	`lida` BOOLEAN DEFAULT FALSE,
-	PRIMARY KEY(`id`)
+CREATE TABLE notificacao (
+    id SERIAL PRIMARY KEY,
+    candidaturas_id INTEGER NOT NULL,
+    empresas_id INTEGER REFERENCES empresas(id),
+    usuarios_id INTEGER REFERENCES usuarios(id),
+    mensagem_usuario VARCHAR(255),
+    mensagem_empresa VARCHAR(255),
+    tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA', 'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO', 'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO')),
+    status_candidatura VARCHAR(20) CHECK (status_candidatura IN ('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA')),
+    data_notificacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lida BOOLEAN DEFAULT FALSE
 );
 
-CREATE TABLE `posts` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-    `empresa_id` INTEGER NOT NULL,
-    `titulo` VARCHAR(100) NOT NULL,
-    `conteudo` TEXT NOT NULL,
-    `imagem` longtext, -- opcional
-    `data_publicacao` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY(`id`),
-    FOREIGN KEY (`empresa_id`) REFERENCES `empresas`(`id`) ON DELETE CASCADE
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    empresa_id INTEGER REFERENCES empresas(id) ON DELETE CASCADE,
+    titulo VARCHAR(100) NOT NULL,
+    conteudo TEXT NOT NULL,
+    imagem TEXT,
+    data_publicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela para histórico de candidaturas removidas
-CREATE TABLE IF NOT EXISTS candidaturas_removidas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,
-    id_vaga INT NOT NULL,
-    data_remocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
-    FOREIGN KEY (id_vaga) REFERENCES vagas(id)
+CREATE TABLE candidaturas_removidas (
+    id SERIAL PRIMARY KEY,
+    id_usuario INTEGER REFERENCES usuarios(id),
+    id_vaga INTEGER REFERENCES vagas(id),
+    data_remocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Chaves estrangeiras
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
-ALTER TABLE `posts`
-ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
+-- Create triggers for updated_at
+CREATE TRIGGER update_vagas_updated_at
+    BEFORE UPDATE ON vagas
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
-ALTER TABLE `candidaturas`
-ADD FOREIGN KEY(`id_usuario`) REFERENCES `usuarios`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `candidaturas`
-ADD FOREIGN KEY(`id_vaga`) REFERENCES `vagas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `vagas`
-ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `chat`
-ADD FOREIGN KEY(`vaga_id`) REFERENCES `vagas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `chat`
-ADD FOREIGN KEY(`usuario_id`) REFERENCES `usuarios`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `chat`
-ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `logs`
-ADD FOREIGN KEY(`usuario_id`) REFERENCES `usuarios`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-ALTER TABLE `logs`
-ADD FOREIGN KEY(`empresa_id`) REFERENCES `empresas`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE vagas ADD COLUMN status VARCHAR(20) DEFAULT 'aberta';
-ALTER TABLE logs MODIFY COLUMN empresa_id INT NULL;
-ALTER TABLE notificacao MODIFY usuarios_id INT NULL;
-ALTER TABLE logs MODIFY usuario_id INT NULL;
-ALTER TABLE notificacao MODIFY empresas_id INT NULL;
-
-# Triggers
-
-DELIMITER $$
--- Quando um usuário for deletado, sua candidatura em uma vaga será excluida automaticamente
+-- Create triggers for cascading deletes
+CREATE OR REPLACE FUNCTION delete_candidaturas_on_usuario_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM candidaturas WHERE id_usuario = OLD.id;
+    RETURN OLD;
+END;
+$$ language 'plpgsql';
 
 CREATE TRIGGER before_delete_usuarios
-BEFORE DELETE ON usuarios
-FOR EACH ROW
-BEGIN
-    DELETE FROM candidaturas
-    WHERE id_usuario = OLD.id;
-END$$
+    BEFORE DELETE ON usuarios
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_candidaturas_on_usuario_delete();
 
--- Deleta as candidaturas de uma vaga quando ela for excluida
+CREATE OR REPLACE FUNCTION delete_candidaturas_on_vaga_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM candidaturas WHERE id_vaga = OLD.id;
+    RETURN OLD;
+END;
+$$ language 'plpgsql';
+
 CREATE TRIGGER before_delete_vagas
-BEFORE DELETE ON vagas
-FOR EACH ROW
-BEGIN
-    DELETE FROM candidaturas
-    where id_vaga = old.id;
-END$$
+    BEFORE DELETE ON vagas
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_candidaturas_on_vaga_delete();
 
--- Trigger para deletar mensagens do chat quando um usuário for excluído
-CREATE TRIGGER before_delete_usuario_chat
-BEFORE DELETE ON usuarios
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION delete_chat_on_usuario_delete()
+RETURNS TRIGGER AS $$
 BEGIN
     DELETE FROM chat WHERE usuario_id = OLD.id;
-END$$
+    RETURN OLD;
+END;
+$$ language 'plpgsql';
 
--- Trigger para deletar mensagens do chat quando uma empresa for excluída
-CREATE TRIGGER before_delete_empresa_chat
-BEFORE DELETE ON empresas
-FOR EACH ROW
+CREATE TRIGGER before_delete_usuario_chat
+    BEFORE DELETE ON usuarios
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_chat_on_usuario_delete();
+
+CREATE OR REPLACE FUNCTION delete_chat_on_empresa_delete()
+RETURNS TRIGGER AS $$
 BEGIN
     DELETE FROM chat WHERE empresa_id = OLD.id;
-END$$
+    RETURN OLD;
+END;
+$$ language 'plpgsql';
 
--- Trigger para deletar logs relacionados a um usuário excluído
-CREATE TRIGGER before_delete_usuario_logs
-BEFORE DELETE ON usuarios
-FOR EACH ROW
-BEGIN
-    DELETE FROM logs WHERE usuario_id = OLD.id;
-END$$
+CREATE TRIGGER before_delete_empresa_chat
+    BEFORE DELETE ON empresas
+    FOR EACH ROW
+    EXECUTE FUNCTION delete_chat_on_empresa_delete();
 
--- Trigger para deletar logs relacionados a uma empresa excluída
-CREATE TRIGGER before_delete_empresa_logs
-BEFORE DELETE ON empresas
-FOR EACH ROW
-BEGIN
-    DELETE FROM logs WHERE empresa_id = OLD.id;
-END$$
-
--- Trigger para deletar notificações relacionadas a uma candidatura excluída
-CREATE TRIGGER before_delete_candidatura_notificacoes
-BEFORE DELETE ON candidaturas
-FOR EACH ROW
-BEGIN
-    DELETE FROM notificacao WHERE candidaturas_id = OLD.id;
-END$$
-
--- Trigger para criar notificação quando o status da candidatura for alterado
-CREATE TRIGGER after_update_candidatura_status
-AFTER UPDATE ON candidaturas
-FOR EACH ROW
-BEGIN
-    DECLARE empresa_id INT;
-
-    IF OLD.status <> NEW.status THEN
-        -- Obter o ID da empresa da vaga
-        SELECT empresa_id INTO empresa_id FROM vagas WHERE id = NEW.id_vaga;
-
-        -- Inserir notificação
-        INSERT INTO notificacao (
-            candidaturas_id, empresas_id, usuarios_id, 
-            mensagem_usuario, mensagem_empresa, status_candidatura
-        )
-        VALUES (
-            NEW.id,
-            empresa_id,
-            NEW.id_usuario,
-            CASE 
-                WHEN NEW.status = 'APROVADO' THEN 'Parabéns! Sua candidatura foi aprovada.'
-                WHEN NEW.status = 'REJEITADO' THEN 'Sua candidatura não foi aprovada desta vez.'
-                WHEN NEW.status = 'EM_ESPERA' THEN 'Sua candidatura está em análise.'
-                ELSE 'O status da sua candidatura foi atualizado.'
-            END,
-            CASE 
-                WHEN NEW.status = 'APROVADO' THEN 'Você aprovou uma candidatura.'
-                WHEN NEW.status = 'REJEITADO' THEN 'Você rejeitou uma candidatura.'
-                WHEN NEW.status = 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
-                ELSE 'Você atualizou o status de uma candidatura.'
-            END,
-            NEW.status
-        );
-    END IF;
-END$$
-
--- Trigger para registrar candidaturas removidas
-CREATE TRIGGER after_delete_candidatura
-AFTER DELETE ON candidaturas
-FOR EACH ROW
-BEGIN
-    INSERT INTO candidaturas_removidas (id_usuario, id_vaga)
-    VALUES (OLD.id_usuario, OLD.id_vaga);
-END$$
-
-DELIMITER ;
 -- Inserindo dados
-
-
 
 select * from usuarios;
 select * from logs;
