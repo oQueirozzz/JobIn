@@ -61,8 +61,8 @@ export function AuthProvider({ children }) {
       setIsLoading(true);
       
       const apiUrl = authType === 'user' 
-        ? 'http://localhost:3001/api/usuarios/login'
-        : 'http://localhost:3001/api/empresas/login';
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/login`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/login`;
 
       const response = await fetch(apiUrl, {
         method: 'POST',

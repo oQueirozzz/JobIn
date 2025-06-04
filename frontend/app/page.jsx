@@ -97,7 +97,7 @@ export default function Feed() {
         // Carregar vagas recomendadas apenas para usuários
         const carregarVagasRecomendadas = async () => {
           try {
-            const res = await fetch("http://localhost:3001/api/vagas");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`	);
             const data = await res.json();
             setVagas(data);
 
@@ -140,7 +140,7 @@ export default function Feed() {
   useEffect(() => {
     const carregarPosts = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/posts');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`);
         const data = await response.json();
         setPosts(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -187,7 +187,7 @@ export default function Feed() {
         formData.append('imagem', selectedImage);
       }
 
-      const response = await fetch('http://localhost:3001/api/posts', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`, {
         method: 'POST',
         body: formData,
       });
@@ -468,7 +468,7 @@ export default function Feed() {
                       {post.imagem && (
                         <div className="mb-4">
                           <img
-                            src={`http://localhost:3001/${post.imagem}`}
+                            src={`${process.env.NEXT_PUBLIC_API_URL}/${post.imagem}`}
                             alt="Post"
                             className="w-full rounded-lg"
                           />

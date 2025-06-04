@@ -284,7 +284,7 @@ export default function Perfil() {
 
             // Se for um caminho de arquivo, baixa do servidor
             if (data.startsWith('/')) {
-                window.open(`http://localhost:3001${data}`, '_blank');
+                window.open(`${process.env.NEXT_PUBLIC_API_URL}${data}`, '_blank');
                 return;
             }
 
@@ -394,8 +394,8 @@ export default function Perfil() {
             
             const isEmpresa = authInfo?.type === 'company';
             const apiUrl = isEmpresa 
-                ? `http://localhost:3001/api/empresas/${userId}`
-                : `http://localhost:3001/api/usuarios/atualizar`; // Rota corrigida
+                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
+                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/atualizar`; // Rota corrigida
 
             // Preparar dados para envio
             const dadosParaEnviar = { ...formData };
@@ -976,8 +976,8 @@ export default function Perfil() {
 
                                                                             const isEmpresa = authInfo?.type === 'company';
                                                                             const apiUrl = isEmpresa 
-                                                                                ? `http://localhost:3001/api/empresas/${userId}`
-                                                                                : `http://localhost:3001/api/usuarios/atualizar`;
+                                                                                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
+                                                                                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/atualizar`;
 
                                                                             // Preparar dados para envio
                                                                             const dadosParaEnviar = {

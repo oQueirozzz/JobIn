@@ -93,7 +93,7 @@ export default function NovaSenha() {
             }
 
             // Se o código estiver correto localmente, prosseguir com a verificação no backend
-            const response = await fetch('http://localhost:3001/api/usuarios/verificar-codigo', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/verificar-codigo`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export default function NovaSenha() {
             }
 
             // Verificar se o email existe na API - apenas verificação
-            const response = await fetch(`http://localhost:3001/api/usuarios/login`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -181,7 +181,7 @@ export default function NovaSenha() {
             setCodigoGerado(codigo);
             
             // Enviar o código para o backend para armazenamento
-            const solicitarCodigoResponse = await fetch('http://localhost:3001/api/usuarios/solicitar-codigo', {
+            const solicitarCodigoResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/solicitar-codigo`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -297,7 +297,7 @@ export default function NovaSenha() {
             console.log('Enviando dados para redefinição:', dadosRequisicao);
 
             // Chamar a API para atualizar a senha no backend
-            const response = await fetch('http://localhost:3001/api/usuarios/redefinir-senha', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/redefinir-senha`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

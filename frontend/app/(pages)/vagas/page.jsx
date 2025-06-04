@@ -25,7 +25,7 @@ export default function Vagas() {
       setLoading(true);
 
       try {
-        const res = await fetch('http://localhost:3001/api/vagas');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`);
         const data = await res.json();
 
         // Ordenar vagas por data de criação (mais recentes primeiro)
@@ -101,7 +101,7 @@ export default function Vagas() {
         }
 
         if (usuarioId) {
-          const resCandidaturas = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
+          const resCandidaturas = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/usuario/${usuarioId}`);
           if (resCandidaturas.ok) {
             const dataCandidaturas = await resCandidaturas.json();
             const vagasCandidatadasIds = dataCandidaturas.map(vg => vg.id_vaga);
@@ -165,7 +165,7 @@ export default function Vagas() {
         curriculo_usuario: parsed.curriculo || null
       };
 
-      const res = await fetch('http://localhost:3001/api/candidaturas', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ export default function Vagas() {
       const usuarioId = parsed.id;
 
       // Primeiro, buscar a candidatura para obter o ID
-      const resCandidatura = await fetch(`http://localhost:3001/api/candidaturas/usuario/${usuarioId}`);
+      const resCandidatura = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/usuario/${usuarioId}`);
       if (!resCandidatura.ok) {
         throw new Error('Erro ao buscar candidatura');
       }
@@ -230,7 +230,7 @@ export default function Vagas() {
 
   async function confirmarRemocaoCandidatura() {
     try {
-      const res = await fetch(`http://localhost:3001/api/candidaturas/${candidaturaToRemove.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/${candidaturaToRemove.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

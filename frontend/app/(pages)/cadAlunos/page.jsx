@@ -78,7 +78,7 @@ export default function CadastroAlunos() {
         }
 
         try {
-            const response = await fetch('http://localhost:3001/api/usuarios/register', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

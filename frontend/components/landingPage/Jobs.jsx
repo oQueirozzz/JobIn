@@ -12,7 +12,7 @@ export default function Jobs() {
     async function fetchVagas() {
       try {
         console.log('Iniciando busca de vagas no frontend...');
-        const res = await fetch('http://localhost:3001/api/vagas');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`);
         console.log('Status da resposta:', res.status);
         
         if (!res.ok) {

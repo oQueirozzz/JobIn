@@ -92,7 +92,7 @@ export default function CadastroEmpresas() {
                 tipo: 'empresa'
             });
 
-            const response = await fetch('http://localhost:3001/api/empresas/register', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

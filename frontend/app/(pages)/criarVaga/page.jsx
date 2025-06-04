@@ -76,7 +76,7 @@ export default function CriarVaga() {
 
       mostrarNotificacao('info', 'Enviando dados para o servidor...');
 
-      const res = await fetch('http://localhost:3001/api/vagas', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
