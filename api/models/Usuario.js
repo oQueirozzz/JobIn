@@ -1,20 +1,11 @@
-const db = require('../config/db.js');
-const bcrypt = require('bcryptjs');
+import pool from '../config/db.js';
+import bcrypt from 'bcryptjs';
 
 class Usuario {
   static async findAll() {
     try {
-      const [rows] = await db.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios');
+      const { rows } = await pool.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios');
       return rows;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async findById(id) {
-    try {
-      const [rows] = await db.query('SELECT * FROM usuarios WHERE id = ?', [id]);
-      return rows[0];
     } catch (error) {
       throw error;
     }
@@ -31,9 +22,9 @@ class Usuario {
         return null;
       }
 
-      const [rows] = await db.query(
-        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios WHERE id = ?', 
-        [parseInt(id, 10)]
+      const { rows } = await pool.query(
+        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios WHERE id = $1', 
+        [userId]
       );
       console.log('Resultado da consulta:', rows);
       return rows[0];
@@ -45,7 +36,7 @@ class Usuario {
 
   static async findByEmail(email) {
     try {
-      const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+      const { rows } = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
       return rows[0];
     } catch (error) {
       throw error;
@@ -54,7 +45,7 @@ class Usuario {
 
   static async findByCPF(cpf) {
     try {
-      const [rows] = await db.query('SELECT * FROM usuarios WHERE cpf = ?', [cpf]);
+      const { rows } = await pool.query('SELECT * FROM usuarios WHERE cpf = $1', [cpf]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar usuário por CPF:', error);
@@ -77,8 +68,8 @@ class Usuario {
       // Definir data_nascimento padrão se não fornecida
       const dataNascimento = userData.data_nascimento || '2000-01-01';
 
-      const [result] = await db.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      const { rows } = await pool.query(
+        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
         [
           userData.nome,
           userData.email,
@@ -95,8 +86,8 @@ class Usuario {
         ]
       );
 
-      console.log('Usuário criado com ID:', result.insertId);
-      return { id: result.insertId, ...userData, senha: undefined };
+      console.log('Usuário criado com ID:', rows[0].id);
+      return { ...rows[0], senha: undefined };
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       throw error;
@@ -111,62 +102,75 @@ class Usuario {
       let query = 'UPDATE usuarios SET ';
       const values = [];
       const updateFields = [];
+      let paramCount = 1;
 
       // Adiciona todos os campos que estão presentes no userData
       if ('nome' in userData) {
-        updateFields.push('nome = ?');
+        updateFields.push(`nome = $${paramCount}`);
         values.push(userData.nome);
+        paramCount++;
       }
       if ('email' in userData) {
-        updateFields.push('email = ?');
+        updateFields.push(`email = $${paramCount}`);
         values.push(userData.email);
+        paramCount++;
       }
       if ('senha' in userData && userData.senha) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(userData.senha, salt);
-        updateFields.push('senha = ?');
+        updateFields.push(`senha = $${paramCount}`);
         values.push(hashedPassword);
+        paramCount++;
       }
       if ('cpf' in userData) {
-        updateFields.push('cpf = ?');
+        updateFields.push(`cpf = $${paramCount}`);
         values.push(userData.cpf);
+        paramCount++;
       }
       if ('data_nascimento' in userData) {
-        updateFields.push('data_nascimento = ?');
+        updateFields.push(`data_nascimento = $${paramCount}`);
         values.push(userData.data_nascimento);
+        paramCount++;
       }
-        if (userData.habilidades !== undefined) {
-        updateFields.push('habilidades = ?');
+      if (userData.habilidades !== undefined) {
+        updateFields.push(`habilidades = $${paramCount}`);
         values.push(userData.habilidades);
-        }
-
+        paramCount++;
+      }
       if (userData.descricao !== undefined) {
-        updateFields.push('descricao = ?');
+        updateFields.push(`descricao = $${paramCount}`);
         values.push(userData.descricao);
+        paramCount++;
       }
       if ('formacao' in userData) {
-        updateFields.push('formacao = ?');
+        updateFields.push(`formacao = $${paramCount}`);
         values.push(userData.formacao);
+        paramCount++;
       }
       if ('curriculo' in userData) {
-        updateFields.push('curriculo = ?');
+        updateFields.push(`curriculo = $${paramCount}`);
         values.push(userData.curriculo);
+        paramCount++;
       }
       if ('area_interesse' in userData) {
-        updateFields.push('area_interesse = ?');
+        updateFields.push(`area_interesse = $${paramCount}`);
         values.push(userData.area_interesse);
+        paramCount++;
       }
       if ('tipo' in userData) {
-        updateFields.push('tipo = ?');
+        updateFields.push(`tipo = $${paramCount}`);
         values.push(userData.tipo);
+        paramCount++;
       }
       if ('foto' in userData) {
-        updateFields.push('foto = ?');
+        updateFields.push(`foto = $${paramCount}`);
         values.push(userData.foto);
+        paramCount++;
       }
       if ('certificados' in userData) {
-        updateFields.push('certificados = ?');
+        updateFields.push(`certificados = $${paramCount}`);
         values.push(userData.certificados);
+        paramCount++;
       }
 
       console.log('Campos a serem atualizados:', updateFields);
@@ -178,16 +182,16 @@ class Usuario {
       }
 
       query += updateFields.join(', ');
-      query += ' WHERE id = ?';
+      query += ` WHERE id = $${paramCount} RETURNING *`;
       values.push(id);
 
       console.log('Query final:', query);
       console.log('Valores finais:', values);
 
-      const [result] = await db.query(query, values);
-      console.log('Resultado da query:', result);
+      const { rows } = await pool.query(query, values);
+      console.log('Resultado da query:', rows);
       
-      return { affectedRows: result.affectedRows };
+      return rows[0];
     } catch (error) {
       console.error('Erro detalhado na atualização:', error);
       throw error;
@@ -196,8 +200,8 @@ class Usuario {
 
   static async delete(id) {
     try {
-      const [result] = await db.query('DELETE FROM usuarios WHERE id = ?', [id]);
-      return { affectedRows: result.affectedRows };
+      const { rows } = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
+      return rows[0];
     } catch (error) {
       throw error;
     }
@@ -208,4 +212,4 @@ class Usuario {
   }
 }
 
-module.exports = Usuario;
+export default Usuario;
