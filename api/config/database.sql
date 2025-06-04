@@ -7,7 +7,7 @@ CREATE TABLE `usuarios` (
 	`nome` VARCHAR(100) NOT NULL,
 	`email` VARCHAR(100) NOT NULL,
 	`senha` VARCHAR(100) NOT NULL,
-	`cpf` VARCHAR(11) NOT NULL UNIQUE,
+	`cpf` VARCHAR(14) NOT NULL UNIQUE,
 	`data_nascimento` VARCHAR(100) NOT NULL,
 	`habilidades` VARCHAR(50),
 	`descricao` TEXT(200),
