@@ -1,5 +1,7 @@
-require('dotenv').config();
 const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3001;
+require('dotenv').config();
 const cors = require('cors');
 const usuariosRoutes = require('./routes/usuarios.js');
 const empresasRoutes = require('./routes/empresas.js');
@@ -15,33 +17,13 @@ const path = require('path');
 const fs = require('fs');
 require('./jobs/notificacaoTeste');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-const allowedOrigins = [
-  'https://jobin-mu.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:3001'
-];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+  origin: ['https://jobin-mu.vercel.app', 'http://localhost:3000', 'http://localhost:3001'],
 
-app.options('*', cors());
+  credentials: true,
+  
+}));
 
 app.use(express.json({ limit: '50mb' }));
 

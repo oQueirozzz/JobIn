@@ -110,7 +110,7 @@ export default function Header() {
   const handleDeleteNotification = async (notificationId, event) => {
     event.stopPropagation();
     try {
-      await fetch(`http://localhost:3001/api/notificacoes/${notificationId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export default function Header() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}/marcar-todas-lidas`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes/usuario/${authInfo.entity.id}/marcar-todas-lidas`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
