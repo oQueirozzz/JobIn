@@ -131,7 +131,7 @@ export default function Vagas() {
     setTimeout(() => setMensagem(null), 4000);
   }
 
-  
+
   function redirecionarParaLogin() {
     window.location.href = '/login';
   }
@@ -267,13 +267,12 @@ export default function Vagas() {
     <section className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
       {/* Mensagem de erro/sucesso */}
       {mensagem && (
-        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-in-out ${
-          mensagem.tipo === 'error'
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-in-out ${mensagem.tipo === 'error'
             ? 'bg-white border-l-4 border-red-500 text-red-700'
             : mensagem.tipo === 'success'
               ? 'bg-white border-l-4 border-green-500 text-green-700'
               : 'bg-white border-l-4 border-blue-500 text-blue-700'
-        }`}>
+          }`}>
           <div className="flex items-center">
             {mensagem.tipo === 'error' ? (
               <svg className="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,9 +356,16 @@ export default function Vagas() {
                 onChange={(e) => setCategoria(e.target.value)}
               >
                 <option value="">Todas as áreas</option>
-                <option value="tecnologia">Tecnologia</option>
-                <option value="admin">Administração</option>
-                <option value="engenharia">Engenharia</option>
+                <option value="TI">Tecnologia da Informação</option>
+                <option value="Mecânica">Mecânica</option>
+                <option value="Design">Design</option>
+                <option value="Administração">Administração</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Vendas">Vendas</option>
+                <option value="Saúde">Saúde</option>
+                <option value="Educação">Educação</option>
+                <option value="Engenharia">Engenharia</option>
+                <option value="Outros">Outros</option>
               </select>
             </div>
 
@@ -395,8 +401,8 @@ export default function Vagas() {
 
             {!isCandidato && (
               <div className="flex items-end">
-                <a 
-                  href="/criarVaga" 
+                <a
+                  href="/criarVaga"
                   className="w-full bg-[#7B2D26] hover:bg-[#9B3D26] text-white text-center py-2 rounded-lg shadow transition-colors duration-300 flex items-center justify-center"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +416,7 @@ export default function Vagas() {
         </div>
       </div>
 
-        <div className="max-w-7xl mx-auto px-4 md:px-12 lg:px-24 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-12 lg:px-24 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Lista de vagas */}
           <div className="lg:col-span-2 space-y-4">
@@ -430,9 +436,8 @@ export default function Vagas() {
               vagasFiltradas.map((vaga) => (
                 <div
                   key={vaga.id}
-                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-all duration-300 ${
-                    vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26] ring-2 ring-[#7B2D26] ring-opacity-50' : ''
-                  }`}
+                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-all duration-300 ${vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26] ring-2 ring-[#7B2D26] ring-opacity-50' : ''
+                    }`}
                   onClick={() => setVagaSelecionada(vaga)}
                 >
                   <div className="flex justify-between items-start mb-4">

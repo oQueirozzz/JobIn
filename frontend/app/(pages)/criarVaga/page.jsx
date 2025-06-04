@@ -4,6 +4,20 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CriarVaga() {
+  const maxSalario = (e) => {
+    const { name, value } = e.target;
+  
+    if (name === 'salario') {
+   
+      const onlyNumbers = value.replace(/\D/g, '');
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: onlyNumbers
+      }));
+    }
+  };
+
   const router = useRouter();
   const [carregando, setCarregando] = useState(false);
   const [notificacao, setNotificacao] = useState({ mostrar: false, tipo: '', mensagem: '' });
@@ -31,7 +45,7 @@ export default function CriarVaga() {
       ...prevState,
       [name]: value
     }));
-    
+
     // Notificação para cada campo preenchido
     if (value.trim()) {
       mostrarNotificacao('info', `Campo ${name.replace('_', ' ')} atualizado`);
@@ -76,10 +90,10 @@ export default function CriarVaga() {
       }
 
       mostrarNotificacao('success', 'Vaga criada com sucesso!');
-      
+
       // Dispara evento para atualizar notificações
       window.dispatchEvent(new Event('notificationUpdate'));
-      
+
       setTimeout(() => {
         router.push('/vagas');
       }, 1500);
@@ -136,7 +150,7 @@ export default function CriarVaga() {
           </div>
         </div>
       )}
-      
+
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
           <div className="text-center mb-10">
@@ -251,9 +265,10 @@ export default function CriarVaga() {
                   required
                   disabled={carregando}
                   className="block w-full px-4 py-4 text-gray-700 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
-                  placeholder=" "
+                  placeholder="R$"
                   value={formData.salario}
-                  onChange={handleInputChange}
+                  onChange={maxSalario}
+                  maxLength={7}
                 />
                 <label
                   htmlFor="salario"
