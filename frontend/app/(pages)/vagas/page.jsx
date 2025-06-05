@@ -109,7 +109,7 @@ export default function Vagas() {
           }
         }
 
-        // Se houver uma vaga selecionada, rola até ela
+        // vaga selecionada
         if (vagaId && detalhesRef.current) {
           setTimeout(() => {
             detalhesRef.current.scrollIntoView({ behavior: 'smooth' });

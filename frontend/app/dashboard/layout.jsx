@@ -1,5 +1,4 @@
 'use client';
-
 import { Inter } from 'next/font/google';
 
 const inter = Inter({
@@ -7,6 +6,7 @@ const inter = Inter({
   variable: '--font-inter',
   display: 'swap',
 });
+
 
 export default function DashboardLayout({ children }) {
   return (
