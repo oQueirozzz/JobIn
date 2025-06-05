@@ -8,15 +8,27 @@ export default function CriarVaga() {
     const { name, value } = e.target;
   
     if (name === 'salario') {
+      
+      let onlyNumbers = value.replace(/\D/g, '');
+  
+     
+      onlyNumbers = onlyNumbers.slice(0, 7);
+  
    
-      const onlyNumbers = value.replace(/\D/g, '');
+      const numberValue = parseFloat(onlyNumbers) / 100;
 
+      const formattedValue = numberValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+  
       setFormData(prev => ({
         ...prev,
-        [name]: onlyNumbers
+        [name]: formattedValue
       }));
     }
   };
+  
 
   const router = useRouter();
   const [carregando, setCarregando] = useState(false);
