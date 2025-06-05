@@ -68,26 +68,49 @@ class Usuario {
       // Definir data_nascimento padrão se não fornecida
       const dataNascimento = userData.data_nascimento || '2000-01-01';
 
-      const { rows } = await pool.query(
-        'INSERT INTO usuarios (nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
-        [
-          userData.nome,
-          userData.email,
-          hashedPassword,
-          userData.cpf,
-          dataNascimento,
-          userData.habilidades || null,
-          userData.descricao || null,
-          userData.formacao || null,
-          userData.area_interesse || null,
-          userData.tipo || 'usuario',
-          userData.foto || null,
-          userData.certificados || null
-        ]
-      );
+      // Campos obrigatórios
+      const camposObrigatorios = {
+        nome: userData.nome,
+        email: userData.email,
+        senha: hashedPassword,
+        cpf: userData.cpf,
+        data_nascimento: dataNascimento,
+        tipo: userData.tipo || 'usuario'
+      };
+
+      // Campos opcionais
+      const camposOpcionais = {
+        local: userData.local || null,
+        descricao: userData.descricao || null,
+        habilidades: userData.habilidades || null,
+        formacao: userData.formacao || null,
+        area_interesse: userData.area_interesse || null,
+        foto: userData.foto || null,
+        certificados: userData.certificados || null
+      };
+
+      // Construir a query dinamicamente
+      const campos = [...Object.keys(camposObrigatorios), ...Object.keys(camposOpcionais)];
+      const valores = [...Object.values(camposObrigatorios), ...Object.values(camposOpcionais)];
+      const placeholders = valores.map((_, index) => `$${index + 1}`).join(', ');
+
+      const query = `
+        INSERT INTO usuarios (${campos.join(', ')})
+        VALUES (${placeholders})
+        RETURNING id, nome, email, cpf, data_nascimento, local, descricao, tipo
+      `;
+
+      console.log('Query de criação:', query);
+      console.log('Valores:', valores);
+
+      const { rows } = await pool.query(query, valores);
+
+      if (!rows[0]) {
+        throw new Error('Falha ao criar usuário no banco de dados');
+      }
 
       console.log('Usuário criado com ID:', rows[0].id);
-      return { ...rows[0], senha: undefined };
+      return rows[0];
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       throw error;

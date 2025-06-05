@@ -52,6 +52,18 @@ export const registerUsuario = async (req, res) => {
       return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
 
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Formato de email inválido' });
+    }
+
+    // Validar formato do CPF (apenas números)
+    const cpfRegex = /^\d{11}$/;
+    if (!cpfRegex.test(cpf.replace(/\D/g, ''))) {
+      return res.status(400).json({ message: 'CPF inválido. Deve conter 11 dígitos numéricos' });
+    }
+
     // Verificar se o email já está em uso
     console.log('Verificando email existente:', email);
     const usuarioExistente = await Usuario.findByEmail(email);
@@ -80,20 +92,29 @@ export const registerUsuario = async (req, res) => {
       tipo: 'usuario'
     });
 
+    if (!usuario) {
+      throw new Error('Falha ao criar usuário');
+    }
+
     console.log('Usuário criado com sucesso:', usuario);
 
-    // Criar notificação de conta criada
-    await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
+    try {
+      // Criar notificação de conta criada
+      await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
 
-    // Registrar log sem empresa (usando 0 como ID do sistema)
-    await logsController.registrarLog(
-      usuario.id,
-      0, // ID do sistema
-      'CRIAR',
-      'USUARIO',
-      `Usuário "${nome}" criado`,
-      { usuario_id: usuario.id }
-    );
+      // Registrar log sem empresa (usando 0 como ID do sistema)
+      await logsController.registrarLog(
+        usuario.id,
+        0, // ID do sistema
+        'CRIAR',
+        'USUARIO',
+        `Usuário "${nome}" criado`,
+        { usuario_id: usuario.id }
+      );
+    } catch (error) {
+      console.error('Erro ao criar notificação ou log:', error);
+      // Não interrompe o fluxo, apenas loga o erro
+    }
 
     console.log('=== REGISTRO CONCLUÍDO COM SUCESSO ===');
     res.status(201).json({
