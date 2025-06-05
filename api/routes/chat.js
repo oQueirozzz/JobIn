@@ -1,6 +1,7 @@
 import express from 'express';
+import * as chatController from '../controllers/chatController.js';
+
 const router = express.Router();
-import chatController from '../controllers/chatController.js';
 
 // Rotas públicas
 router.get('/', chatController.getMensagens);

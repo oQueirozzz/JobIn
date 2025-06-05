@@ -1,18 +1,22 @@
 import express from 'express';
-const router = express.Router();
-import notificacoesController from '../controllers/notificacoesController.js';
+import * as notificacoesController from '../controllers/notificacoesController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
+const router = express.Router();
+
+// Rotas públicas
+router.get('/', notificacoesController.getNotificacoes);
+router.get('/:id', notificacoesController.getNotificacaoById);
+router.get('/usuario/:usuarioId', notificacoesController.getNotificacoesByUsuario);
+router.get('/empresa/:empresaId', notificacoesController.getNotificacoesByEmpresa);
+router.post('/', notificacoesController.createNotificacao);
+router.put('/:id', notificacoesController.updateNotificacao);
+router.delete('/:id', notificacoesController.deleteNotificacao);
+
 // Rotas protegidas
-router.get('/', protect, notificacoesController.getNotificacoes);
-router.get('/:id', protect, notificacoesController.getNotificacaoById);
-router.get('/usuario/:usuarioId', protect, notificacoesController.getNotificacoesByUsuario);
 router.get('/usuario/:usuarioId/nao-lidas', protect, notificacoesController.getNotificacoesNaoLidasByUsuario);
-router.get('/empresa/:empresaId', protect, notificacoesController.getNotificacoesByEmpresa);
 router.get('/candidatura/:candidaturaId', protect, notificacoesController.getNotificacoesByCandidatura);
-router.post('/', protect, notificacoesController.createNotificacao);
 router.put('/:id/marcar-lida', protect, notificacoesController.marcarComoLida);
 router.put('/usuario/:usuarioId/marcar-todas-lidas', protect, notificacoesController.marcarTodasComoLidas);
-router.delete('/:id', protect, notificacoesController.deleteNotificacao);
 
 export default router;

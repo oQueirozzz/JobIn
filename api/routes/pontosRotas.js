@@ -1,12 +1,13 @@
 import express from 'express';
-const router = express.Router();
-import pontosRotasController from '../controllers/pontosRotasController.js';
+import * as pontosRotasController from '../controllers/pontosRotasController.js';
 import { protect } from '../middleware/authMiddleware.js';
+
+const router = express.Router();
 
 // Rotas públicas
 router.get('/', pontosRotasController.getPontosRotas);
 router.get('/:id', pontosRotasController.getPontoRotaById);
-router.get('/rota/:routeId', pontosRotasController.getPontosByRouteId);
+router.get('/rota/:rotaId', pontosRotasController.getPontosRotasByRota);
 
 // Rotas protegidas
 router.post('/', protect, pontosRotasController.createPontoRota);
