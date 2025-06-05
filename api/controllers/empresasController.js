@@ -2,7 +2,7 @@ import Empresa from '../models/Empresa.js';
 import * as logsController from './logsController.js';
 import Log from '../models/Log.js';
 import Notificacao from '../models/Notificacao.js';
-import notificacaoService from '../services/notificacaoService.js';
+import NotificacaoService from '../services/notificacaoService.js';
 import Usuario from '../models/Usuario.js';
 import jwt from 'jsonwebtoken';
 
@@ -68,7 +68,7 @@ export const registerEmpresa = async (req, res) => {
     });
 
     // Criar notificação de conta criada
-    await notificacaoService.criarNotificacaoContaCriada(0, empresa.id, true);
+    await NotificacaoService.criarNotificacaoContaCriada(0, empresa.id, true);
 
     // Registrar log sem usuário (usando 0 como ID do sistema)
     await logsController.registrarLog(

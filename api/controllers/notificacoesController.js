@@ -141,7 +141,7 @@ export const marcarTodasComoLidas = async (req, res) => {
 };
 
 // Excluir notificação
-  export const deleteNotificacao = async (req, res) => {
+export const deleteNotificacao = async (req, res) => {
   try {
     const notificacao = await Notificacao.findById(req.params.id);
     
@@ -155,10 +155,10 @@ export const marcarTodasComoLidas = async (req, res) => {
     await Log.create({
       usuario_id: notificacao.usuarios_id,
       empresa_id: notificacao.empresas_id,
-      acao: 'EXCLUIR',
-      resourse: 'NOTIFICACAO',
+      tipo_acao: 'EXCLUIR',
+      tipo_entidade: 'NOTIFICACAO',
       descricao: 'Notificação excluída',
-      detalhes: { notificacao_id: notificacao.id, tipo: notificacao.tipo }
+      dados_adicionais: { notificacao_id: notificacao.id, tipo: notificacao.tipo }
     });
     
     res.status(200).json({ message: 'Notificação excluída com sucesso' });

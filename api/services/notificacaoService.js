@@ -22,7 +22,9 @@ class NotificacaoService {
         candidaturas_id: 0,
         mensagem_usuario: mensagem,
         mensagem_empresa: null,
-        status_candidatura: 'PENDENTE'
+        status_candidatura: 'PENDENTE',
+        tipo: 'PERFIL_VISITADO',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de perfil visitado:', error);
@@ -50,7 +52,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `Você se candidatou para a vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} se candidatou para a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'PENDENTE'
+        status_candidatura: 'PENDENTE',
+        tipo: 'CANDIDATURA_CRIADA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de candidatura:', error);
@@ -78,7 +82,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `Você removeu sua candidatura da vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} removeu a candidatura da vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'PENDENTE'
+        status_candidatura: 'PENDENTE',
+        tipo: 'CANDIDATURA_REMOVIDA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de candidatura removida:', error);
@@ -106,7 +112,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} foi aprovada!`,
         mensagem_empresa: `Você aprovou a candidatura de um usuário para a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'APROVADO'
+        status_candidatura: 'APROVADO',
+        tipo: 'CANDIDATURA_APROVADA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de candidatura aprovada:', error);
@@ -129,7 +137,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi excluída`,
         mensagem_empresa: `Você excluiu a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'PENDENTE'
+        status_candidatura: 'PENDENTE',
+        tipo: 'VAGA_EXCLUIDA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de vaga excluída:', error);
@@ -152,7 +162,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi atualizada`,
         mensagem_empresa: `Você atualizou a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'PENDENTE'
+        status_candidatura: 'PENDENTE',
+        tipo: 'VAGA_ATUALIZADA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de vaga atualizada:', error);
@@ -161,38 +173,29 @@ class NotificacaoService {
   }
 
   // Notificação de conta criada
-  static async criarNotificacaoContaCriada(usuarioId, empresaId, isEmpresa = false) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoContaCriada', { usuarioId, empresaId, isEmpresa });
+  static async criarNotificacaoContaCriada(usuarioId, empresaId, isEmpresa) {
     try {
-      if (isEmpresa) {
-        const empresa = await Empresa.findById(empresaId);
-        if (!empresa) {
-          throw new Error('Empresa não encontrada');
-        }
+      console.log('[NotificacaoService] Disparando: criarNotificacaoContaCriada', { usuarioId, empresaId, isEmpresa });
+      
+      const mensagem = isEmpresa 
+        ? 'Bem-vindo(a) ao JobIn! Sua empresa foi registrada com sucesso.'
+        : 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.';
 
-        return await Notificacao.create({
-          usuarios_id: 0,
-          empresas_id: empresaId,
-          candidaturas_id: 0,
-          mensagem_usuario: null,
-          mensagem_empresa: 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.',
-          status_candidatura: 'PENDENTE'
-        });
-      } else {
-        const usuario = await Usuario.findById(usuarioId);
-        if (!usuario) {
-          throw new Error('Usuário não encontrado');
-        }
+      const dados = {
+        usuarios_id: isEmpresa ? null : usuarioId,
+        empresas_id: isEmpresa ? empresaId : null,
+        candidaturas_id: null,
+        mensagem_usuario: isEmpresa ? null : mensagem,
+        mensagem_empresa: isEmpresa ? mensagem : null,
+        status_candidatura: null,
+        tipo: 'CONTA_CRIADA',
+        lida: false
+      };
 
-        return await Notificacao.create({
-          usuarios_id: usuarioId,
-          empresas_id: 0,
-          candidaturas_id: 0,
-          mensagem_usuario: 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.',
-          mensagem_empresa: null,
-          status_candidatura: 'PENDENTE'
-        });
-      }
+      console.log('Criando notificação com dados:', dados);
+      const notificacao = await Notificacao.create(dados);
+      console.log('Notificação criada com sucesso:', notificacao);
+      return notificacao;
     } catch (error) {
       console.error('Erro ao criar notificação de conta criada:', error);
       throw error;
@@ -210,12 +213,14 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: 0,
+          usuarios_id: null,
           empresas_id: empresaId,
-          candidaturas_id: 0,
+          candidaturas_id: null,
           mensagem_usuario: null,
           mensagem_empresa: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
-          status_candidatura: 'PENDENTE'
+          status_candidatura: null,
+          tipo: 'SENHA_ALTERADA',
+          lida: false
         });
       } else {
         const usuario = await Usuario.findById(usuarioId);
@@ -225,11 +230,13 @@ class NotificacaoService {
 
         return await Notificacao.create({
           usuarios_id: usuarioId,
-          empresas_id: 0,
-          candidaturas_id: 0,
+          empresas_id: null,
+          candidaturas_id: null,
           mensagem_usuario: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
           mensagem_empresa: null,
-          status_candidatura: 'PENDENTE'
+          status_candidatura: null,
+          tipo: 'SENHA_ALTERADA',
+          lida: false
         });
       }
     } catch (error) {
@@ -250,12 +257,12 @@ class NotificacaoService {
 
       // Criar notificação para a empresa
       await Notificacao.create({
-        candidaturas_id: 0,
         empresas_id: empresaId,
         usuarios_id: 0, // Usando 0 como ID padrão para notificações do sistema
         mensagem_usuario: null,
         mensagem_empresa: `Nova vaga "${vaga.nome_vaga}" criada com sucesso!`,
         status_candidatura: 'PENDENTE',
+        tipo: 'VAGA_CRIADA',
         lida: false
       });
 
@@ -294,7 +301,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" foi rejeitada`,
         mensagem_empresa: `Você rejeitou a candidatura de ${usuario.nome} para a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'REJEITADO'
+        status_candidatura: 'REJEITADO',
+        tipo: 'CANDIDATURA_REJEITADA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de candidatura rejeitada:', error);
@@ -322,7 +331,9 @@ class NotificacaoService {
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" está em análise`,
         mensagem_empresa: `Você colocou a candidatura de ${usuario.nome} em análise para a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'EM_ESPERA'
+        status_candidatura: 'EM_ESPERA',
+        tipo: 'CANDIDATURA_EM_ESPERA',
+        lida: false
       });
     } catch (error) {
       console.error('Erro ao criar notificação de candidatura em espera:', error);
@@ -351,12 +362,14 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: 0,
+          usuarios_id: null,
           empresas_id: empresaId,
-          candidaturas_id: 0,
+          candidaturas_id: null,
           mensagem_usuario: null,
           mensagem_empresa: 'Seu perfil foi atualizado com sucesso.',
-          status_candidatura: 'PENDENTE'
+          status_candidatura: null,
+          tipo: 'PERFIL_ATUALIZADO',
+          lida: false
         });
       } else {
         const usuario = await Usuario.findById(usuarioId);
@@ -366,11 +379,13 @@ class NotificacaoService {
 
         return await Notificacao.create({
           usuarios_id: usuarioId,
-          empresas_id: 0,
-          candidaturas_id: 0,
+          empresas_id: null,
+          candidaturas_id: null,
           mensagem_usuario: 'Seu perfil foi atualizado com sucesso.',
           mensagem_empresa: null,
-          status_candidatura: 'PENDENTE'
+          status_candidatura: null,
+          tipo: 'PERFIL_ATUALIZADO',
+          lida: false
         });
       }
     } catch (error) {

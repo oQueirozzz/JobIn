@@ -58,18 +58,20 @@ class Log {
 
   // Criar novo log
   static async create(logData) {
+    let client;
     try {
+      client = await pool.connect();
       console.log('Criando log com dados:', logData);
 
       const query = `
         INSERT INTO logs (
           usuario_id,
           empresa_id,
-          acao,
-          resourse,
+          tipo_acao,
+          tipo_entidade,
           descricao,
-          detalhes,
-          created_at
+          dados_adicionais,
+          data_criacao
         ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING *
       `;
@@ -77,21 +79,23 @@ class Log {
       const values = [
         logData.usuario_id || null,
         logData.empresa_id || null,
-        logData.acao,
-        logData.resourse || logData.resource,
+        logData.tipo_acao || null,
+        logData.tipo_entidade || null,
         logData.descricao || null,
-        logData.detalhes || null
+        logData.dados_adicionais ? JSON.stringify(logData.dados_adicionais) : null
       ];
 
       console.log('Executando query com valores:', values);
 
-      const { rows } = await pool.query(query, values);
+      const { rows } = await client.query(query, values);
       console.log('Log criado com sucesso, ID:', rows[0].id);
 
       return rows[0];
     } catch (error) {
       console.error('Erro ao criar log:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
@@ -102,11 +106,11 @@ class Log {
         UPDATE logs 
         SET usuario_id = $1, 
             empresa_id = $2, 
-            acao = $3, 
-            resourse = $4, 
+            tipo_acao = $3, 
+            tipo_entidade = $4, 
             descricao = $5, 
-            detalhes = $6, 
-            updated_at = CURRENT_TIMESTAMP
+            dados_adicionais = $6, 
+            data_atualizacao = CURRENT_TIMESTAMP
         WHERE id = $7
         RETURNING *
       `;
@@ -114,10 +118,10 @@ class Log {
       const values = [
         logData.usuario_id || null,
         logData.empresa_id || null,
-        logData.acao,
-        logData.resourse || logData.resource,
+        logData.tipo_acao || null,
+        logData.tipo_entidade || null,
         logData.descricao || null,
-        logData.detalhes || null,
+        logData.dados_adicionais ? JSON.stringify(logData.dados_adicionais) : null,
         id
       ];
 

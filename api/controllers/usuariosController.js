@@ -97,23 +97,22 @@ export const registerUsuario = async (req, res) => {
 
     console.log('Usuário criado com sucesso:', usuario);
 
-    try {
-      // Criar notificação de conta criada
-      await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
+    // Criar notificação de conta criada
+    console.log('Criando notificação de boas-vindas...');
+    await NotificacaoService.criarNotificacaoContaCriada(usuario.id, 0, false);
+    console.log('Notificação de boas-vindas criada com sucesso');
 
-      // Registrar log sem empresa (usando 0 como ID do sistema)
-      await logsController.registrarLog(
-        usuario.id,
-        0, // ID do sistema
-        'CRIAR',
-        'USUARIO',
-        `Usuário "${nome}" criado`,
-        { usuario_id: usuario.id }
-      );
-    } catch (error) {
-      console.error('Erro ao criar notificação ou log:', error);
-      // Não interrompe o fluxo, apenas loga o erro
-    }
+    // Registrar log sem empresa (usando 0 como ID do sistema)
+    console.log('Registrando log de criação...');
+    await logsController.registrarLog(
+      usuario.id,
+      0, // ID do sistema
+      'CRIAR',
+      'USUARIO',
+      `Usuário "${nome}" criado`,
+      { usuario_id: usuario.id }
+    );
+    console.log('Log registrado com sucesso');
 
     console.log('=== REGISTRO CONCLUÍDO COM SUCESSO ===');
     res.status(201).json({
@@ -239,76 +238,71 @@ export const loginUsuario = async (req, res) => {
 // Atualizar um usuário
 export const updateUsuario = async (req, res) => {
   try {
-    let userId = parseInt(req.params.id, 10);
-    
-    // Se não houver ID nos parâmetros (rota /atualizar), buscar no corpo
-    if (!userId || isNaN(userId)) {
-      userId = parseInt(req.body.id, 10);
-    }
-    
-    console.log('ID do usuário recebido:', userId);
-    console.log('Tipo do ID:', typeof userId);
-    console.log('Dados recebidos para atualização:', req.body);
-    console.log('Arquivos recebidos:', req.files);
-    
-    if (!userId || isNaN(userId)) {
-      console.error('ID inválido:', req.params.id || req.body.id);
-      return res.status(400).json({ message: 'ID do usuário inválido' });
-    }
-    
-    // Verificar se o usuário existe antes de tentar atualizar
-    const usuarioExistente = await Usuario.findById(userId);
+    const usuarioId = parseInt(req.params.id);
+    console.log('ID do usuário recebido:', usuarioId);
+    console.log('Tipo do ID:', typeof usuarioId);
+
+    // Verificar se o usuário existe
+    const usuarioExistente = await Usuario.findById(usuarioId);
     console.log('Usuário existente:', usuarioExistente);
-    
+
     if (!usuarioExistente) {
-      console.error('Usuário não encontrado com ID:', userId);
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
-    
-    // Preparar dados para atualização
-    const dadosAtualizacao = { ...req.body };
-    
-    // Processar arquivos enviados
-    if (req.files) {
-      if (req.files.foto && req.files.foto[0]) {
-        dadosAtualizacao.foto = req.files.foto[0].path.replace(/\\/g, '/');
-      }
-      if (req.files.curriculo && req.files.curriculo[0]) {
-        dadosAtualizacao.curriculo = req.files.curriculo[0].path.replace(/\\/g, '/');
-      }
-      if (req.files.certificados && req.files.certificados[0]) {
-        dadosAtualizacao.certificados = req.files.certificados[0].path.replace(/\\/g, '/');
-      }
-    }
-    
-    // Atualizar o usuário
+
     console.log('Iniciando atualização do usuário...');
-    const result = await Usuario.update(userId, dadosAtualizacao);
-    console.log('Resultado da atualização:', result);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
+    console.log('Iniciando atualização no modelo com ID:', usuarioId);
+
+    // Preparar dados para atualização
+    const dadosAtualizacao = {
+      ...req.body,
+      id: usuarioId
+    };
+
+    // Se houver arquivos, processar o upload
+    if (req.files) {
+      console.log('Arquivos recebidos:', req.files);
+      
+      if (req.files.foto) {
+        const foto = req.files.foto[0];
+        // Salvar apenas o nome do arquivo, não o caminho completo
+        dadosAtualizacao.foto = `uploads/usuarios/${foto.filename}`;
+      }
+      
+      if (req.files.curriculo) {
+        const curriculo = req.files.curriculo[0];
+        dadosAtualizacao.curriculo = `uploads/usuarios/${curriculo.filename}`;
+      }
+      
+      if (req.files.certificados) {
+        const certificados = req.files.certificados.map(file => `uploads/usuarios/${file.filename}`);
+        dadosAtualizacao.certificados = certificados;
+      }
     }
-    
-    // Buscar os dados atualizados do usuário para retornar ao cliente
+
+    console.log('Dados recebidos para atualização:', dadosAtualizacao);
+
+    // Atualizar usuário
+    const usuarioAtualizado = await Usuario.update(usuarioId, dadosAtualizacao);
+    console.log('Resultado da atualização:', usuarioAtualizado);
+
+    // Buscar dados atualizados
     console.log('Buscando dados atualizados do usuário...');
-    const usuarioAtualizado = await Usuario.findById(userId);
-    console.log('Dados atualizados encontrados:', usuarioAtualizado);
-    
-    if (!usuarioAtualizado) {
-      return res.status(404).json({ message: 'Erro ao buscar dados atualizados do usuário' });
-    }
-    
-    // Registrar log de atualização de perfil
-    await logsController.logAtualizacaoPerfil(userId, 0, 'usuario');
-    
+    const dadosAtualizados = await Usuario.findById(usuarioId);
+    console.log('Dados atualizados encontrados:', dadosAtualizados);
+
+    // Registrar log da atualização
+    await logsController.logAtualizacaoPerfil(usuarioId, 0, false);
+
     // Criar notificação de perfil atualizado
-    await NotificacaoService.criarNotificacaoPerfilAtualizado(userId, 0, false);
-    
-    // Retornar os dados atualizados do usuário
-    res.status(200).json(usuarioAtualizado);
+    await NotificacaoService.criarNotificacaoPerfilAtualizado(usuarioId, 0, false);
+
+    res.status(200).json({
+      message: 'Usuário atualizado com sucesso',
+      usuario: dadosAtualizados
+    });
   } catch (error) {
-    console.error('Erro detalhado ao atualizar usuário:', error);
+    console.error('Erro ao atualizar usuário:', error);
     res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
   }
 };

@@ -3,9 +3,15 @@ import * as usuariosController from '../controllers/usuariosController.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import NotificacaoService from '../services/notificacaoService.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// Configuração do __dirname para ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
@@ -265,22 +271,14 @@ router.put('/redefinir-senha', async (req, res) => {
   }
 });
 
-// Rotas de perfil
-router.get('/perfil', usuariosController.getPerfil);
-router.put('/atualizar', upload.fields([
+// Rotas protegidas
+router.get('/perfil', protect, usuariosController.getPerfil);
+router.put('/:id', protect, upload.fields([
   { name: 'foto', maxCount: 1 },
   { name: 'curriculo', maxCount: 1 },
   { name: 'certificados', maxCount: 1 }
 ]), usuariosController.updateUsuario);
-
-// Rotas com ID (devem vir por último)
-router.get('/:id', usuariosController.getUsuarioById);
-router.put('/:id', upload.fields([
-  { name: 'foto', maxCount: 1 },
-  { name: 'curriculo', maxCount: 1 },
-  { name: 'certificados', maxCount: 1 }
-]), usuariosController.updateUsuario);
-router.delete('/:id', usuariosController.deleteUsuario);
+router.delete('/:id', protect, usuariosController.deleteUsuario);
 
 // Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
 const codigosVerificacao = {};

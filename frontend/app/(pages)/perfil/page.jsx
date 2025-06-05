@@ -194,80 +194,81 @@ export default function Perfil() {
 
     // Função para atualizar o estado local quando o arquivo é carregado
     const handleFileChange = async (e, field) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Verificar tamanho do arquivo (máximo 5MB)
-        const maxSize = 5 * 1024 * 1024; // 5MB em bytes
-        if (file.size > maxSize) {
-            showMessage('O arquivo é muito grande. Tamanho máximo permitido: 5MB', 'error');
-            return;
-        }
-
-        // Verificar tipo do arquivo
-        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        const allowedDocTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-        if (field === 'foto' || field === 'logo') {
-            if (!allowedImageTypes.includes(file.type)) {
-                showMessage('Formato de imagem não suportado. Use JPG, PNG ou GIF', 'error');
-                return;
-            }
-        } else if (field === 'curriculo' || field === 'certificados') {
-            if (!allowedDocTypes.includes(file.type)) {
-                showMessage('Formato de documento não suportado. Use PDF, DOC ou DOCX', 'error');
-                return;
-            }
-        }
-
         try {
-            // Converter o arquivo para base64
-            const reader = new FileReader();
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validar tipo de arquivo
+            if (field === 'foto' && !file.type.startsWith('image/')) {
+                showMessage('Por favor, selecione uma imagem válida.', 'error');
+                return;
+            }
+
+            // Validar tamanho do arquivo (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('O arquivo deve ter no máximo 5MB.', 'error');
+                return;
+            }
+
+            // Criar FormData para upload
+            const formData = new FormData();
+            formData.append(field, file);
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage('Token de autenticação não encontrado', 'error');
+                return;
+            }
+
+            const userId = authInfo?.entity?.id;
+            if (!userId) {
+                showMessage('ID do usuário não encontrado!', 'error');
+                return;
+            }
+
+            const isEmpresa = authInfo?.type === 'company';
+            const apiUrl = isEmpresa 
+                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
+                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
+
+            // Fazer upload do arquivo
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Erro ao fazer upload do arquivo');
+            }
+
+            const data = await response.json();
             
-            reader.onloadend = async () => {
-                try {
-                    let processedData = reader.result;
-                    
-                    // Comprimir apenas imagens
-                    if (field === 'foto' || field === 'logo') {
-                        processedData = await compressImage(reader.result);
-                    }
-
-                    // Atualizar o estado local
-                    setFormData(prev => ({
-                        ...prev,
-                        [field]: processedData
-                    }));
-
-                    // Atualizar o localStorage
-                    const authEntity = JSON.parse(localStorage.getItem('authEntity'));
-                    const updatedEntity = {
-                        ...authEntity,
-                        [field]: processedData
-                    };
-                    localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
-
-                    // Atualizar o contexto de autenticação
-                    if (authInfo && authInfo.entity) {
-                        authInfo.entity = updatedEntity;
-                    }
-
-                    // Mostrar mensagem de sucesso
-                    showMessage(`${field === 'foto' ? 'Foto' : field === 'curriculo' ? 'Currículo' : field === 'logo' ? 'Logo' : 'Certificado'} atualizado com sucesso!`, 'success');
-                } catch (error) {
-                    console.error('Erro ao processar arquivo:', error);
-                    showMessage('Erro ao processar arquivo. Tente novamente.', 'error');
+            // Atualizar estado com a resposta do servidor
+            if (data.usuario) {
+                setFormData(prev => ({ ...prev, ...data.usuario }));
+                
+                // Atualizar a URL do arquivo no estado local
+                if (field === 'foto' && data.usuario.foto) {
+                    const photoUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.foto}`;
+                    setFormData(prev => ({ ...prev, foto: photoUrl }));
+                    localStorage.setItem('userPhoto', photoUrl);
+                } else if (field === 'curriculo' && data.usuario.curriculo) {
+                    const curriculoUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.curriculo}`;
+                    setFormData(prev => ({ ...prev, curriculo: curriculoUrl }));
+                } else if (field === 'certificados' && data.usuario.certificados) {
+                    const certificadosUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.certificados}`;
+                    setFormData(prev => ({ ...prev, certificados: certificadosUrl }));
                 }
-            };
+            }
 
-            reader.onerror = () => {
-                showMessage('Erro ao ler o arquivo. Tente novamente.', 'error');
-            };
-
-            reader.readAsDataURL(file);
+            showMessage(`${field === 'foto' ? 'Foto' : field === 'curriculo' ? 'Currículo' : 'Certificado'} atualizado com sucesso!`, 'success');
         } catch (error) {
-            console.error('Erro ao processar arquivo:', error);
-            showMessage('Erro ao processar arquivo. Tente novamente.', 'error');
+            console.error('Erro ao fazer upload:', error);
+            showMessage(error.message || 'Erro ao fazer upload do arquivo. Por favor, tente novamente.', 'error');
         }
     };
 
@@ -395,27 +396,16 @@ export default function Perfil() {
             const isEmpresa = authInfo?.type === 'company';
             const apiUrl = isEmpresa 
                 ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/atualizar`; // Rota corrigida
+                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
 
             // Preparar dados para envio
-            const dadosParaEnviar = { ...formData };
+            const dadosParaEnviar = {
+                ...formData,
+                foto: null
+            };
             
-            // Para usuários, incluir o ID no corpo da requisição
-            if (!isEmpresa) {
-                dadosParaEnviar.id = userId;
-            }
-
-            // Filtrar apenas os campos necessários
-            const camposPermitidos = isEmpresa 
-                ? ['nome', 'descricao', 'local', 'logo']
-                : ['id', 'nome', 'formacao', 'area_interesse', 'habilidades', 'descricao', 'curriculo', 'certificados', 'foto'];
-                
-            const dadosFiltrados = Object.keys(dadosParaEnviar)
-                .filter(key => camposPermitidos.includes(key))
-                .reduce((obj, key) => {
-                    obj[key] = dadosParaEnviar[key];
-                    return obj;
-                }, {});
+            // Remover o ID do corpo da requisição pois já está na URL
+            delete dadosParaEnviar.id;
 
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -424,47 +414,41 @@ export default function Perfil() {
                 return;
             }
 
-            // Verificar se há arquivos para upload
-            const hasFiles = dadosFiltrados.foto?.startsWith?.('data:') || 
-                           dadosFiltrados.curriculo?.startsWith?.('data:') || 
-                           dadosFiltrados.certificados?.startsWith?.('data:');
+            // Filtrar campos vazios ou nulos
+            const dadosFiltrados = Object.fromEntries(
+                Object.entries(dadosParaEnviar).filter(([_, value]) => value !== null && value !== '')
+            );
 
             let response;
-            
-            if (hasFiles) {
-                // Usar FormData para upload de arquivos
+            if (formData.foto?.startsWith?.('data:') || formData.curriculo?.startsWith?.('data:') || formData.certificados?.startsWith?.('data:')) {
+                // Usar FormData para arquivos
                 const formDataToSend = new FormData();
-                
-                // Adicionar campos de texto
-                Object.keys(dadosFiltrados).forEach(key => {
-                    if (key !== 'foto' && key !== 'curriculo' && key !== 'certificados') {
-                        formDataToSend.append(key, dadosFiltrados[key] || '');
+                Object.entries(dadosFiltrados).forEach(([key, value]) => {
+                    if (value?.startsWith?.('data:')) {
+                        // Converter base64 para blob
+                        const base64Data = value.split(',')[1];
+                        const byteCharacters = atob(base64Data);
+                        const byteArrays = [];
+                        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                            const slice = byteCharacters.slice(offset, offset + 512);
+                            const byteNumbers = new Array(slice.length);
+                            for (let i = 0; i < slice.length; i++) {
+                                byteNumbers[i] = slice.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            byteArrays.push(byteArray);
+                        }
+                        const blob = new Blob(byteArrays, { type: 'image/jpeg' });
+                        formDataToSend.append(key, blob, `${key}.jpg`);
+                    } else {
+                        formDataToSend.append(key, value);
                     }
                 });
-                
-                // Converter base64 para File e adicionar ao FormData
-                if (dadosFiltrados.foto?.startsWith?.('data:')) {
-                    const fotoFile = await base64ToFile(dadosFiltrados.foto, 'foto.jpg');
-                    formDataToSend.append('foto', fotoFile);
-                }
-                
-                if (dadosFiltrados.curriculo?.startsWith?.('data:')) {
-                    const curriculoFile = await base64ToFile(dadosFiltrados.curriculo, 'curriculo.pdf');
-                    formDataToSend.append('curriculo', curriculoFile);
-                }
-                
-                if (dadosFiltrados.certificados?.startsWith?.('data:')) {
-                    const certificadosFile = await base64ToFile(dadosFiltrados.certificados, 'certificados.pdf');
-                    formDataToSend.append('certificados', certificadosFile);
-                }
-                
-                console.log('Enviando com FormData:', Array.from(formDataToSend.entries()));
-                
+
                 response = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`
-                        // Não definir Content-Type para FormData
                     },
                     body: formDataToSend
                 });
@@ -493,7 +477,7 @@ export default function Perfil() {
             // Criar um objeto atualizado combinando os dados existentes com os retornados pelo servidor
             const updatedEntity = {
                 ...authInfo.entity,
-                ...dadosAtualizados // Usar dados do servidor como prioridade
+                ...dadosAtualizados.usuario // Usar dados do servidor como prioridade
             };
             
             // Para arquivos, manter a versão base64 local se o servidor não retornou o caminho
@@ -539,9 +523,6 @@ export default function Perfil() {
 
             // Mostrar mensagem de sucesso
             showMessage('Perfil atualizado com sucesso!', 'success');
-
-            // Forçar re-render do componente para mostrar as mudanças imediatamente
-            // Removido o reload da página para melhor UX
 
         } catch (error) {
             console.error('Erro ao atualizar perfil:', error);
@@ -977,18 +958,13 @@ export default function Perfil() {
                                                                             const isEmpresa = authInfo?.type === 'company';
                                                                             const apiUrl = isEmpresa 
                                                                                 ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
-                                                                                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/atualizar`;
+                                                                                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
 
                                                                             // Preparar dados para envio
                                                                             const dadosParaEnviar = {
                                                                                 ...formData,
                                                                                 foto: null
                                                                             };
-
-                                                                            // Para usuários, incluir o ID no corpo da requisição
-                                                                            if (!isEmpresa) {
-                                                                                dadosParaEnviar.id = userId;
-                                                                            }
 
                                                                             const token = localStorage.getItem('authToken');
                                                                             if (!token) {

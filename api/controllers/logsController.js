@@ -12,9 +12,9 @@ export const getLogs = async (req, res) => {
 };
 
 // Função utilitária para registrar logs em qualquer parte do sistema
-export const registrarLog = async (usuarioId, empresaId, acao, resource, descricao, detalhes) => {
+export const registrarLog = async (usuarioId, empresaId, tipoAcao, tipoEntidade, descricao, dadosAdicionais) => {
   try {
-    console.log('Registrando log:', { usuarioId, empresaId, acao, resource, descricao, detalhes });
+    console.log('Registrando log:', { usuarioId, empresaId, tipoAcao, tipoEntidade, descricao, dadosAdicionais });
     
     // Garantir que usuarioId seja um número válido ou 0 quando não disponível
     const usuario_id = usuarioId || 0;
@@ -24,10 +24,10 @@ export const registrarLog = async (usuarioId, empresaId, acao, resource, descric
     const logData = {
       usuario_id,
       empresa_id,
-      acao,
-      resource,
+      tipo_acao: tipoAcao,
+      tipo_entidade: tipoEntidade,
       descricao,
-      detalhes
+      dados_adicionais: dadosAdicionais
     };
 
     console.log('Dados do log a serem salvos:', logData);
@@ -45,7 +45,7 @@ export const logLogin = async (usuarioId, empresaId, tipoUsuario) => {
   const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
   const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
   
-  return this.registrarLog(
+  return registrarLog(
     usuarioId,
     empresaId,
     'LOGIN',
@@ -57,7 +57,7 @@ export const logLogin = async (usuarioId, empresaId, tipoUsuario) => {
 
 // Log de candidatura
 export const logCandidatura = async (usuarioId, empresaId, vagaId) => {
-  return this.registrarLog(
+  return registrarLog(
     usuarioId,
     empresaId,
     'CANDIDATURA',
@@ -68,23 +68,32 @@ export const logCandidatura = async (usuarioId, empresaId, vagaId) => {
 };
 
 // Log de atualização de perfil
-export const logAtualizacaoPerfil = async (usuarioId, empresaId, tipoUsuario) => {
-  const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
-  const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
-  
-  return this.registrarLog(
-    usuarioId,
-    empresaId,
-    'ATUALIZAR',
-    entidade,
-    `Perfil atualizado: ${entidade} ID ${id}`,
-    { tipo_usuario: tipoUsuario }
-  );
+export const logAtualizacaoPerfil = async (usuarioId, empresaId, isEmpresa) => {
+  try {
+    const tipo = isEmpresa ? 'EMPRESA' : 'USUARIO';
+    const mensagem = isEmpresa 
+      ? 'Perfil da empresa atualizado'
+      : 'Perfil do usuário atualizado';
+
+    await Log.create({
+      usuario_id: isEmpresa ? 0 : usuarioId,
+      empresa_id: isEmpresa ? empresaId : 0,
+      tipo_acao: 'ATUALIZAR',
+      tipo_entidade: tipo,
+      descricao: mensagem,
+      dados_adicionais: { 
+        usuario_id: usuarioId,
+        empresa_id: empresaId
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao registrar log de atualização de perfil:', error);
+  }
 };
 
 // Log de criação de vaga
 export const logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
-  return this.registrarLog(
+  return registrarLog(
     0,
     empresaId,
     'CRIAR',
@@ -96,7 +105,7 @@ export const logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
 
 // Log de mensagem no chat
 export const logMensagemChat = async (usuarioId, empresaId, vagaId) => {
-  return this.registrarLog(
+  return registrarLog(
     usuarioId,
     empresaId,
     'MENSAGEM',
