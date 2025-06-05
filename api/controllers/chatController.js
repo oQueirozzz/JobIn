@@ -103,7 +103,7 @@ export const updateMensagem = async (req, res) => {
 };
 
 // Excluir mensagem
-exports.deleteMensagem = async (req, res) => {
+export const deleteMensagem = async (req, res) => {
   try {
     const result = await Chat.delete(req.params.id);
     if (result.affectedRows === 0) {
