@@ -1,6 +1,7 @@
 import express from 'express';
+import * as candidaturasController from '../controllers/candidaturasController.js';
+
 const router = express.Router();
-import candidaturasController from '../controllers/candidaturasController.js';
 
 // Todas as rotas são públicas
 router.get('/', candidaturasController.getCandidaturas);
