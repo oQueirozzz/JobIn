@@ -142,10 +142,11 @@ export const loginUsuario = async (req, res) => {
   try {
     const { email, senha } = req.body;
 
+    console.log('=== INÍCIO DO LOGIN ===');
     console.log('Email recebido:', email);
-    console.log('Senha recebida:', senha);
 
     if (!email || !senha) {
+      console.log('Campos faltando:', { email: !!email, senha: !!senha });
       return res.status(400).json({ 
         message: 'Por favor, preencha todos os campos para fazer login.' 
       });
@@ -154,33 +155,46 @@ export const loginUsuario = async (req, res) => {
     // Verificar se o email pertence a uma empresa
     const empresaComMesmoEmail = await Empresa.findByEmail(email);
     if (empresaComMesmoEmail) {
+      console.log('Email pertence a uma empresa:', email);
       return res.status(401).json({ 
         message: 'Ops! Parece que você está tentando fazer login como candidato, mas este email está cadastrado como empresa. Por favor, clique em "Sou Empresa" e tente novamente.' 
       });
     }
 
+    console.log('Buscando usuário com email:', email);
     const usuario = await Usuario.findByEmail(email);
-    console.log('Usuário encontrado:', usuario);
-
+    
     if (!usuario) {
+      console.log('Usuário não encontrado:', email);
       return res.status(401).json({ 
         message: 'Não encontramos uma conta com este email. Verifique se o email está correto ou cadastre-se como candidato.' 
       });
     }
 
-    console.log('Senha no banco (hash):', usuario.senha);
+    console.log('Usuário encontrado:', {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email
+    });
 
+    console.log('Verificando senha...');
     const senhaCorreta = await Usuario.comparePassword(senha, usuario.senha);
     console.log('Senha correta?', senhaCorreta);
 
     if (!senhaCorreta) {
+      console.log('Senha incorreta para o usuário:', email);
       return res.status(401).json({ 
         message: 'Senha incorreta. Por favor, verifique sua senha e tente novamente.' 
       });
     }
     
     // Registrar log de login
-    await logsController.logLogin(usuario.id, 0, 'usuario');
+    try {
+      await logsController.logLogin(usuario.id, 0, 'usuario');
+    } catch (error) {
+      console.error('Erro ao registrar log de login:', error);
+      // Não interrompe o fluxo, apenas loga o erro
+    }
 
     // Montar objeto de usuário para o frontend
     const usuarioFrontend = {
@@ -196,7 +210,6 @@ export const loginUsuario = async (req, res) => {
       foto: usuario.foto || usuario.foto_perfil || '',
       tipo: 'usuario',
       autenticado: true
-
     };
 
     // Gerar token JWT
@@ -206,13 +219,20 @@ export const loginUsuario = async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    console.log('=== LOGIN CONCLUÍDO COM SUCESSO ===');
     res.status(200).json({
       token,
       usuario: usuarioFrontend
     });
   } catch (error) {
-    console.error('Erro ao fazer login:', error);
-    res.status(500).json({ message: 'Erro ao fazer login' });
+    console.error('=== ERRO NO LOGIN ===');
+    console.error('Erro detalhado:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      message: 'Erro ao fazer login',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

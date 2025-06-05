@@ -36,9 +36,13 @@ class Usuario {
 
   static async findByEmail(email) {
     try {
-      const { rows } = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+      const { rows } = await pool.query(
+        'SELECT id, nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, foto, certificados FROM usuarios WHERE email = $1',
+        [email]
+      );
       return rows[0];
     } catch (error) {
+      console.error('Erro ao buscar usuário por email:', error);
       throw error;
     }
   }
