@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const vagasController = require('../controllers/vagasController.js');
+import vagasController from '../controllers/vagasController.js';
 
 // Rotas públicas
 router.get('/', vagasController.getVagas);
@@ -14,4 +14,4 @@ router.put('/:id', vagasController.updateVaga);
 router.delete('/:id', vagasController.deleteVaga);
 
 
-module.exports = router;
+export default router;

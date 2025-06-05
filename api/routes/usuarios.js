@@ -1,11 +1,11 @@
-const express = require('express');
+import express from 'express';
+import * as usuariosController from '../controllers/usuariosController.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import NotificacaoService from '../services/notificacaoService.js';
+
 const router = express.Router();
-const usuariosController = require('../controllers/usuariosController.js');
-const db = require('../config/db.js');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const NotificacaoService = require('../services/notificacaoService.js');
 
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
@@ -282,10 +282,7 @@ router.put('/:id', upload.fields([
 ]), usuariosController.updateUsuario);
 router.delete('/:id', usuariosController.deleteUsuario);
 
-// Inicializar o Resend para envio de emails
-
-
 // Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
 const codigosVerificacao = {};
 
-module.exports = router;
+export default router;

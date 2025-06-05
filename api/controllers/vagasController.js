@@ -1,9 +1,9 @@
-const Vaga = require('../models/Vaga.js');
-const logsController = require('./logsController.js');
-const NotificacaoService = require('../services/notificacaoService.js');
+import Vaga from '../models/Vaga.js';
+import logsController from './logsController.js';
+import NotificacaoService from '../services/notificacaoService.js';
 
 // Obter todas as vagas
-exports.getVagas = async (req, res) => {
+export const getVagas = async (req, res) => {
   try {
     console.log('Iniciando busca de vagas no controlador...');
     const vagas = await Vaga.findAll();
@@ -22,7 +22,7 @@ exports.getVagas = async (req, res) => {
 };
 
 // Obter uma vaga pelo ID
-exports.getVagaById = async (req, res) => {
+export const getVagaById = async (req, res) => {
   try {
     const vaga = await Vaga.findById(req.params.id);
     if (!vaga) {
@@ -36,7 +36,7 @@ exports.getVagaById = async (req, res) => {
 };
 
 // Obter vagas por empresa
-exports.getVagasByEmpresa = async (req, res) => {
+  export const getVagasByEmpresa = async (req, res) => {
   try {
     const vagas = await Vaga.findByEmpresa(req.params.empresaId);
     res.status(200).json(vagas);
@@ -47,7 +47,7 @@ exports.getVagasByEmpresa = async (req, res) => {
 };
 
 // Criar uma nova vaga
-exports.createVaga = async (req, res) => {
+export const createVaga = async (req, res) => {
   try {
     const {
       empresa_id,
@@ -85,7 +85,7 @@ exports.createVaga = async (req, res) => {
 };
 
 // Atualizar uma vaga
-exports.updateVaga = async (req, res) => {
+export const updateVaga = async (req, res) => {
   try {
     const { id } = req.params;
     const dadosAtualizados = req.body;
@@ -123,7 +123,7 @@ exports.updateVaga = async (req, res) => {
 };
 
 // Excluir uma vaga
-exports.deleteVaga = async (req, res) => {
+export const deleteVaga = async (req, res) => {
   try {
     const { id } = req.params;
     

@@ -1,4 +1,4 @@
-const pool = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Rota {
   // Buscar todas as rotas
@@ -76,4 +76,4 @@ class Rota {
   }
 }
 
-module.exports = Rota;
+export default Rota;

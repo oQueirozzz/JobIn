@@ -1,4 +1,4 @@
-const pool = require('../config/db.js');
+import pool from '../config/db.js';
 
 class PontoRota {
   // Buscar todos os pontos de rotas
@@ -82,4 +82,4 @@ class PontoRota {
   }
 }
 
-module.exports = PontoRota;
+export default PontoRota;

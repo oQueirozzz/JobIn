@@ -1,12 +1,12 @@
-const Candidatura = require('../models/Candidatura.js');
-const Vaga = require('../models/Vaga.js');
-const Usuario = require('../models/Usuario.js');
-const Notificacao = require('../models/Notificacao.js');
-const logsController = require('./logsController.js');
-const NotificacaoService = require('../services/notificacaoService.js');
+import Candidatura from '../models/Candidatura.js';
+import Vaga from '../models/Vaga.js';
+import Usuario from '../models/Usuario.js';
+import Notificacao from '../models/Notificacao.js';
+import logsController from './logsController.js';
+import NotificacaoService from '../services/notificacaoService.js';
 
 // Obter todas as candidaturas
-exports.getCandidaturas = async (req, res) => {
+export const getCandidaturas = async (req, res) => {
   try {
     const candidaturas = await Candidatura.findAll();
     res.status(200).json(candidaturas);
@@ -17,7 +17,7 @@ exports.getCandidaturas = async (req, res) => {
 };
 
 // Obter uma candidatura pelo ID
-exports.getCandidaturaById = async (req, res) => {
+export const getCandidaturaById = async (req, res) => {
   try {
     const candidatura = await Candidatura.findById(req.params.id);
     if (!candidatura) {
@@ -31,7 +31,7 @@ exports.getCandidaturaById = async (req, res) => {
 };
 
 // Obter candidaturas por usuário
-exports.getCandidaturasByUsuario = async (req, res) => {
+export const getCandidaturasByUsuario = async (req, res) => {
   try {
     const candidaturas = await Candidatura.findByUsuario(req.params.usuarioId);
     res.status(200).json(candidaturas);
@@ -42,7 +42,7 @@ exports.getCandidaturasByUsuario = async (req, res) => {
 };
 
 // Obter candidaturas por vaga
-exports.getCandidaturasByVaga = async (req, res) => {
+export const getCandidaturasByVaga = async (req, res) => {
   try {
     const candidaturas = await Candidatura.findByVaga(req.params.vagaId);
     res.status(200).json(candidaturas);
@@ -53,7 +53,7 @@ exports.getCandidaturasByVaga = async (req, res) => {
 };
 
 // Criar candidatura
-exports.createCandidatura = async (req, res) => {
+export const createCandidatura = async (req, res) => {
   try {
     const { id_usuario, id_vaga, curriculo_usuario } = req.body;
 
@@ -126,7 +126,7 @@ exports.createCandidatura = async (req, res) => {
 };
 
 // Atualizar status da candidatura
-exports.updateStatusCandidatura = async (req, res) => {
+export const updateStatusCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -181,7 +181,7 @@ exports.updateStatusCandidatura = async (req, res) => {
 };
 
 // Remover candidatura
-exports.deleteCandidatura = async (req, res) => {
+export const deleteCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
     const { confirmacao } = req.body;
@@ -224,7 +224,7 @@ exports.deleteCandidatura = async (req, res) => {
 };
 
 // Função para notificar sobre status da candidatura
-exports.atualizarStatusCandidatura = async (req, res) => {
+export const atualizarStatusCandidatura = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, mensagem } = req.body;

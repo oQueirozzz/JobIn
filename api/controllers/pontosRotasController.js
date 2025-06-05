@@ -1,7 +1,7 @@
-const PontoRota = require('../models/PontoRota.js');
+import PontoRota from '../models/PontoRota.js';
 
 // Obter todos os pontos de rotas
-exports.getPontosRotas = async (req, res) => {
+export const getPontosRotas = async (req, res) => {
   try {
     const pontos = await PontoRota.findAll();
     res.status(200).json(pontos);
@@ -12,7 +12,7 @@ exports.getPontosRotas = async (req, res) => {
 };
 
 // Obter ponto de rota por ID
-exports.getPontoRotaById = async (req, res) => {
+export const getPontoRotaById = async (req, res) => {
   try {
     const ponto = await PontoRota.findById(req.params.id);
     if (!ponto) {
@@ -26,7 +26,7 @@ exports.getPontoRotaById = async (req, res) => {
 };
 
 // Obter pontos de uma rota específica
-exports.getPontosByRouteId = async (req, res) => {
+export const getPontosByRouteId = async (req, res) => {
   try {
     const pontos = await PontoRota.findByRouteId(req.params.routeId);
     res.status(200).json(pontos);
@@ -37,7 +37,7 @@ exports.getPontosByRouteId = async (req, res) => {
 };
 
 // Criar novo ponto de rota
-exports.createPontoRota = async (req, res) => {
+export const createPontoRota = async (req, res) => {
   try {
     const { route_id, sequence, latitude, longitude } = req.body;
 
@@ -55,7 +55,7 @@ exports.createPontoRota = async (req, res) => {
 };
 
 // Criar múltiplos pontos de rota
-exports.createManyPontosRota = async (req, res) => {
+export const createManyPontosRota = async (req, res) => {
   try {
     const { routeId, pontos } = req.body;
 
@@ -80,7 +80,7 @@ exports.createManyPontosRota = async (req, res) => {
 };
 
 // Atualizar ponto de rota
-exports.updatePontoRota = async (req, res) => {
+export const updatePontoRota = async (req, res) => {
   try {
     const result = await PontoRota.update(req.params.id, req.body);
     if (result.affectedRows === 0) {
@@ -94,7 +94,7 @@ exports.updatePontoRota = async (req, res) => {
 };
 
 // Excluir ponto de rota
-exports.deletePontoRota = async (req, res) => {
+export const deletePontoRota = async (req, res) => {
   try {
     const result = await PontoRota.delete(req.params.id);
     if (result.affectedRows === 0) {
@@ -108,7 +108,7 @@ exports.deletePontoRota = async (req, res) => {
 };
 
 // Excluir todos os pontos de uma rota
-exports.deletePontosByRouteId = async (req, res) => {
+export const deletePontosByRouteId = async (req, res) => {
   try {
     await PontoRota.deleteByRouteId(req.params.routeId);
     res.status(200).json({ message: 'Pontos da rota excluídos com sucesso' });

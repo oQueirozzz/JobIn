@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 // Middleware de autenticação
-exports.protect = (req, res, next) => {
+export const protect = (req, res, next) => {
   try {
     // Obter o token do header
     const authHeader = req.headers.authorization;
@@ -38,7 +38,7 @@ exports.protect = (req, res, next) => {
 };
 
 // Middleware para verificar se é uma empresa
-exports.empresa = (req, res, next) => {
+export const empresa = (req, res, next) => {
   if (!req.usuario || req.usuario.type !== 'company') {
     return res.status(403).json({ message: 'Acesso permitido apenas para empresas' });
   }
@@ -46,7 +46,7 @@ exports.empresa = (req, res, next) => {
 };
 
 // Middleware para verificar se é um usuário
-exports.usuario = (req, res, next) => {
+export const usuario = (req, res, next) => {
   if (!req.usuario || req.usuario.type !== 'user') {
     return res.status(403).json({ message: 'Acesso permitido apenas para usuários' });
   }

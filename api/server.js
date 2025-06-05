@@ -1,28 +1,33 @@
-const express = require('express');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import usuariosRoutes from './routes/usuarios.js';
+import empresasRoutes from './routes/empresas.js';
+import vagasRoutes from './routes/vagas.js';
+import candidaturasRoutes from './routes/candidaturas.js';
+import chatRoutes from './routes/chat.js';
+import logsRoutes from './routes/logs.js';
+import notificacoesRoutes from './routes/notificacoes.js';
+import rotasRoutes from './routes/rotas.js';
+import pontosRotasRoutes from './routes/pontosRotas.js';
+import postsRoutes from './routes/posts.js';
+import './jobs/notificacaoTeste.js';
+
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3001;
-require('dotenv').config();
-const cors = require('cors');
-const usuariosRoutes = require('./routes/usuarios.js');
-const empresasRoutes = require('./routes/empresas.js');
-const vagasRoutes = require('./routes/vagas.js');
-const candidaturasRoutes = require('./routes/candidaturas.js');
-const chatRoutes = require('./routes/chat.js');
-const logsRoutes = require('./routes/logs.js');
-const notificacoesRoutes = require('./routes/notificacoes.js');
-const rotasRoutes = require('./routes/rotas.js');
-const pontosRotasRoutes = require('./routes/pontosRotas.js');
-const postsRoutes = require('./routes/posts.js');
-const path = require('path');
-const fs = require('fs');
-require('./jobs/notificacaoTeste');
 
+// Obter o diretório atual em ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors({
   origin: ['https://jobin-mu.vercel.app', 'http://localhost:3000', 'http://localhost:3001'],
-
   credentials: true,
-  
 }));
 
 app.use(express.json({ limit: '50mb' }));

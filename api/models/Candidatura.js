@@ -1,4 +1,4 @@
-const db = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Candidatura {
   static async findAll() {
@@ -173,4 +173,4 @@ static async countCandidaturasByUsuarioEVaga(id_usuario, id_vaga) {
 
 
 
-module.exports = Candidatura;
+export default Candidatura;

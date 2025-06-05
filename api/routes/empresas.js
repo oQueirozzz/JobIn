@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const empresasController = require('../controllers/empresasController.js');
+import empresasController from '../controllers/empresasController.js';
 
 // Rotas públicas
 router.post('/register', empresasController.registerEmpresa);
@@ -12,4 +12,4 @@ router.get('/:id', empresasController.getEmpresaById);
 router.put('/:id', empresasController.updateEmpresa);
 router.delete('/:id', empresasController.deleteEmpresa);
 
-module.exports = router;
+export default router;

@@ -1,7 +1,7 @@
-const Rota = require('../models/Rota.js');
+import Rota from '../models/Rota.js';
 
 // Obter todas as rotas
-exports.getRotas = async (req, res) => {
+export const getRotas = async (req, res) => {
   try {
     const rotas = await Rota.findAll();
     res.status(200).json(rotas);
@@ -12,7 +12,7 @@ exports.getRotas = async (req, res) => {
 };
 
 // Obter rota por ID
-exports.getRotaById = async (req, res) => {
+export const getRotaById = async (req, res) => {
   try {
     const rota = await Rota.findById(req.params.id);
     if (!rota) {
@@ -26,7 +26,7 @@ exports.getRotaById = async (req, res) => {
 };
 
 // Obter rotas por criador
-exports.getRotasByCreator = async (req, res) => {
+export const getRotasByCreator = async (req, res) => {
   try {
     const rotas = await Rota.findByCreator(req.params.createdBy);
     res.status(200).json(rotas);
@@ -37,7 +37,7 @@ exports.getRotasByCreator = async (req, res) => {
 };
 
 // Obter rotas ativas
-exports.getActiveRotas = async (req, res) => {
+export const getActiveRotas = async (req, res) => {
   try {
     const rotas = await Rota.findActive();
     res.status(200).json(rotas);
@@ -48,7 +48,7 @@ exports.getActiveRotas = async (req, res) => {
 };
 
 // Obter rotas por dificuldade
-exports.getRotasByDifficulty = async (req, res) => {
+export const getRotasByDifficulty = async (req, res) => {
   try {
     const rotas = await Rota.findByDifficulty(req.params.difficulty);
     res.status(200).json(rotas);
@@ -59,7 +59,7 @@ exports.getRotasByDifficulty = async (req, res) => {
 };
 
 // Criar nova rota
-exports.createRota = async (req, res) => {
+export const createRota = async (req, res) => {
   try {
     const { name, start_point, end_point, distance, estimated_time, difficulty, created_by } = req.body;
 
@@ -77,7 +77,7 @@ exports.createRota = async (req, res) => {
 };
 
 // Atualizar rota
-exports.updateRota = async (req, res) => {
+export const updateRota = async (req, res) => {
   try {
     const result = await Rota.update(req.params.id, req.body);
     if (result.affectedRows === 0) {
@@ -91,7 +91,7 @@ exports.updateRota = async (req, res) => {
 };
 
 // Excluir rota
-exports.deleteRota = async (req, res) => {
+export const deleteRota = async (req, res) => {
   try {
     const result = await Rota.delete(req.params.id);
     if (result.affectedRows === 0) {
@@ -107,7 +107,7 @@ exports.deleteRota = async (req, res) => {
 };
 
 // Ativar/desativar rota
-exports.toggleActiveRota = async (req, res) => {
+  export const toggleActiveRota = async (req, res) => {
   try {
     const { isActive } = req.body;
     if (isActive === undefined) {

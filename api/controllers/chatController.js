@@ -1,7 +1,7 @@
-const Chat = require('../models/Chat.js');
+import Chat from '../models/Chat.js';
 
 // Obter todas as mensagens
-exports.getMensagens = async (req, res) => {
+export const getMensagens = async (req, res) => {
   try {
     const mensagens = await Chat.findAll();
     res.status(200).json(mensagens);
@@ -12,7 +12,7 @@ exports.getMensagens = async (req, res) => {
 };
 
 // Obter mensagem por ID
-exports.getMensagemById = async (req, res) => {
+export const getMensagemById = async (req, res) => {
   try {
     const mensagem = await Chat.findById(req.params.id);
     if (!mensagem) {
@@ -26,7 +26,7 @@ exports.getMensagemById = async (req, res) => {
 };
 
 // Obter mensagens por usuário
-exports.getMensagensByUsuario = async (req, res) => {
+export const getMensagensByUsuario = async (req, res) => {
   try {
     const mensagens = await Chat.findByUsuario(req.params.usuarioId);
     res.status(200).json(mensagens);
@@ -37,7 +37,7 @@ exports.getMensagensByUsuario = async (req, res) => {
 };
 
 // Obter mensagens por empresa
-exports.getMensagensByEmpresa = async (req, res) => {
+export const getMensagensByEmpresa = async (req, res) => {
   try {
     const mensagens = await Chat.findByEmpresa(req.params.empresaId);
     res.status(200).json(mensagens);
@@ -48,7 +48,7 @@ exports.getMensagensByEmpresa = async (req, res) => {
 };
 
 // Obter mensagens por vaga
-exports.getMensagensByVaga = async (req, res) => {
+export const getMensagensByVaga = async (req, res) => {
   try {
     const mensagens = await Chat.findByVaga(req.params.vagaId);
     res.status(200).json(mensagens);
@@ -59,7 +59,7 @@ exports.getMensagensByVaga = async (req, res) => {
 };
 
 // Obter conversa entre usuário e empresa
-exports.getConversation = async (req, res) => {
+export const getConversation = async (req, res) => {
   try {
     const { usuarioId, empresaId } = req.params;
     const mensagens = await Chat.findConversation(usuarioId, empresaId);
@@ -71,7 +71,7 @@ exports.getConversation = async (req, res) => {
 };
 
 // Criar nova mensagem
-exports.createMensagem = async (req, res) => {
+export const createMensagem = async (req, res) => {
   try {
     const { usuario_id, empresa_id, vaga_id, mensagem } = req.body;
 
@@ -89,7 +89,7 @@ exports.createMensagem = async (req, res) => {
 };
 
 // Atualizar mensagem
-exports.updateMensagem = async (req, res) => {
+export const updateMensagem = async (req, res) => {
   try {
     const result = await Chat.update(req.params.id, req.body);
     if (result.affectedRows === 0) {

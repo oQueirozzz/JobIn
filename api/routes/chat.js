@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const chatController = require('../controllers/chatController.js');
+import chatController from '../controllers/chatController.js';
 
 // Rotas públicas
 router.get('/', chatController.getMensagens);
@@ -15,4 +15,4 @@ router.post('/', chatController.createMensagem);
 router.put('/:id', chatController.updateMensagem);
 router.delete('/:id', chatController.deleteMensagem);
 
-module.exports = router;
+export default router;

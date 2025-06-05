@@ -1,4 +1,4 @@
-const db = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Vaga {
   static async findAll() {
@@ -170,4 +170,4 @@ class Vaga {
   }
 }
 
-module.exports = Vaga;
+export default Vaga;

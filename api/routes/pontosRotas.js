@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pontosRotasController = require('../controllers/pontosRotasController.js');
-const { protect } = require('../middleware/authMiddleware.js');
+import pontosRotasController from '../controllers/pontosRotasController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 // Rotas públicas
 router.get('/', pontosRotasController.getPontosRotas);
@@ -15,4 +15,4 @@ router.put('/:id', protect, pontosRotasController.updatePontoRota);
 router.delete('/:id', protect, pontosRotasController.deletePontoRota);
 router.delete('/rota/:routeId', protect, pontosRotasController.deletePontosByRouteId);
 
-module.exports = router;
+export default router;

@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const rotasController = require('../controllers/rotasController.js');
-const { protect } = require('../middleware/authMiddleware.js');
+import rotasController from '../controllers/rotasController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 // Rotas públicas
 router.get('/', rotasController.getRotas);
@@ -16,4 +16,4 @@ router.put('/:id', protect, rotasController.updateRota);
 router.delete('/:id', protect, rotasController.deleteRota);
 router.patch('/:id/toggle-active', protect, rotasController.toggleActiveRota);
 
-module.exports = router;
+export default router;

@@ -1,7 +1,7 @@
-const Log = require('../models/Log.js');
+import Log from '../models/Log.js';
 
 // Obter todos os logs
-exports.getLogs = async (req, res) => {
+export const getLogs = async (req, res) => {
   try {
     const logs = await Log.findAll();
     res.status(200).json(logs);
@@ -12,7 +12,7 @@ exports.getLogs = async (req, res) => {
 };
 
 // Função utilitária para registrar logs em qualquer parte do sistema
-exports.registrarLog = async (usuarioId, empresaId, acao, resource, descricao, detalhes) => {
+export const registrarLog = async (usuarioId, empresaId, acao, resource, descricao, detalhes) => {
   try {
     console.log('Registrando log:', { usuarioId, empresaId, acao, resource, descricao, detalhes });
     
@@ -41,7 +41,7 @@ exports.registrarLog = async (usuarioId, empresaId, acao, resource, descricao, d
 };
 
 // Funções utilitárias para eventos comuns
-exports.logLogin = async (usuarioId, empresaId, tipoUsuario) => {
+export const logLogin = async (usuarioId, empresaId, tipoUsuario) => {
   const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
   const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
   
@@ -56,7 +56,7 @@ exports.logLogin = async (usuarioId, empresaId, tipoUsuario) => {
 };
 
 // Log de candidatura
-exports.logCandidatura = async (usuarioId, empresaId, vagaId) => {
+export const logCandidatura = async (usuarioId, empresaId, vagaId) => {
   return this.registrarLog(
     usuarioId,
     empresaId,
@@ -68,7 +68,7 @@ exports.logCandidatura = async (usuarioId, empresaId, vagaId) => {
 };
 
 // Log de atualização de perfil
-exports.logAtualizacaoPerfil = async (usuarioId, empresaId, tipoUsuario) => {
+export const logAtualizacaoPerfil = async (usuarioId, empresaId, tipoUsuario) => {
   const entidade = tipoUsuario === 'usuario' ? 'USUARIO' : 'EMPRESA';
   const id = tipoUsuario === 'usuario' ? usuarioId : empresaId;
   
@@ -83,7 +83,7 @@ exports.logAtualizacaoPerfil = async (usuarioId, empresaId, tipoUsuario) => {
 };
 
 // Log de criação de vaga
-exports.logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
+export const logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
   return this.registrarLog(
     0,
     empresaId,
@@ -95,7 +95,7 @@ exports.logCriacaoVaga = async (empresaId, vagaId, nomeVaga) => {
 };
 
 // Log de mensagem no chat
-exports.logMensagemChat = async (usuarioId, empresaId, vagaId) => {
+export const logMensagemChat = async (usuarioId, empresaId, vagaId) => {
   return this.registrarLog(
     usuarioId,
     empresaId,
@@ -108,7 +108,7 @@ exports.logMensagemChat = async (usuarioId, empresaId, vagaId) => {
 
 
 // Obter log por ID
-exports.getLogById = async (req, res) => {
+export const getLogById = async (req, res) => {
   try {
     const log = await Log.findById(req.params.id);
     if (!log) {
@@ -122,7 +122,7 @@ exports.getLogById = async (req, res) => {
 };
 
 // Obter logs por usuário
-exports.getLogsByUsuario = async (req, res) => {
+export const getLogsByUsuario = async (req, res) => {
   try {
     const logs = await Log.findByUsuario(req.params.usuarioId);
     res.status(200).json(logs);
@@ -133,7 +133,7 @@ exports.getLogsByUsuario = async (req, res) => {
 };
 
 // Obter logs por empresa
-exports.getLogsByEmpresa = async (req, res) => {
+export const getLogsByEmpresa = async (req, res) => {
   try {
     const logs = await Log.findByEmpresa(req.params.empresaId);
     res.status(200).json(logs);
@@ -144,7 +144,7 @@ exports.getLogsByEmpresa = async (req, res) => {
 };
 
 // Obter logs por ação
-exports.getLogsByAcao = async (req, res) => {
+export const getLogsByAcao = async (req, res) => {
   try {
     const logs = await Log.findByAcao(req.params.acao);
     res.status(200).json(logs);
@@ -155,7 +155,7 @@ exports.getLogsByAcao = async (req, res) => {
 };
 
 // Criar novo log
-exports.createLog = async (req, res) => {
+export const createLog = async (req, res) => {
   try {
     const { usuario_id, empresa_id, acao, resourse } = req.body;
 
@@ -173,7 +173,7 @@ exports.createLog = async (req, res) => {
 };
 
 // Atualizar log
-exports.updateLog = async (req, res) => {
+export const updateLog = async (req, res) => {
   try {
     const result = await Log.update(req.params.id, req.body);
     if (result.affectedRows === 0) {
@@ -187,7 +187,7 @@ exports.updateLog = async (req, res) => {
 };
 
 // Excluir log
-exports.deleteLog = async (req, res) => {
+export const deleteLog = async (req, res) => {
   try {
     const result = await Log.delete(req.params.id);
     if (result.affectedRows === 0) {

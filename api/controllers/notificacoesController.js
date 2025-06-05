@@ -1,8 +1,8 @@
-const Notificacao = require('../models/Notificacao.js');
-const Log = require('../models/Log.js');
+import Notificacao from '../models/Notificacao.js';
+import Log from '../models/Log.js';
 
 // Obter todas as notificações
-exports.getNotificacoes = async (req, res) => {
+export const getNotificacoes = async (req, res) => {
   try {
     const notificacoes = await Notificacao.findAll();
     res.status(200).json(notificacoes);
@@ -13,7 +13,7 @@ exports.getNotificacoes = async (req, res) => {
 };
 
 // Obter notificação por ID
-exports.getNotificacaoById = async (req, res) => {
+export const getNotificacaoById = async (req, res) => {
   try {
     const notificacao = await Notificacao.findById(req.params.id);
     if (!notificacao) {
@@ -27,7 +27,7 @@ exports.getNotificacaoById = async (req, res) => {
 };
 
 // Obter notificações por usuário
-exports.getNotificacoesByUsuario = async (req, res) => {
+export const getNotificacoesByUsuario = async (req, res) => {
   try {
     const notificacoes = await Notificacao.findByUsuario(req.params.usuarioId);
     res.status(200).json(notificacoes);
@@ -38,7 +38,7 @@ exports.getNotificacoesByUsuario = async (req, res) => {
 };
 
 // Obter notificações não lidas por usuário
-exports.getNotificacoesNaoLidasByUsuario = async (req, res) => {
+export const getNotificacoesNaoLidasByUsuario = async (req, res) => {
   try {
     const notificacoes = await Notificacao.findNaoLidasByUsuario(req.params.usuarioId);
     res.status(200).json(notificacoes);
@@ -49,7 +49,7 @@ exports.getNotificacoesNaoLidasByUsuario = async (req, res) => {
 };
 
 // Obter notificações por empresa
-exports.getNotificacoesByEmpresa = async (req, res) => {
+export const getNotificacoesByEmpresa = async (req, res) => {
   try {
     const notificacoes = await Notificacao.findByEmpresa(req.params.empresaId);
     res.status(200).json(notificacoes);
@@ -60,7 +60,7 @@ exports.getNotificacoesByEmpresa = async (req, res) => {
 };
 
 // Obter notificações por candidatura
-exports.getNotificacoesByCandidatura = async (req, res) => {
+export const getNotificacoesByCandidatura = async (req, res) => {
   try {
     const notificacoes = await Notificacao.findByCandidatura(req.params.candidaturaId);
     res.status(200).json(notificacoes);
@@ -71,7 +71,7 @@ exports.getNotificacoesByCandidatura = async (req, res) => {
 };
 
 // Criar nova notificação
-exports.createNotificacao = async (req, res) => {
+export const createNotificacao = async (req, res) => {
   try {
     const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura } = req.body;
     
@@ -108,7 +108,7 @@ exports.createNotificacao = async (req, res) => {
 };
 
 // Marcar notificação como lida
-exports.marcarComoLida = async (req, res) => {
+export const marcarComoLida = async (req, res) => {
   try {
     const notificacaoId = req.params.id;
     const sucesso = await Notificacao.marcarComoLida(notificacaoId);
@@ -125,7 +125,7 @@ exports.marcarComoLida = async (req, res) => {
 };
 
 // Marcar todas as notificações do usuário como lidas
-exports.marcarTodasComoLidas = async (req, res) => {
+export const marcarTodasComoLidas = async (req, res) => {
   try {
     const usuarioId = req.params.usuarioId;
     const quantidade = await Notificacao.marcarTodasComoLidas(usuarioId);
@@ -141,7 +141,7 @@ exports.marcarTodasComoLidas = async (req, res) => {
 };
 
 // Excluir notificação
-exports.deleteNotificacao = async (req, res) => {
+  export const deleteNotificacao = async (req, res) => {
   try {
     const notificacao = await Notificacao.findById(req.params.id);
     

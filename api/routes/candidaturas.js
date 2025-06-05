@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const candidaturasController = require('../controllers/candidaturasController.js');
+import candidaturasController from '../controllers/candidaturasController.js';
 
 // Todas as rotas são públicas
 router.get('/', candidaturasController.getCandidaturas);
@@ -11,4 +11,4 @@ router.post('/', candidaturasController.createCandidatura);
 router.put('/:id/status', candidaturasController.updateStatusCandidatura);
 router.delete('/:id', candidaturasController.deleteCandidatura);
 
-module.exports = router;
+export default router;

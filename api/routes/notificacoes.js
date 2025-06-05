@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const notificacoesController = require('../controllers/notificacoesController.js');
-const { protect } = require('../middleware/authMiddleware.js');
+import notificacoesController from '../controllers/notificacoesController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 // Rotas protegidas
 router.get('/', protect, notificacoesController.getNotificacoes);
@@ -15,4 +15,4 @@ router.put('/:id/marcar-lida', protect, notificacoesController.marcarComoLida);
 router.put('/usuario/:usuarioId/marcar-todas-lidas', protect, notificacoesController.marcarTodasComoLidas);
 router.delete('/:id', protect, notificacoesController.deleteNotificacao);
 
-module.exports = router;
+export default router;

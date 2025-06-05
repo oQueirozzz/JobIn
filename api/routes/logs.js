@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const logsController = require('../controllers/logsController.js');
-const { protect } = require('../middleware/authMiddleware.js');
+import logsController from '../controllers/logsController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 // Rotas protegidas
 router.get('/', protect, logsController.getLogs);
@@ -13,4 +13,4 @@ router.post('/', protect, logsController.createLog);
 router.put('/:id', protect, logsController.updateLog);
 router.delete('/:id', protect, logsController.deleteLog);
 
-module.exports = router;
+export default router;

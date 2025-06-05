@@ -1,4 +1,4 @@
-const pool = require('../config/db.js');
+import pool from '../config/db.js';
 
 class Chat {
   // Buscar todas as mensagens
@@ -72,4 +72,4 @@ class Chat {
   }
 }
 
-module.exports = Chat;
+export default Chat;

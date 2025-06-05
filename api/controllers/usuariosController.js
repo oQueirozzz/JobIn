@@ -1,13 +1,15 @@
-const Usuario = require('../models/Usuario');
-const logsController = require('./logsController');
-const NotificacaoService = require('../services/notificacaoService');
-const bcrypt = require('bcrypt');
+import Usuario from '../models/Usuario.js';
+import logsController from './logsController.js';
+import NotificacaoService from '../services/notificacaoService.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import Empresa from '../models/Empresa.js';
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
 
 // Obter todos os usuários
-exports.getUsuarios = async (req, res) => {
+export const getUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.findAll();
     res.status(200).json(usuarios);
@@ -18,7 +20,7 @@ exports.getUsuarios = async (req, res) => {
 };
 
 // Obter um usuário pelo ID
-exports.getUsuarioById = async (req, res) => {
+export const getUsuarioById = async (req, res) => {
   try {
     const id = req.params.id;
     console.log('Buscando usuário com ID:', id);
@@ -37,7 +39,7 @@ exports.getUsuarioById = async (req, res) => {
 };
 
 // Registrar usuário
-exports.registerUsuario = async (req, res) => {
+export const registerUsuario = async (req, res) => {
   try {
     console.log('=== INÍCIO DO REGISTRO DE USUÁRIO ===');
     console.log('Body recebido:', req.body);
@@ -116,7 +118,7 @@ exports.registerUsuario = async (req, res) => {
 };
 
 // Login de usuário
-exports.loginUsuario = async (req, res) => {
+export const loginUsuario = async (req, res) => {
   try {
     const { email, senha } = req.body;
 
@@ -130,7 +132,6 @@ exports.loginUsuario = async (req, res) => {
     }
 
     // Verificar se o email pertence a uma empresa
-    const Empresa = require('../models/Empresa');
     const empresaComMesmoEmail = await Empresa.findByEmail(email);
     if (empresaComMesmoEmail) {
       return res.status(401).json({ 
@@ -179,7 +180,6 @@ exports.loginUsuario = async (req, res) => {
     };
 
     // Gerar token JWT
-    const jwt = require('jsonwebtoken');
     const token = jwt.sign(
       { id: usuario.id, type: 'user' },
       process.env.JWT_SECRET || 'sua-chave-secreta',
@@ -197,7 +197,7 @@ exports.loginUsuario = async (req, res) => {
 };
 
 // Atualizar um usuário
-exports.updateUsuario = async (req, res) => {
+export const updateUsuario = async (req, res) => {
   try {
     let userId = parseInt(req.params.id, 10);
     
@@ -274,7 +274,7 @@ exports.updateUsuario = async (req, res) => {
 };
 
 // Excluir um usuário
-exports.deleteUsuario = async (req, res) => {
+export const deleteUsuario = async (req, res) => {
   try {
     // Registrar log antes de excluir o usuário
     await logsController.registrarLog(
@@ -298,7 +298,7 @@ exports.deleteUsuario = async (req, res) => {
 };
 
 // Obter perfil do usuário (modificado para funcionar sem autenticação)
-exports.getPerfil = async (req, res) => {
+export const getPerfil = async (req, res) => {
   try {
     // Verifica se há um ID na query ou usa um ID padrão para testes
     const userId = req.query.id || req.params.id || '1'; // ID padrão para testes
@@ -319,7 +319,7 @@ exports.getPerfil = async (req, res) => {
   }
 };
 
-exports.updateSenha = async (req, res) => {
+export const updateSenha = async (req, res) => {
   try {
     const { id } = req.params;
     const { senha_atual, nova_senha } = req.body;
