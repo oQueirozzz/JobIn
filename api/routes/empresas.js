@@ -1,6 +1,7 @@
 import express from 'express';
+import * as empresasController from '../controllers/empresasController.js';
+
 const router = express.Router();
-import empresasController from '../controllers/empresasController.js';
 
 // Rotas públicas
 router.post('/register', empresasController.registerEmpresa);
