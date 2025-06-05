@@ -1,5 +1,5 @@
 import Usuario from '../models/Usuario.js';
-import logsController from './logsController.js';
+import * as logsController from './logsController.js';
 import NotificacaoService from '../services/notificacaoService.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';

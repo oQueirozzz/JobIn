@@ -2,7 +2,7 @@ import Notificacao from '../models/Notificacao.js';
 import Usuario from '../models/Usuario.js';
 import Vaga from '../models/Vaga.js';
 import Empresa from '../models/Empresa.js';
-import logsController from '../controllers/logsController.js';
+import * as logsController from '../controllers/logsController.js';
 
 class NotificacaoService {
   // Notificação de perfil visitado

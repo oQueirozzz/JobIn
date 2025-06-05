@@ -1,5 +1,5 @@
 import Vaga from '../models/Vaga.js';
-import logsController from './logsController.js';
+import * as logsController from './logsController.js';
 import NotificacaoService from '../services/notificacaoService.js';
 
 // Obter todas as vagas

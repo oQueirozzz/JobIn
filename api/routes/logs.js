@@ -1,7 +1,8 @@
 import express from 'express';
-const router = express.Router();
-import logsController from '../controllers/logsController.js';
+import * as logsController from '../controllers/logsController.js';
 import { protect } from '../middleware/authMiddleware.js';
+
+const router = express.Router();
 
 // Rotas protegidas
 router.get('/', protect, logsController.getLogs);

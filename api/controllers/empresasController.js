@@ -1,5 +1,5 @@
 import Empresa from '../models/Empresa.js';
-import logsController from './logsController.js';
+import * as logsController from './logsController.js';
 import Log from '../models/Log.js';
 import Notificacao from '../models/Notificacao.js';
 import notificacaoService from '../services/notificacaoService.js';
