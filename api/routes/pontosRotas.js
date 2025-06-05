@@ -7,7 +7,7 @@ const router = express.Router();
 // Rotas públicas
 router.get('/', pontosRotasController.getPontosRotas);
 router.get('/:id', pontosRotasController.getPontoRotaById);
-router.get('/rota/:rotaId', pontosRotasController.getPontosRotasByRota);
+router.get('/rota/:rotaId', pontosRotasController.getPontosByRouteId);
 
 // Rotas protegidas
 router.post('/', protect, pontosRotasController.createPontoRota);
