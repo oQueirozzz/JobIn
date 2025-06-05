@@ -1,4 +1,4 @@
-import { pool } from '../config/database.js';
+import { pool } from '../config/db.js';
 
 export default class BaseModel {
     static async query(sql, params = []) {

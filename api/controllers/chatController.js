@@ -1,4 +1,6 @@
 import Chat from '../models/Chat.js';
+import Notificacao from '../models/Notificacao.js';
+import pool from '../config/db.js';
 
 // Obter todas as mensagens
 export const getMensagens = async (req, res) => {
@@ -113,5 +115,129 @@ export const deleteMensagem = async (req, res) => {
   } catch (error) {
     console.error('Erro ao excluir mensagem:', error);
     res.status(500).json({ message: 'Erro ao excluir mensagem' });
+  }
+};
+
+export const sendMessage = async (req, res) => {
+  try {
+    const { receiver_id, receiver_type, message, vaga_id } = req.body;
+    const sender_id = req.usuario.id;
+    const sender_type = req.usuario.type === 'company' ? 'company' : 'user';
+
+    // Create the message
+    const newMessage = await Chat.create({
+      sender_id,
+      receiver_id,
+      sender_type,
+      receiver_type,
+      message,
+      vaga_id
+    });
+
+    // Create notification for the receiver
+    await Notificacao.create({
+      usuario_id: receiver_id,
+      tipo: 'mensagem',
+      mensagem: `Nova mensagem de ${req.usuario.nome}`,
+      remetente_id: sender_id,
+      remetente_tipo: sender_type,
+      vaga_id
+    });
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error);
+    res.status(500).json({ message: 'Erro ao enviar mensagem' });
+  }
+};
+
+export const getConversations = async (req, res) => {
+  try {
+    const userId = req.usuario.id;
+    const userType = req.usuario.type === 'company' ? 'company' : 'user';
+
+    const conversations = await Chat.getConversations(userId, userType);
+    
+    // Get unread message counts for each conversation
+    const conversationsWithUnread = await Promise.all(conversations.map(async (conv) => {
+      const unreadCount = await Chat.getUnreadCount(userId, conv.other_user_id, userType, conv.other_user_type);
+      return {
+        ...conv,
+        unread_count: unreadCount
+      };
+    }));
+
+    res.json(conversationsWithUnread);
+  } catch (error) {
+    console.error('Erro ao buscar conversas:', error);
+    res.status(500).json({ message: 'Erro ao buscar conversas' });
+  }
+};
+
+export const getMessages = async (req, res) => {
+  try {
+    const { otherUserId, otherUserType } = req.params;
+    const userId = req.usuario.id;
+    const userType = req.usuario.type === 'company' ? 'company' : 'user';
+
+    const messages = await Chat.getMessages(userId, otherUserId, userType, otherUserType);
+    res.json(messages);
+  } catch (error) {
+    console.error('Erro ao buscar mensagens:', error);
+    res.status(500).json({ message: 'Erro ao buscar mensagens' });
+  }
+};
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const userId = req.usuario.id;
+    const userType = req.usuario.type === 'company' ? 'company' : 'user';
+
+    // Search in both users and companies tables
+    const searchQuery = `
+      (
+        SELECT 
+          id,
+          nome as name,
+          'user' as type,
+          foto as image,
+          email,
+          descricao as description
+        FROM usuarios 
+        WHERE (LOWER(nome) LIKE LOWER($1) OR LOWER(email) LIKE LOWER($1))
+        AND id != $2
+        AND tipo = 'usuario'
+      )
+      UNION
+      (
+        SELECT 
+          id,
+          nome as name,
+          'company' as type,
+          logo as image,
+          email,
+          descricao as description
+        FROM empresas 
+        WHERE (LOWER(nome) LIKE LOWER($1) OR LOWER(email) LIKE LOWER($1))
+        AND id != $2
+      )
+      ORDER BY name
+      LIMIT 10
+    `;
+
+    const { rows } = await pool.query(searchQuery, [`%${query}%`, userId]);
+    
+    // Format the results to include additional information
+    const formattedResults = rows.map(row => ({
+      ...row,
+      image: row.image || (row.type === 'user' ? 'https://placehold.co/200x/ffa8e4/ffffff.svg?text=ʕ•́ᴥ•̀ʔ&font=Lato' : 'https://placehold.co/200x/b7a8ff/ffffff.svg?text=ʕ•́ᴥ•̀ʔ&font=Lato'),
+      description: row.description || (row.type === 'user' ? 'Usuário' : 'Empresa')
+    }));
+
+    res.json(formattedResults);
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).json({ message: 'Erro ao buscar usuários' });
   }
 };
