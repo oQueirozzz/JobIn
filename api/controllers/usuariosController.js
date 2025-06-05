@@ -44,7 +44,7 @@ export const registerUsuario = async (req, res) => {
     console.log('=== INÍCIO DO REGISTRO DE USUÁRIO ===');
     console.log('Body recebido:', req.body);
     
-    const { nome, email, senha, cpf, local, descricao } = req.body;
+    const { nome, email, senha, cpf, descricao } = req.body;
 
     // Validar campos obrigatórios
     if (!nome || !email || !senha || !cpf) {
@@ -81,13 +81,12 @@ export const registerUsuario = async (req, res) => {
     }
 
     // Criar o usuário
-    console.log('Criando usuário com dados:', { nome, email, cpf, local, descricao });
+    console.log('Criando usuário com dados:', { nome, email, cpf, descricao });
     const usuario = await Usuario.create({
       nome,
       email,
       senha,
       cpf,
-      local,
       descricao,
       tipo: 'usuario'
     });
@@ -122,9 +121,9 @@ export const registerUsuario = async (req, res) => {
       nome: usuario.nome,
       email: usuario.email,
       cpf: usuario.cpf,
-      local: usuario.local,
       descricao: usuario.descricao,
-      tipo: usuario.tipo
+      tipo: usuario.tipo,
+      curriculo: usuario.curriculo || null
     });
   } catch (error) {
     console.error('=== ERRO NO REGISTRO DE USUÁRIO ===');

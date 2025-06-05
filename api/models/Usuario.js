@@ -80,10 +80,10 @@ class Usuario {
 
       // Campos opcionais
       const camposOpcionais = {
-        local: userData.local || null,
-        descricao: userData.descricao || null,
         habilidades: userData.habilidades || null,
+        descricao: userData.descricao || null,
         formacao: userData.formacao || null,
+        curriculo: userData.curriculo || null,
         area_interesse: userData.area_interesse || null,
         foto: userData.foto || null,
         certificados: userData.certificados || null
@@ -97,7 +97,7 @@ class Usuario {
       const query = `
         INSERT INTO usuarios (${campos.join(', ')})
         VALUES (${placeholders})
-        RETURNING id, nome, email, cpf, data_nascimento, local, descricao, tipo
+        RETURNING id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, foto, certificados
       `;
 
       console.log('Query de criação:', query);
