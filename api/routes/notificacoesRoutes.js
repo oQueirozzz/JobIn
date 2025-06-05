@@ -5,7 +5,9 @@ import {
     getNotificacaoById,
     getNotificacoesNaoLidas,
     marcarComoLida,
-    marcarTodasComoLidas
+    marcarTodasComoLidas,
+    createNotificacao,
+    deleteNotificacao
 } from '../controllers/notificacoesController.js';
 
 const router = express.Router();
@@ -17,7 +19,9 @@ router.use(authMiddleware);
 router.get('/', getNotificacoes);
 router.get('/unread', getNotificacoesNaoLidas);
 router.get('/:id', getNotificacaoById);
+router.post('/', createNotificacao);
 router.post('/:id/read', marcarComoLida);
 router.post('/read-all', marcarTodasComoLidas);
+router.delete('/:id', deleteNotificacao);
 
 export default router; 

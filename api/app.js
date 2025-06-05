@@ -7,7 +7,7 @@ import vagaRoutes from './routes/vagaRoutes.js';
 import candidaturaRoutes from './routes/candidaturaRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import postRoutes from './routes/postRoutes.js';
-import notificacaoRoutes from './routes/notificacaoRoutes.js';
+import notificacoesRoutes from './routes/notificacoesRoutes.js';
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ app.use('/api/vagas', vagaRoutes);
 app.use('/api/candidaturas', candidaturaRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/posts', postRoutes);
-app.use('/api/notificacoes', notificacaoRoutes);
+app.use('/api/notificacoes', notificacoesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

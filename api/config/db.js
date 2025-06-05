@@ -1,40 +1,37 @@
-import { Pool } from 'pg';
+import pg from 'pg';
 import dotenv from 'dotenv';
+
 dotenv.config();
+
+const { Pool } = pg;
 
 // Log das variáveis de ambiente (sem mostrar a senha)
 console.log('Configuração do banco de dados:');
-console.log('Host:', process.env.DB_HOST || 'localhost');
+console.log('Host:', process.env.DB_HOST || 'dpg-d0nu3ifdiees739f2qo0-a.oregon-postgres.render.com');
 console.log('Port:', process.env.DB_PORT || '5432');
-console.log('User:', process.env.DB_USER || 'postgres');
-console.log('Database:', process.env.DB_NAME || 'jobin');
+console.log('User:', process.env.DB_USER || 'database_postgre_ensr_user');
+console.log('Database:', process.env.DB_NAME || 'database_postgre_ensr');
 console.log('SSL:', process.env.DB_SSL === 'true');
 
-// Configuração do pool com timeout maior
 const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
-    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'dpg-d0nu3ifdiees739f2qo0-a.oregon-postgres.render.com',
+    port: process.env.DB_PORT || '5432',
+    database: process.env.DB_NAME || 'database_postgre_ensr',
+    user: process.env.DB_USER || 'database_postgre_ensr_user',
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'jobin',
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000, // Aumentado para 10 segundos
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
-// Testar a conexão
-pool.on('connect', () => {
-    console.log('Conexão com o banco de dados estabelecida com sucesso');
-});
-
-pool.on('error', (err) => {
-    console.error('Erro inesperado na conexão com o banco de dados:', err);
-    console.error('Detalhes do erro:', {
-        code: err.code,
-        message: err.message,
-        stack: err.stack
-    });
+// Test the connection
+pool.connect((err, client, release) => {
+    if (err) {
+        console.error('Error connecting to the database:', err);
+        return;
+    }
+    console.log('Successfully connected to the database');
+    release();
 });
 
 // Função para testar a conexão
@@ -43,10 +40,10 @@ const testConnection = async () => {
     try {
         console.log('Tentando conectar ao banco de dados...');
         console.log('Configuração:', {
-            host: process.env.DB_HOST || 'localhost',
+            host: process.env.DB_HOST || 'dpg-d0nu3ifdiees739f2qo0-a.oregon-postgres.render.com',
             port: process.env.DB_PORT || '5432',
-            database: process.env.DB_NAME || 'jobin',
-            user: process.env.DB_USER || 'postgres',
+            database: process.env.DB_NAME || 'database_postgre_ensr',
+            user: process.env.DB_USER || 'database_postgre_ensr_user',
             ssl: process.env.DB_SSL === 'true'
         });
 
@@ -80,7 +77,7 @@ testConnection().catch(error => {
     console.error('1. Se as variáveis de ambiente estão configuradas corretamente');
     console.error('2. Se o PostgreSQL está rodando localmente');
     console.error('3. Se as credenciais estão corretas');
-    console.error('4. Se o banco de dados "jobin" existe');
+    console.error('4. Se o banco de dados "database_postgre_ensr" existe');
 });
 
 export default pool;
