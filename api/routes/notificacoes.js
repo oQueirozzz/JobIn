@@ -10,7 +10,6 @@ router.get('/:id', notificacoesController.getNotificacaoById);
 router.get('/usuario/:usuarioId', notificacoesController.getNotificacoesByUsuario);
 router.get('/empresa/:empresaId', notificacoesController.getNotificacoesByEmpresa);
 router.post('/', notificacoesController.createNotificacao);
-router.put('/:id', notificacoesController.updateNotificacao);
 router.delete('/:id', notificacoesController.deleteNotificacao);
 
 // Rotas protegidas
