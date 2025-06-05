@@ -38,12 +38,15 @@ const upload = multer({
     if (file.fieldname === 'foto' && file.mimetype.startsWith('image/')) {
       cb(null, true);
     }
-    // Permitir PDFs para currículo e certificados
-    else if ((file.fieldname === 'curriculo' || file.fieldname === 'certificados') && file.mimetype === 'application/pdf') {
+    // Permitir PDFs e documentos para currículo e certificados
+    else if ((file.fieldname === 'curriculo' || file.fieldname === 'certificados') && 
+      (file.mimetype === 'application/pdf' || 
+       file.mimetype === 'application/msword' || 
+       file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
       cb(null, true);
     }
     else {
-      cb(new Error('Tipo de arquivo não permitido'), false);
+      cb(new Error('Tipo de arquivo não permitido. Use imagens para foto e PDF/DOC para currículo/certificados.'), false);
     }
   }
 });

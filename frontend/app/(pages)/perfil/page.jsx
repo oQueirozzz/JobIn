@@ -204,68 +204,33 @@ export default function Perfil() {
                 return;
             }
 
+            // Validar tipo de arquivo para currículo e certificados
+            if ((field === 'curriculo' || field === 'certificados') && 
+                !['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
+                showMessage('Por favor, selecione um arquivo PDF ou Word válido.', 'error');
+                return;
+            }
+
             // Validar tamanho do arquivo (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 showMessage('O arquivo deve ter no máximo 5MB.', 'error');
                 return;
             }
 
-            // Criar FormData para upload
-            const formData = new FormData();
-            formData.append(field, file);
-
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                showMessage('Token de autenticação não encontrado', 'error');
+            // Para arquivos que não são imagens, apenas armazenar o arquivo
+            if (field === 'curriculo' || field === 'certificados') {
+                setFormData(prev => ({ ...prev, [field]: file }));
+                showMessage(`${field === 'curriculo' ? 'Currículo' : 'Certificado'} selecionado com sucesso!`, 'success');
                 return;
             }
 
-            const userId = authInfo?.entity?.id;
-            if (!userId) {
-                showMessage('ID do usuário não encontrado!', 'error');
-                return;
+            // Para imagens, criar URL temporária para preview
+            if (field === 'foto') {
+                const fileUrl = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, [field]: fileUrl }));
+                localStorage.setItem('userPhoto', fileUrl);
+                showMessage('Foto selecionada com sucesso! Clique em "Salvar Alterações" para confirmar.', 'success');
             }
-
-            const isEmpresa = authInfo?.type === 'company';
-            const apiUrl = isEmpresa 
-                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
-
-            // Fazer upload do arquivo
-            const response = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Erro ao fazer upload do arquivo');
-            }
-
-            const data = await response.json();
-            
-            // Atualizar estado com a resposta do servidor
-            if (data.usuario) {
-                setFormData(prev => ({ ...prev, ...data.usuario }));
-                
-                // Atualizar a URL do arquivo no estado local
-                if (field === 'foto' && data.usuario.foto) {
-                    const photoUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.foto}`;
-                    setFormData(prev => ({ ...prev, foto: photoUrl }));
-                    localStorage.setItem('userPhoto', photoUrl);
-                } else if (field === 'curriculo' && data.usuario.curriculo) {
-                    const curriculoUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.curriculo}`;
-                    setFormData(prev => ({ ...prev, curriculo: curriculoUrl }));
-                } else if (field === 'certificados' && data.usuario.certificados) {
-                    const certificadosUrl = `${process.env.NEXT_PUBLIC_API_URL}/${data.usuario.certificados}`;
-                    setFormData(prev => ({ ...prev, certificados: certificadosUrl }));
-                }
-            }
-
-            showMessage(`${field === 'foto' ? 'Foto' : field === 'curriculo' ? 'Currículo' : 'Certificado'} atualizado com sucesso!`, 'success');
         } catch (error) {
             console.error('Erro ao fazer upload:', error);
             showMessage(error.message || 'Erro ao fazer upload do arquivo. Por favor, tente novamente.', 'error');
@@ -400,8 +365,7 @@ export default function Perfil() {
 
             // Preparar dados para envio
             const dadosParaEnviar = {
-                ...formData,
-                foto: null
+                ...formData
             };
             
             // Remover o ID do corpo da requisição pois já está na URL
@@ -420,11 +384,13 @@ export default function Perfil() {
             );
 
             let response;
-            if (formData.foto?.startsWith?.('data:') || formData.curriculo?.startsWith?.('data:') || formData.certificados?.startsWith?.('data:')) {
+            if (formData.foto?.startsWith?.('data:') || formData.curriculo instanceof File || formData.certificados instanceof File) {
                 // Usar FormData para arquivos
                 const formDataToSend = new FormData();
                 Object.entries(dadosFiltrados).forEach(([key, value]) => {
-                    if (value?.startsWith?.('data:')) {
+                    if (value instanceof File) {
+                        formDataToSend.append(key, value);
+                    } else if (value?.startsWith?.('data:')) {
                         // Converter base64 para blob
                         const base64Data = value.split(',')[1];
                         const byteCharacters = atob(base64Data);
@@ -454,8 +420,6 @@ export default function Perfil() {
                 });
             } else {
                 // Usar JSON para dados sem arquivos
-                console.log('Enviando com JSON:', dadosFiltrados);
-                
                 response = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
@@ -484,10 +448,10 @@ export default function Perfil() {
             if (dadosFiltrados.foto?.startsWith?.('data:') && !updatedEntity.foto) {
                 updatedEntity.foto = dadosFiltrados.foto;
             }
-            if (dadosFiltrados.curriculo?.startsWith?.('data:') && !updatedEntity.curriculo) {
+            if (dadosFiltrados.curriculo instanceof File && !updatedEntity.curriculo) {
                 updatedEntity.curriculo = dadosFiltrados.curriculo;
             }
-            if (dadosFiltrados.certificados?.startsWith?.('data:') && !updatedEntity.certificados) {
+            if (dadosFiltrados.certificados instanceof File && !updatedEntity.certificados) {
                 updatedEntity.certificados = dadosFiltrados.certificados;
             }
 
@@ -745,10 +709,17 @@ export default function Perfil() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <h2 className="text-xl font-semibold text-gray-800">Currículo</h2>
                         <div className="flex gap-4">
-                            {formData.curriculo && formData.curriculo !== "" ? (
+                            {formData.curriculo ? (
                                 <>
                                     <button 
-                                        onClick={() => downloadFile(formData.curriculo, 'curriculo')}
+                                        onClick={() => {
+                                            if (formData.curriculo instanceof File) {
+                                                const url = URL.createObjectURL(formData.curriculo);
+                                                window.open(url, '_blank');
+                                            } else {
+                                                downloadFile(formData.curriculo, 'curriculo');
+                                            }
+                                        }}
                                         className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -756,15 +727,28 @@ export default function Perfil() {
                                         </svg>
                                         Baixar Currículo
                                     </button>
+                                    <label
+                                        htmlFor="curriculo-input"
+                                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm"
+                                    >
+                                        Atualizar Currículo
+                                    </label>
                                 </>
                             ) : (
-                                <button 
-                                    onClick={() => document.getElementById('curriculo-input').click()}
+                                <label
+                                    htmlFor="curriculo-input"
                                     className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm"
                                 >
                                     Enviar Currículo
-                                </button>
+                                </label>
                             )}
+                            <input
+                                type="file"
+                                id="curriculo-input"
+                                onChange={(e) => handleFileChange(e, 'curriculo')}
+                                className="hidden"
+                                accept=".pdf,.doc,.docx"
+                            />
                         </div>
                     </div>
                 </div>

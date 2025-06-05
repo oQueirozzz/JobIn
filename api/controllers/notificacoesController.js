@@ -4,8 +4,9 @@ import Log from '../models/Log.js';
 // Obter todas as notificações
 export const getNotificacoes = async (req, res) => {
   try {
-    const notificacoes = await Notificacao.findAll();
-    res.status(200).json(notificacoes);
+    const userId = req.usuario.id;
+    const notificacoes = await Notificacao.findByUsuario(userId);
+    res.json(notificacoes);
   } catch (error) {
     console.error('Erro ao buscar notificações:', error);
     res.status(500).json({ message: 'Erro ao buscar notificações' });
@@ -19,7 +20,7 @@ export const getNotificacaoById = async (req, res) => {
     if (!notificacao) {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
-    res.status(200).json(notificacao);
+    res.json(notificacao);
   } catch (error) {
     console.error('Erro ao buscar notificação:', error);
     res.status(500).json({ message: 'Erro ao buscar notificação' });
@@ -38,10 +39,11 @@ export const getNotificacoesByUsuario = async (req, res) => {
 };
 
 // Obter notificações não lidas por usuário
-export const getNotificacoesNaoLidasByUsuario = async (req, res) => {
+export const getNotificacoesNaoLidas = async (req, res) => {
   try {
-    const notificacoes = await Notificacao.findNaoLidasByUsuario(req.params.usuarioId);
-    res.status(200).json(notificacoes);
+    const userId = req.usuario.id;
+    const notificacoes = await Notificacao.getNotificacoesNaoLidas(userId);
+    res.json(notificacoes);
   } catch (error) {
     console.error('Erro ao buscar notificações não lidas:', error);
     res.status(500).json({ message: 'Erro ao buscar notificações não lidas' });
@@ -110,14 +112,11 @@ export const createNotificacao = async (req, res) => {
 // Marcar notificação como lida
 export const marcarComoLida = async (req, res) => {
   try {
-    const notificacaoId = req.params.id;
-    const sucesso = await Notificacao.marcarComoLida(notificacaoId);
-    
-    if (!sucesso) {
+    const notificacao = await Notificacao.marcarComoLida(req.params.id);
+    if (!notificacao) {
       return res.status(404).json({ message: 'Notificação não encontrada' });
     }
-    
-    res.status(200).json({ message: 'Notificação marcada como lida' });
+    res.json(notificacao);
   } catch (error) {
     console.error('Erro ao marcar notificação como lida:', error);
     res.status(500).json({ message: 'Erro ao marcar notificação como lida' });
@@ -127,16 +126,12 @@ export const marcarComoLida = async (req, res) => {
 // Marcar todas as notificações do usuário como lidas
 export const marcarTodasComoLidas = async (req, res) => {
   try {
-    const usuarioId = req.params.usuarioId;
-    const quantidade = await Notificacao.marcarTodasComoLidas(usuarioId);
-    
-    res.status(200).json({ 
-      message: 'Notificações marcadas como lidas',
-      quantidade
-    });
+    const userId = req.usuario.id;
+    const count = await Notificacao.marcarTodasComoLidas(userId);
+    res.json({ message: `${count} notificações marcadas como lidas` });
   } catch (error) {
-    console.error('Erro ao marcar notificações como lidas:', error);
-    res.status(500).json({ message: 'Erro ao marcar notificações como lidas' });
+    console.error('Erro ao marcar todas as notificações como lidas:', error);
+    res.status(500).json({ message: 'Erro ao marcar todas as notificações como lidas' });
   }
 };
 

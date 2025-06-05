@@ -93,64 +93,40 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    let client;
+    const { usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id } = notificacaoData;
+    
+    const query = `
+      INSERT INTO notificacoes (usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    
+    const values = [usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id];
+    
     try {
-      client = await pool.connect();
-      console.log('Criando notificação com dados:', notificacaoData);
-
-      const query = `
-        INSERT INTO notificacao (
-          id,
-          candidaturas_id,
-          empresas_id,
-          usuarios_id,
-          mensagem_usuario,
-          mensagem_empresa,
-          tipo,
-          status_candidatura,
-          data_notificacao,
-          lida
-        ) VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, $8)
-        RETURNING *
-      `;
-
-      const values = [
-        notificacaoData.candidaturas_id || null,
-        notificacaoData.empresas_id || null,
-        notificacaoData.usuarios_id || null,
-        notificacaoData.mensagem_usuario || null,
-        notificacaoData.mensagem_empresa || null,
-        notificacaoData.tipo.toUpperCase(),
-        notificacaoData.status_candidatura || null,
-        notificacaoData.lida || false
-      ];
-
-      console.log('Executando query com valores:', values);
-
-      const { rows } = await client.query(query, values);
-      console.log('Notificação criada com sucesso, ID:', rows[0].id);
-
+      const { rows } = await pool.query(query, values);
       return rows[0];
     } catch (error) {
       console.error('Erro ao criar notificação:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Marcar notificação como lida
-  static async marcarComoLida(id) {
-    let client;
+  static async marcarComoLida(notificacaoId) {
+    const query = `
+      UPDATE notificacoes
+      SET lida = true
+      WHERE id = $1
+      RETURNING *
+    `;
+    
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('UPDATE notificacao SET lida = true WHERE id = $1 RETURNING *', [id]);
+      const { rows } = await pool.query(query, [notificacaoId]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
@@ -232,6 +208,33 @@ class Notificacao {
       throw error;
     } finally {
       if (client) client.release();
+    }
+  }
+
+  static async getNotificacoesNaoLidas(usuarioId) {
+    const query = `
+      SELECT n.*, 
+             CASE 
+                 WHEN n.remetente_tipo = 'user' THEN u.nome
+                 WHEN n.remetente_tipo = 'company' THEN e.nome
+             END as remetente_nome,
+             CASE 
+                 WHEN n.remetente_tipo = 'user' THEN u.foto
+                 WHEN n.remetente_tipo = 'company' THEN e.logo
+             END as remetente_imagem
+      FROM notificacoes n
+      LEFT JOIN usuarios u ON n.remetente_id = u.id AND n.remetente_tipo = 'user'
+      LEFT JOIN empresas e ON n.remetente_id = e.id AND n.remetente_tipo = 'company'
+      WHERE n.usuario_id = $1 AND n.lida = false
+      ORDER BY n.created_at DESC
+    `;
+    
+    try {
+      const { rows } = await pool.query(query, [usuarioId]);
+      return rows;
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+      throw error;
     }
   }
 }

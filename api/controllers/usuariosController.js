@@ -238,66 +238,25 @@ export const loginUsuario = async (req, res) => {
 // Atualizar um usuário
 export const updateUsuario = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.params.id);
-    console.log('ID do usuário recebido:', usuarioId);
-    console.log('Tipo do ID:', typeof usuarioId);
+    const usuarioId = req.params.id;
+    const usuario = await Usuario.findById(usuarioId);
 
-    // Verificar se o usuário existe
-    const usuarioExistente = await Usuario.findById(usuarioId);
-    console.log('Usuário existente:', usuarioExistente);
-
-    if (!usuarioExistente) {
+    if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    console.log('Iniciando atualização do usuário...');
-    console.log('Iniciando atualização no modelo com ID:', usuarioId);
+    // Verificar se houve alteração no currículo
+    const curriculoAlterado = req.files && req.files.curriculo && req.files.curriculo[0];
 
-    // Preparar dados para atualização
-    const dadosAtualizacao = {
-      ...req.body,
-      id: usuarioId
-    };
+    // Atualizar dados do usuário
+    const dadosAtualizados = await usuario.update(req.body, req.files);
 
-    // Se houver arquivos, processar o upload
-    if (req.files) {
-      console.log('Arquivos recebidos:', req.files);
-      
-      if (req.files.foto) {
-        const foto = req.files.foto[0];
-        // Salvar apenas o nome do arquivo, não o caminho completo
-        dadosAtualizacao.foto = `uploads/usuarios/${foto.filename}`;
-      }
-      
-      if (req.files.curriculo) {
-        const curriculo = req.files.curriculo[0];
-        dadosAtualizacao.curriculo = `uploads/usuarios/${curriculo.filename}`;
-      }
-      
-      if (req.files.certificados) {
-        const certificados = req.files.certificados.map(file => `uploads/usuarios/${file.filename}`);
-        dadosAtualizacao.certificados = certificados;
-      }
+    // Se houve alteração no currículo, criar notificação
+    if (curriculoAlterado) {
+      await NotificacaoService.criarNotificacaoPerfilAlterado(usuarioId, 0, false);
     }
 
-    console.log('Dados recebidos para atualização:', dadosAtualizacao);
-
-    // Atualizar usuário
-    const usuarioAtualizado = await Usuario.update(usuarioId, dadosAtualizacao);
-    console.log('Resultado da atualização:', usuarioAtualizado);
-
-    // Buscar dados atualizados
-    console.log('Buscando dados atualizados do usuário...');
-    const dadosAtualizados = await Usuario.findById(usuarioId);
-    console.log('Dados atualizados encontrados:', dadosAtualizados);
-
-    // Registrar log da atualização
-    await logsController.logAtualizacaoPerfil(usuarioId, 0, false);
-
-    // Criar notificação de perfil atualizado
-    await NotificacaoService.criarNotificacaoPerfilAtualizado(usuarioId, 0, false);
-
-    res.status(200).json({
+    res.json({
       message: 'Usuário atualizado com sucesso',
       usuario: dadosAtualizados
     });
