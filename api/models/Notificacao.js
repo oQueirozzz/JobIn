@@ -36,7 +36,7 @@ class Notificacao {
     let client;
     try {
       client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuarios_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuario_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por usuário:', error);
@@ -51,7 +51,7 @@ class Notificacao {
     let client;
     try {
       client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuarios_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuario_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações não lidas:', error);
@@ -66,7 +66,7 @@ class Notificacao {
     let client;
     try {
       client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE empresas_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
+      const { rows } = await client.query('SELECT * FROM notificacao WHERE empresa_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por empresa:', error);
@@ -93,15 +93,15 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    const { usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id } = notificacaoData;
+    const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
     
     const query = `
-      INSERT INTO notificacoes (usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
     
-    const values = [usuario_id, tipo, mensagem, remetente_id, remetente_tipo, vaga_id];
+    const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
     
     try {
       const { rows } = await pool.query(query, values);
@@ -115,7 +115,7 @@ class Notificacao {
   // Marcar notificação como lida
   static async marcarComoLida(notificacaoId) {
     const query = `
-      UPDATE notificacoes
+      UPDATE notificacao
       SET lida = true
       WHERE id = $1
       RETURNING *
@@ -136,7 +136,7 @@ class Notificacao {
     try {
       client = await pool.connect();
       const { rows } = await client.query(
-        'UPDATE notificacao SET lida = TRUE WHERE usuarios_id = $1 RETURNING *',
+        'UPDATE notificacao SET lida = TRUE WHERE usuario_id = $1 RETURNING *',
         [usuarioId]
       );
       return rows.length;
@@ -222,11 +222,11 @@ class Notificacao {
                  WHEN n.remetente_tipo = 'user' THEN u.foto
                  WHEN n.remetente_tipo = 'company' THEN e.logo
              END as remetente_imagem
-      FROM notificacoes n
+      FROM notificacao n
       LEFT JOIN usuarios u ON n.remetente_id = u.id AND n.remetente_tipo = 'user'
       LEFT JOIN empresas e ON n.remetente_id = e.id AND n.remetente_tipo = 'company'
       WHERE n.usuario_id = $1 AND n.lida = false
-      ORDER BY n.created_at DESC
+      ORDER BY n.data_notificacao DESC
     `;
     
     try {

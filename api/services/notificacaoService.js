@@ -17,8 +17,8 @@ class NotificacaoService {
       const mensagem = `${visitante.nome} visitou seu perfil`;
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: 0,
+        usuario_id: usuarioId,
+        empresa_id: null,
         candidaturas_id: 0,
         mensagem_usuario: mensagem,
         mensagem_empresa: null,
@@ -47,8 +47,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `Você se candidatou para a vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} se candidatou para a vaga "${vaga.nome_vaga}"`,
@@ -77,8 +77,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `Você removeu sua candidatura da vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} removeu a candidatura da vaga "${vaga.nome_vaga}"`,
@@ -107,8 +107,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} foi aprovada!`,
         mensagem_empresa: `Você aprovou a candidatura de um usuário para a vaga "${vaga.nome_vaga}"`,
@@ -132,8 +132,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi excluída`,
         mensagem_empresa: `Você excluiu a vaga "${vaga.nome_vaga}"`,
@@ -157,8 +157,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi atualizada`,
         mensagem_empresa: `Você atualizou a vaga "${vaga.nome_vaga}"`,
@@ -182,8 +182,8 @@ class NotificacaoService {
         : 'Bem-vindo(a) ao JobIn! Sua conta foi criada com sucesso.';
 
       const dados = {
-        usuarios_id: isEmpresa ? null : usuarioId,
-        empresas_id: isEmpresa ? empresaId : null,
+        usuario_id: isEmpresa ? null : usuarioId,
+        empresa_id: isEmpresa ? empresaId : null,
         candidaturas_id: null,
         mensagem_usuario: isEmpresa ? null : mensagem,
         mensagem_empresa: isEmpresa ? mensagem : null,
@@ -213,8 +213,8 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: null,
-          empresas_id: empresaId,
+          usuario_id: null,
+          empresa_id: empresaId,
           candidaturas_id: null,
           mensagem_usuario: null,
           mensagem_empresa: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
@@ -229,8 +229,8 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: usuarioId,
-          empresas_id: null,
+          usuario_id: usuarioId,
+          empresa_id: null,
           candidaturas_id: null,
           mensagem_usuario: 'Sua senha foi alterada com sucesso. Se você não fez essa alteração, entre em contato com o suporte.',
           mensagem_empresa: null,
@@ -257,8 +257,8 @@ class NotificacaoService {
 
       // Criar notificação para a empresa
       await Notificacao.create({
-        empresas_id: empresaId,
-        usuarios_id: 0, // Usando 0 como ID padrão para notificações do sistema
+        empresa_id: empresaId,
+        usuario_id: 0, // Usando 0 como ID padrão para notificações do sistema
         mensagem_usuario: null,
         mensagem_empresa: `Nova vaga "${vaga.nome_vaga}" criada com sucesso!`,
         status_candidatura: 'PENDENTE',
@@ -296,8 +296,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" foi rejeitada`,
         mensagem_empresa: `Você rejeitou a candidatura de ${usuario.nome} para a vaga "${vaga.nome_vaga}"`,
@@ -326,8 +326,8 @@ class NotificacaoService {
       }
       
       return await Notificacao.create({
-        usuarios_id: usuarioId,
-        empresas_id: empresaId,
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
         candidaturas_id: vagaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" está em análise`,
         mensagem_empresa: `Você colocou a candidatura de ${usuario.nome} em análise para a vaga "${vaga.nome_vaga}"`,
@@ -362,8 +362,8 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: null,
-          empresas_id: empresaId,
+          usuario_id: null,
+          empresa_id: empresaId,
           candidaturas_id: null,
           mensagem_usuario: null,
           mensagem_empresa: 'Seu perfil foi atualizado com sucesso.',
@@ -378,8 +378,8 @@ class NotificacaoService {
         }
 
         return await Notificacao.create({
-          usuarios_id: usuarioId,
-          empresas_id: null,
+          usuario_id: usuarioId,
+          empresa_id: null,
           candidaturas_id: null,
           mensagem_usuario: 'Seu perfil foi atualizado com sucesso.',
           mensagem_empresa: null,
