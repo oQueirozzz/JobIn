@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
-import HeaderLanding from '../../../components/landingPage/HeaderLanding';
+
 
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
@@ -328,7 +328,7 @@ export default function NovaSenha() {
                 setTipoMensagem('sucesso');
                 setMensagem('Senha atualizada com sucesso!');
 
-                // Limpar campos e voltar para a etapa inicial após 3 segundos
+              
                 setTimeout(() => {
                     setEmail('');
                     setNovaSenha('');
@@ -336,7 +336,7 @@ export default function NovaSenha() {
                     setCodigoVerificacao('');
                     setCodigoGerado('');
                     setTokenRedefinicao('');
-                    window.location.href = '/login';
+                    window.location.href = '/config';
                 }, 3000);
             } else {
                 setTipoMensagem('erro');
@@ -518,7 +518,6 @@ export default function NovaSenha() {
 
     return (
         <>
-            <HeaderLanding />
             <section className="w-full min-h-screen flex items-center justify-center px-4 bg-branco">
                 <div className="w-[500px] bg-white rounded-lg shadow-xl p-10">
 
@@ -548,7 +547,7 @@ export default function NovaSenha() {
                     {renderizarFormulario()}
 
                     <p className="text-sm text-center text-gray-700 mt-6">
-                        <a href="/login" className="text-vinho hover:underline">Voltar para o login</a>
+                        <a href="/config" className="text-vinho hover:underline">Voltar para configurações</a>
                     </p>
 
                 </div>

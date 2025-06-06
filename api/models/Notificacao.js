@@ -93,20 +93,18 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    let client;
+    const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
+    
+    const query = `
+      INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+    
+    const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
+    
     try {
-      client = await pool.connect();
-      const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
-      
-      const query = `
-        INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
-      `;
-      
-      const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
-      
-      const { rows } = await client.query(query, values);
+      const { rows } = await pool.query(query, values);
       return rows[0];
     } catch (error) {
       console.error('Erro ao criar notificação:', error);
@@ -118,17 +116,15 @@ class Notificacao {
 
   // Marcar notificação como lida
   static async marcarComoLida(notificacaoId) {
-    let client;
+    const query = `
+      UPDATE notificacao
+      SET lida = true
+      WHERE id = $1
+      RETURNING *
+    `;
+    
     try {
-      client = await pool.connect();
-      const query = `
-        UPDATE notificacao
-        SET lida = true
-        WHERE id = $1
-        RETURNING *
-      `;
-      
-      const { rows } = await client.query(query, [notificacaoId]);
+      const { rows } = await pool.query(query, [notificacaoId]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
@@ -162,7 +158,7 @@ class Notificacao {
     try {
       client = await pool.connect();
       const { mensagem_usuario, mensagem_empresa, status_candidatura } = notificacaoData;
-      
+
       let query = 'UPDATE notificacao SET ';
       const values = [];
       const updateFields = [];
@@ -236,13 +232,26 @@ class Notificacao {
       WHERE n.usuario_id = $1 AND n.lida = false
       ORDER BY n.data_notificacao DESC
     `;
-    
+
     try {
       const { rows } = await pool.query(query, [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
       throw error;
+    }
+  }
+
+  static async deleteByEmpresaId(empresaId) {
+    let client;
+    try {
+      client = await pool.connect();
+      await client.query('DELETE FROM notificacao WHERE empresa_id = $1', [empresaId]);
+    } catch (error) {
+      console.error('Erro ao excluir notificações da empresa:', error);
+      throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 }

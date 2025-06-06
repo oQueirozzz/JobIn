@@ -269,20 +269,13 @@ export const updateUsuario = async (req, res) => {
 // Excluir um usuário
 export const deleteUsuario = async (req, res) => {
   try {
-    // Registrar log antes de excluir o usuário
-    await logsController.registrarLog(
-      req.params.id,
-      0,
-      'EXCLUIR',
-      'USUARIO',
-      `Usuário excluído: ID ${req.params.id}`,
-      { usuario_id: req.params.id }
-    );
-    
-    const result = await Usuario.delete(req.params.id);
-    if (result.affectedRows === 0) {
+    const usuario = await Usuario.findById(req.params.id);
+    if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
+
+    await Usuario.delete(req.params.id);
+
     res.status(200).json({ message: 'Usuário excluído com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir usuário:', error);

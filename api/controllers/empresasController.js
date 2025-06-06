@@ -202,31 +202,23 @@ export const deleteEmpresa = async (req, res) => {
   try {
     const { id } = req.params;
     const empresa = await Empresa.findById(id);
-    
+
     if (!empresa) {
       return res.status(404).json({ error: 'Empresa não encontrada' });
     }
 
+    await Notificacao.deleteByEmpresaId(id);
+
     const deletedEmpresa = await Empresa.delete(id);
-    
+
     if (!deletedEmpresa) {
       return res.status(400).json({ error: 'Erro ao excluir empresa' });
     }
 
-    // Registrar ação no log
-    await Log.create({
-      usuario_id: 0,
-      empresa_id: id,
-      acao: 'DELETE',
-      tabela: 'empresas',
-      registro_id: id,
-      detalhes: {
-        nome: empresa.nome,
-        email: empresa.email
-      }
-    });
+   
 
     res.json({ message: 'Empresa excluída com sucesso' });
+
   } catch (error) {
     console.error('Erro ao excluir empresa:', error);
     res.status(500).json({ error: 'Erro ao excluir empresa' });
