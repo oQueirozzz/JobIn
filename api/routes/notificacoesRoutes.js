@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/authMiddleware.js';
+import { protect, empresa, usuario  } from '../middleware/authMiddleware.js';
 import {
     getNotificacoes,
     getNotificacaoById,
@@ -13,7 +13,7 @@ import {
 const router = express.Router();
 
 // Apply auth middleware to all routes
-router.use(authMiddleware);
+router.use(protect);
 
 // Notification routes
 router.get('/', getNotificacoes);

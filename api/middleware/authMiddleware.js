@@ -52,3 +52,5 @@ export const usuario = (req, res, next) => {
   }
   next();
 };
+
+export default{ protect, empresa, usuario };

@@ -10,7 +10,7 @@ import vagasRoutes from './routes/vagas.js';
 import candidaturasRoutes from './routes/candidaturas.js';
 import chatRoutes from './routes/chat.js';
 import logsRoutes from './routes/logs.js';
-import notificacoesRoutes from './routes/notificacoes.js';
+import notificacoesRoutes from './routes/notificacoesRoutes.js';
 import rotasRoutes from './routes/rotas.js';
 import pontosRotasRoutes from './routes/pontosRotas.js';
 import postsRoutes from './routes/posts.js';
