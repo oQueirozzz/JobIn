@@ -4,8 +4,26 @@ import Log from '../models/Log.js';
 // Obter todas as notificações
 export const getNotificacoes = async (req, res) => {
   try {
-    const userId = req.usuario.id;
-    const notificacoes = await Notificacao.findByUsuario(userId);
+    // Check if the authenticated entity is a user or a company
+    const authType = req.usuario.type; // Assuming req.usuario contains the authenticated entity details including type
+    const authId = req.usuario.id;
+
+    console.log(`[NotificacoesController] Fetching notifications for entity type: ${authType}, ID: ${authId}`);
+
+    let notificacoes;
+
+    if (authType === 'user') {
+      notificacoes = await Notificacao.findByUsuario(authId);
+    } else if (authType === 'company') {
+      notificacoes = await Notificacao.findByEmpresa(authId);
+    } else {
+      console.warn(`[NotificacoesController] Unknown authenticated entity type: ${authType}`);
+      return res.status(400).json({ message: 'Tipo de entidade autenticada desconhecido' });
+    }
+
+    console.log(`[NotificacoesController] Found ${notificacoes.length} notifications for entity ID ${authId}`);
+    console.log('[NotificacoesController] Notifications data:', notificacoes);
+
     res.json(notificacoes);
   } catch (error) {
     console.error('Erro ao buscar notificações:', error);

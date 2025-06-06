@@ -207,5 +207,14 @@ AFTER UPDATE ON candidaturas
 FOR EACH ROW EXECUTE FUNCTION notificar_status_candidatura();
 
 
+-- Tabela para tokens de redefinição de senha
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 select table_name from information_schema.tables where table_schema = 'public';

@@ -48,6 +48,8 @@ export default function Header() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  console.log('[Header] authInfo:', authInfo);
+
   // Função para buscar notificações
   const fetchNotifications = async () => {
     try {
@@ -56,12 +58,36 @@ export default function Header() {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[Header] Erro ao buscar notificações:', response.status, errorData);
+        // Set notifications to an empty array to prevent render errors
+        setNotifications([]);
+        setUnreadCount(0);
+        return; // Stop further processing
+      }
+
       const data = await response.json();
-      setNotifications(data);
-      // Conta apenas as notificações não lidas para o contador
-      setUnreadCount(data.filter(notification => !notification.lida).length);
+      console.log('[Header] Fetched notifications data:', data);
+
+      // Ensure data is an array before using filter
+      if (Array.isArray(data)) {
+        setNotifications(data);
+        // Conta apenas as notificações não lidas para o contador
+        setUnreadCount(data.filter(notification => !notification.lida).length);
+      } else {
+        console.error('[Header] Fetched data is not an array:', data);
+        // Set notifications to an empty array to prevent render errors
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
+      console.error('[Header] Erro na requisição de notificações:', error);
+      // Set notifications to an empty array in case of network errors etc.
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 
@@ -94,7 +120,7 @@ export default function Header() {
 
   const handleNotificationClick = async (notificationId) => {
     try {
-      await fetch(`http://localhost:3001/api/notificacoes/${notificationId}/marcar-lida`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes/${notificationId}/marcar-lida`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -150,6 +176,21 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
+  };
+
+  // Format notification date and time with -3 hours offset
+  const formatNotificationTimestamp = (timestamp) => {
+    try {
+      const notificationDate = new Date(timestamp);
+      // Subtract 3 hours as requested
+      notificationDate.setHours(notificationDate.getHours() - 3);
+      const formattedDate = notificationDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+      const formattedTime = notificationDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit', hour12: false});
+      return `${formattedDate} ${formattedTime}`;
+    } catch (error) {
+      console.error('[Header] Error formatting timestamp:', error, timestamp);
+      return 'Invalid Date'; // Return a fallback in case of errors
+    }
   };
 
   if (pathname === '') {
@@ -261,17 +302,14 @@ export default function Header() {
                                 }`} />
                                 <div className="flex-1">
                                   <p className="text-sm">
-                                    {authInfo?.entity?.tipo === 'EMPRESA' 
-                                      ? notification.mensagem_empresa 
+                                    {authInfo?.entity?.tipo === 'empresa'
+                                      ? notification.mensagem_empresa
                                       : notification.mensagem_usuario}
                                   </p>
                                   <p className="text-xs text-gray-500 mt-1">
-                                    {new Date(notification.data_notificacao).toLocaleDateString('pt-BR', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
+                                    {/* Use the raw timestamp string, which is already in ISO 8601 UTC format */}
+                                    {console.log('[Header] Raw notification timestamp:', notification.data_notificacao)}
+                                    {formatNotificationTimestamp(notification.data_notificacao)}
                                   </p>
                                 </div>
                               </div>

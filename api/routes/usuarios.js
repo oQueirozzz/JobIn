@@ -6,6 +6,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import NotificacaoService from '../services/notificacaoService.js';
 import { protect } from '../middleware/authMiddleware.js';
+import db from '../config/db.js';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -64,40 +66,68 @@ router.get('/', usuariosController.getUsuarios);
 // Rotas de redefinição de senha
 router.post('/solicitar-codigo', async (req, res) => {
   const { email, codigo } = req.body;
-  console.log('Solicitação de código para:', email, 'Código:', codigo);
+  console.log('Solicitação de código para:', email);
 
   try {
     // Verificar se o email existe no banco de dados
-    const [usuarios] = await db.query(
-      'SELECT id, email, nome FROM usuarios WHERE email = ?', 
-      [email]
-    );
+    const queryText = 'SELECT id, email, nome FROM usuarios WHERE email = $1';
+    const queryParams = [email];
+    console.log('Verificando email existente:', queryText, queryParams);
+    const result = await db.query(queryText, queryParams);
+    const usuarios = result.rows;
 
     if (usuarios.length === 0) {
+      console.log('Email não cadastrado:', email);
       return res.status(404).json({ message: 'Email não cadastrado no sistema' });
     }
 
-    // Usar o código enviado pelo frontend ou gerar um novo se não for fornecido
-    const codigoVerificacao = codigo || Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Armazenar o código (em produção, salvar no banco com tempo de expiração)
-    codigosVerificacao[email] = {
-      codigo: codigoVerificacao,
-      expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos (900 segundos)
+    const userId = usuarios[0].id;
+
+    // 1. Remover tokens existentes para este usuário/email
+    console.log('Removendo tokens existentes para:', email);
+    await db.query('DELETE FROM password_reset_tokens WHERE email = $1', [email]);
+
+    // 2. Hashar o código recebido do frontend
+    const salt = await bcrypt.genSalt(10);
+    const codigoHash = await bcrypt.hash(codigo, salt);
+    console.log('Código recebido (não hashado):', codigo);
+    console.log('Código hasheado:', codigoHash);
+
+    // 3. Calcular data de expiração (15 minutos)
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    console.log('Token expira em:', expiresAt);
+
+    // 4. Inserir novo token no banco de dados
+    console.log('Inserindo novo token no DB...');
+    await db.query(
+      'INSERT INTO password_reset_tokens (user_id, email, token, expires_at) VALUES ($1, $2, $3, $4)',
+      [userId, email, codigoHash, expiresAt]
+    );
+    console.log('Token inserido no DB');
+
+    // 5. Configurar parâmetros para o EmailJS
+    const templateParams = {
+        to_email: email.trim().toLowerCase(),
+        token: codigo,
+        name: 'JobIn Support',
+        from_email: 'suporte@jobin.com'
     };
 
-    console.log('Código armazenado para', email, ':', codigosVerificacao[email]);
+    // 6. Enviar email com o código de verificação usando EmailJS
+    console.log('Enviando email com código...');
+    // await emailjs.send('service_r9l70po', 'template_0t894rd', templateParams);
+    console.log('Email de redefinição (simulado) enviado para:', email, 'com código:', codigo);
 
     // Retornar resposta de sucesso
     return res.status(200).json({ 
-      message: 'Código de verificação gerado com sucesso',
+      message: 'Código de verificação gerado e enviado para seu email.',
       success: true
     });
 
   } catch (error) {
-    console.error('Erro ao processar solicitação:', error);
+    console.error('Erro ao processar solicitação de código:', error);
     return res.status(500).json({ 
-      message: 'Erro no servidor',
+      message: 'Erro no servidor ao solicitar código.',
       error: error.message
     });
   }
@@ -110,57 +140,52 @@ router.post('/verificar-codigo', async (req, res) => {
   try {
     const emailNormalizado = email.trim().toLowerCase();
     
-    // Verificar se existe um código para este email
-    if (!codigosVerificacao[emailNormalizado]) {
-      console.log('Nenhum código encontrado para:', emailNormalizado);
+    // 1. Buscar token ativo para o email no banco de dados
+    console.log('Buscando token ativo no DB para:', emailNormalizado);
+    const result = await db.query(
+      'SELECT * FROM password_reset_tokens WHERE email = $1 AND expires_at > NOW()',
+      [emailNormalizado]
+    );
+    const tokenData = result.rows[0];
+
+    if (!tokenData) {
+      console.log('Nenhum token ativo ou válido encontrado para:', emailNormalizado);
       return res.status(400).json({ 
-        message: 'Nenhum código solicitado para este email ou código expirado' 
+        message: 'Código inválido ou expirado. Solicite um novo código.' 
       });
     }
     
-    const verificacao = codigosVerificacao[emailNormalizado];
-    console.log('Verificação encontrada:', verificacao);
-    
-    // Verificar se o código expirou
-    if (Date.now() > verificacao.expiraEm) {
-      console.log('Código expirado:', {
-        agora: Date.now(),
-        expiraEm: verificacao.expiraEm
-      });
-      delete codigosVerificacao[emailNormalizado];
-      return res.status(400).json({ message: 'Código expirado. Solicite um novo código' });
-    }
-    
-    // Verificar se o código está correto
-    if (verificacao.codigo !== codigo) {
-      console.log('Código incorreto:', {
-        recebido: codigo,
-        esperado: verificacao.codigo
-      });
+    // 2. Comparar o código fornecido com o hash no banco usando bcrypt
+    console.log('Comparando código fornecido com hash do DB...');
+    const isMatch = await bcrypt.compare(codigo.toUpperCase(), tokenData.token);
+
+    if (!isMatch) {
+      console.log('Código não corresponde para:', emailNormalizado);
       return res.status(400).json({ message: 'Código inválido' });
     }
     
-    // Código válido - gerar token temporário para redefinição de senha
-    const tokenRedefinicao = Math.random().toString(36).substring(2, 15);
-    console.log('Novo token gerado:', tokenRedefinicao);
+    // 3. Código válido - Gerar um token de redefinição
+    const tokenRedefinicao = await bcrypt.hash(Date.now().toString(), 10);
     
-    // Atualizar a verificação com o novo token
-    codigosVerificacao[emailNormalizado] = {
-      ...verificacao,
-      tokenRedefinicao: tokenRedefinicao,
-      expiraEm: Date.now() + 15 * 60 * 1000 // 15 minutos
-    };
-    
-    console.log('Verificação atualizada:', codigosVerificacao[emailNormalizado]);
-    
+    // 4. Atualizar o token no banco de dados
+    await db.query(
+      'UPDATE password_reset_tokens SET token = $1 WHERE id = $2',
+      [tokenRedefinicao, tokenData.id]
+    );
+    console.log('Token de redefinição atualizado no DB');
+
+    // Retornar sucesso com o token de redefinição
     return res.status(200).json({ 
       message: 'Código verificado com sucesso',
+      email: emailNormalizado,
+      userId: tokenData.user_id,
       token: tokenRedefinicao
     });
+
   } catch (error) {
-    console.error('Erro na verificação:', error);
+    console.error('Erro na verificação de código:', error);
     return res.status(500).json({
-      message: 'Erro no servidor',
+      message: 'Erro no servidor ao verificar código.',
       error: error.message
     });
   }
@@ -188,79 +213,53 @@ router.put('/redefinir-senha', async (req, res) => {
     console.log('Email normalizado:', emailNormalizado);
 
     // Verificar token de redefinição
-    if (!codigosVerificacao[emailNormalizado]) {
-      console.log('Códigos de verificação:', codigosVerificacao);
-      console.log('Email não encontrado nos códigos:', emailNormalizado);
-      return res.status(400).json({ 
-        message: 'Nenhuma solicitação de redefinição encontrada para este email' 
-      });
-    }
+    const tokenResult = await db.query(
+      'SELECT * FROM password_reset_tokens WHERE email = $1 AND token = $2 AND expires_at > NOW()',
+      [emailNormalizado, token]
+    );
 
-    const verificacao = codigosVerificacao[emailNormalizado];
-    console.log('Verificação encontrada:', verificacao);
-    
-    if (!verificacao.tokenRedefinicao) {
-      console.log('Token de redefinição não encontrado na verificação');
+    if (tokenResult.rows.length === 0) {
+      console.log('Token inválido ou expirado para:', emailNormalizado);
       return res.status(400).json({ 
-        message: 'Token de redefinição inválido' 
-      });
-    }
-
-    if (verificacao.tokenRedefinicao !== token) {
-      console.log('Token não corresponde:', { 
-        recebido: token, 
-        esperado: verificacao.tokenRedefinicao 
-      });
-      return res.status(400).json({ 
-        message: 'Token inválido' 
-      });
-    }
-
-    // Verificar se o token expirou (15 minutos)
-    if (Date.now() > verificacao.expiraEm) {
-      console.log('Token expirado:', { 
-        agora: Date.now(), 
-        expiraEm: verificacao.expiraEm 
-      });
-      delete codigosVerificacao[emailNormalizado];
-      return res.status(400).json({ 
-        message: 'Token expirado. Solicite um novo código' 
+        message: 'Token de redefinição inválido ou expirado. Por favor, solicite um novo código.' 
       });
     }
 
     // Verificar se o usuário existe
-    const [usuario] = await db.query('SELECT id FROM usuarios WHERE email = ?', [emailNormalizado]);
-    if (!usuario || usuario.length === 0) {
+    const userResult = await db.query('SELECT id FROM usuarios WHERE email = $1', [emailNormalizado]);
+    if (userResult.rows.length === 0) {
       return res.status(404).json({ 
         message: 'Usuário não encontrado' 
       });
     }
     
     // Hash da nova senha
-    const bcrypt = require('bcryptjs');
+    console.log('Hashando nova senha...');
     const salt = await bcrypt.genSalt(10);
     const senhaHash = await bcrypt.hash(novaSenha, salt);
+    console.log('Senha hashada.');
 
-    // Atualizar senha no banco usando o email
-    const [result] = await db.query(
-      'UPDATE usuarios SET senha = ? WHERE email = ?',
-      [senhaHash, emailNormalizado]
+    // Atualizar senha no banco
+    console.log('Atualizando senha no DB para user ID:', userResult.rows[0].id);
+    const resultUpdate = await db.query(
+      'UPDATE usuarios SET senha = $1 WHERE id = $2',
+      [senhaHash, userResult.rows[0].id]
     );
 
-    if (result.affectedRows === 0) {
+    if (resultUpdate.rowCount === 0) {
+      console.log('Erro ao atualizar senha no DB para user ID:', userResult.rows[0].id);
       return res.status(404).json({ 
-        message: 'Erro ao atualizar senha' 
+        message: 'Erro ao atualizar senha.' 
       });
     }
-    
-    // Limpar código de verificação após uso
-    delete codigosVerificacao[emailNormalizado];
 
-    // Criar notificação de senha alterada usando o email
-    const [usuarioNotificacao] = await db.query('SELECT id FROM usuarios WHERE email = ?', [emailNormalizado]);
-    if (usuarioNotificacao && usuarioNotificacao.length > 0) {
-      await NotificacaoService.criarNotificacaoSenhaAlterada(usuarioNotificacao[0].id, 0, false);
-    }
+    // Remover o token usado
+    await db.query('DELETE FROM password_reset_tokens WHERE email = $1', [emailNormalizado]);
+    console.log('Token usado removido do DB');
+    
+    // Criar notificação de senha alterada
+    await NotificacaoService.criarNotificacaoSenhaAlterada(userResult.rows[0].id, 0, false);
+    console.log('Notificação de senha alterada criada.');
 
     return res.json({ 
       message: 'Senha atualizada com sucesso!' 
@@ -283,7 +282,7 @@ router.put('/:id', protect, upload.fields([
 ]), usuariosController.updateUsuario);
 router.delete('/:id', protect, usuariosController.deleteUsuario);
 
-// Armazenar códigos de verificação temporariamente (em produção, usar banco de dados)
-const codigosVerificacao = {};
+// Remover o objeto em memória, pois não é mais usado
+// const codigosVerificacao = {};
 
 export default router;

@@ -2,67 +2,64 @@ import pool from '../config/db.js';
 
 class Vaga {
   static async findAll() {
+    let client;
     try {
       console.log('Iniciando busca de vagas...');
-      
-      // Testar a conexão antes de executar a query
-      const connection = await db.getConnection();
-      console.log('Conexão com o banco estabelecida com sucesso');
-      
-      try {
-        const [rows] = await connection.execute(
-          'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id ORDER BY v.created_at DESC'
-        );
-        console.log('Query executada com sucesso');
-        console.log('Número de vagas encontradas:', rows.length);
-        console.log('Primeira vaga (se houver):', rows[0]);
-        
-        // Garantir que sempre retornamos um array
-        const resultado = Array.isArray(rows) ? rows : [];
-        console.log('Resultado final:', resultado);
-        
-        return resultado;
-      } finally {
-        connection.release();
-        console.log('Conexão liberada');
-      }
+      client = await pool.connect();
+      console.log('Conexão com o banco estabelecida com sucesso para findAll');
+
+      const query = 'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id ORDER BY v.created_at DESC';
+      const result = await client.query(query);
+
+      console.log('Query executada com sucesso para findAll');
+      console.log('Número de vagas encontradas:', result.rows.length);
+
+      return result.rows || [];
     } catch (error) {
-      console.error('Erro detalhado ao buscar vagas:', {
-        message: error.message,
-        code: error.code,
-        errno: error.errno,
-        sqlState: error.sqlState,
-        sqlMessage: error.sqlMessage
-      });
-      return [];
+      console.error('Erro ao buscar vagas:', error);
+      throw error;
+    } finally {
+      if (client) client.release();
+      console.log('Conexão liberada para findAll');
     }
   }
 
   static async findById(id) {
+    let client;
     try {
-      const [rows] = await db.execute(
-        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = ?',
-        [id]
-      );
-      return rows[0];
+      client = await pool.connect();
+      const query = 'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = $1';
+      const result = await client.query(query, [id]);
+      return result.rows[0];
     } catch (error) {
+      console.error('Erro ao buscar vaga por ID:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
   static async findByEmpresa(empresaId) {
+    let client;
     try {
-      const [rows] = await db.execute('SELECT * FROM vagas WHERE empresa_id = ?', [empresaId]);
-      return rows;
+      client = await pool.connect();
+      const query = 'SELECT * FROM vagas WHERE empresa_id = $1';
+      const result = await client.query(query, [empresaId]);
+      return result.rows;
     } catch (error) {
+      console.error('Erro ao buscar vagas por empresa:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
   static async create(vagaData) {
+    let client;
     try {
       console.log('Dados recebidos para criar vaga:', vagaData);
-      
+      client = await pool.connect();
+
       const { 
         empresa_id, 
         nome_vaga,
@@ -79,12 +76,13 @@ class Vaga {
       if (!empresa_id || !nome_vaga || !nome_empresa || !descricao || !tipo_vaga || !local_vaga || !categoria || !requisitos) {
         throw new Error('Campos obrigatórios faltando: empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga, local_vaga, categoria e requisitos');
       }
-      
+
       const query = `
         INSERT INTO vagas (
           empresa_id, nome_vaga, nome_empresa, descricao, tipo_vaga,
           local_vaga, categoria, requisitos, salario
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id;
       `;
       
       const values = [
@@ -99,18 +97,17 @@ class Vaga {
         salario || null
       ];
 
-      console.log('Executando query com valores:', values);
+      console.log('Executando query de criação com valores:', values);
 
-      const [result] = await db.execute(query, values);
-      console.log('Vaga criada com sucesso, ID:', result.insertId);
+      const result = await client.query(query, values);
+      const newVagaId = result.rows[0].id;
+      console.log('Vaga criada com sucesso, ID:', newVagaId);
 
-      // Buscar a vaga criada para retornar com todos os dados
-      const [vagaCriada] = await db.execute(
-        'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = ?',
-        [result.insertId]
-      );
+      // Buscar a vaga criada para retornar com todos os dados (optional, can return just ID)
+      const vagaCriadaQuery = 'SELECT v.*, e.nome as nome_empresa FROM vagas v LEFT JOIN empresas e ON v.empresa_id = e.id WHERE v.id = $1';
+      const vagaCriadaResult = await client.query(vagaCriadaQuery, [newVagaId]);
 
-      return vagaCriada[0];
+      return vagaCriadaResult.rows[0];
     } catch (error) {
       console.error('Erro detalhado ao criar vaga:', {
         message: error.message,
@@ -118,11 +115,15 @@ class Vaga {
         data: vagaData
       });
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
   static async update(id, vagaData) {
+    let client;
     try {
+      client = await pool.connect();
       const { 
         nome_vaga,
         nome_empresa,
@@ -133,15 +134,15 @@ class Vaga {
         requisitos,
         salario
       } = vagaData;
-      
+
       const query = `
         UPDATE vagas 
-        SET nome_vaga = ?, nome_empresa = ?, descricao = ?, tipo_vaga = ?,
-            local_vaga = ?, categoria = ?, requisitos = ?, salario = ?
-        WHERE id = ?
+        SET nome_vaga = $1, nome_empresa = $2, descricao = $3, tipo_vaga = $4,
+            local_vaga = $5, categoria = $6, requisitos = $7, salario = $8
+        WHERE id = $9
       `;
-      
-      const [result] = await db.execute(query, [
+
+      const values = [
         nome_vaga,
         nome_empresa,
         descricao, 
@@ -151,21 +152,33 @@ class Vaga {
         requisitos,
         salario,
         id
-      ]);
+      ];
 
-      return result.affectedRows > 0;
+      console.log('Executando query de atualização com valores:', values);
+
+      const result = await client.query(query, values);
+
+      return result.rowCount > 0; // Return true if a row was updated
     } catch (error) {
       console.error('Erro ao atualizar vaga:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
   static async delete(id) {
+    let client;
     try {
-      const [result] = await db.execute('DELETE FROM vagas WHERE id = ?', [id]);
-      return { affectedRows: result.affectedRows };
+      client = await pool.connect();
+      const query = 'DELETE FROM vagas WHERE id = $1';
+      const result = await client.query(query, [id]);
+      return { affectedRows: result.rowCount }; // Return rowCount for affected rows
     } catch (error) {
+      console.error('Erro ao excluir vaga:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 }
