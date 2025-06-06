@@ -154,6 +154,38 @@ export default function Feed() {
     carregarPosts();
   }, []);
 
+  // NOVO useEffect para carregar notificações
+  useEffect(() => {
+    const carregarNotificacoes = async () => {
+      if (isAuthenticated && authInfo?.entity?.id && authInfo?.token) {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes`, {
+            headers: {
+              'Authorization': `Bearer ${authInfo.token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setNotifications(data);
+          } else if (response.status === 401) {
+            console.error('Erro de autenticação ao carregar notificações:', response.status);
+            // Tratar o erro de autenticação, talvez redirecionar para login
+            setNotifications([]);
+          } else {
+            console.error('Erro ao carregar notificações:', response.status);
+            setNotifications([]);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar notificações:', error);
+          setNotifications([]);
+        }
+      } else {
+        setNotifications([]); // Limpa notificações se não autenticado ou sem token
+      }
+    };
+    carregarNotificacoes();
+  }, [isAuthenticated, authInfo?.entity?.id, authInfo?.token]); // Dependências para recarregar quando o status de auth, ID do usuário ou token mudar
+
   const handleLogout = () => {
     logout();
   };

@@ -51,7 +51,7 @@ export default function Header() {
   // Função para buscar notificações
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/notificacoes/usuario/${authInfo.entity.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
