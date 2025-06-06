@@ -258,7 +258,7 @@ class NotificacaoService {
       // Criar notificação para a empresa
       await Notificacao.create({
         empresa_id: empresaId,
-        usuario_id: 0, // Usando 0 como ID padrão para notificações do sistema
+        usuario_id: null,
         mensagem_usuario: null,
         mensagem_empresa: `Nova vaga "${vaga.nome_vaga}" criada com sucesso!`,
         status_candidatura: 'PENDENTE',
