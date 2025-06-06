@@ -33,8 +33,8 @@ class NotificacaoService {
   }
 
   // Notificação de candidatura criada
-  static async criarNotificacaoCandidaturaCriada(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaCriada', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoCandidaturaCriada(usuarioId, empresaId, vagaId, candidaturaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaCriada', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -49,7 +49,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `Você se candidatou para a vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} se candidatou para a vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'PENDENTE',
@@ -63,8 +63,8 @@ class NotificacaoService {
   }
 
   // Notificação de candidatura removida
-  static async criarNotificacaoCandidaturaRemovida(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRemovida', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoCandidaturaRemovida(usuarioId, empresaId, vagaId, candidaturaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRemovida', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -79,7 +79,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `Você removeu sua candidatura da vaga "${vaga.nome_vaga}"`,
         mensagem_empresa: `${usuario.nome} removeu a candidatura da vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'PENDENTE',
@@ -93,8 +93,8 @@ class NotificacaoService {
   }
 
   // Notificação de candidatura aprovada
-  static async criarNotificacaoCandidaturaAprovada(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaAprovada', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoCandidaturaAprovada(usuarioId, empresaId, vagaId, candidaturaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaAprovada', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -109,7 +109,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} foi aprovada!`,
         mensagem_empresa: `Você aprovou a candidatura de um usuário para a vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'APROVADO',
@@ -282,8 +282,8 @@ class NotificacaoService {
   }
 
   // Notificação de candidatura rejeitada
-  static async criarNotificacaoCandidaturaRejeitada(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRejeitada', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoCandidaturaRejeitada(usuarioId, empresaId, vagaId, candidaturaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaRejeitada', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -298,7 +298,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" foi rejeitada`,
         mensagem_empresa: `Você rejeitou a candidatura de ${usuario.nome} para a vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'REJEITADO',
@@ -312,8 +312,8 @@ class NotificacaoService {
   }
 
   // Notificação de candidatura em espera
-  static async criarNotificacaoCandidaturaEmEspera(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaEmEspera', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoCandidaturaEmEspera(usuarioId, empresaId, vagaId, candidaturaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaEmEspera', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -328,7 +328,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `Sua candidatura para a vaga "${vaga.nome_vaga}" está em análise`,
         mensagem_empresa: `Você colocou a candidatura de ${usuario.nome} em análise para a vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'EM_ESPERA',

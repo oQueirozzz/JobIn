@@ -93,40 +93,48 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
-    
-    const query = `
-      INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `;
-    
-    const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
-    
+    let client;
     try {
-      const { rows } = await pool.query(query, values);
+      client = await pool.connect();
+      const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
+      
+      const query = `
+        INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `;
+      
+      const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
+      
+      const { rows } = await client.query(query, values);
       return rows[0];
     } catch (error) {
       console.error('Erro ao criar notificação:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 
   // Marcar notificação como lida
   static async marcarComoLida(notificacaoId) {
-    const query = `
-      UPDATE notificacao
-      SET lida = true
-      WHERE id = $1
-      RETURNING *
-    `;
-    
+    let client;
     try {
-      const { rows } = await pool.query(query, [notificacaoId]);
+      client = await pool.connect();
+      const query = `
+        UPDATE notificacao
+        SET lida = true
+        WHERE id = $1
+        RETURNING *
+      `;
+      
+      const { rows } = await client.query(query, [notificacaoId]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
       throw error;
+    } finally {
+      if (client) client.release();
     }
   }
 

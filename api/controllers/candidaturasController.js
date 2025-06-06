@@ -107,7 +107,7 @@ export const createCandidatura = async (req, res) => {
     });
 
     // Criar notificação
-    await NotificacaoService.criarNotificacaoCandidaturaCriada(id_usuario, vaga.empresa_id, id_vaga);
+    await NotificacaoService.criarNotificacaoCandidaturaCriada(id_usuario, vaga.empresa_id, id_vaga, candidatura.id);
 
     res.status(201).json({
       ...candidatura,
@@ -154,21 +154,24 @@ export const updateStatusCandidatura = async (req, res) => {
         await NotificacaoService.criarNotificacaoCandidaturaAprovada(
           candidatura.id_usuario,
           candidatura.empresa_id,
-          candidatura.id_vaga
+          candidatura.id_vaga,
+          candidatura.id
         );
         break;
       case 'REJEITADO':
         await NotificacaoService.criarNotificacaoCandidaturaRejeitada(
           candidatura.id_usuario,
           candidatura.empresa_id,
-          candidatura.id_vaga
+          candidatura.id_vaga,
+          candidatura.id
         );
         break;
       case 'EM_ESPERA':
         await NotificacaoService.criarNotificacaoCandidaturaEmEspera(
           candidatura.id_usuario,
           candidatura.empresa_id,
-          candidatura.id_vaga
+          candidatura.id_vaga,
+          candidatura.id
         );
         break;
     }
@@ -200,18 +203,19 @@ export const deleteCandidatura = async (req, res) => {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
 
+    // Criar notificação
+    await NotificacaoService.criarNotificacaoCandidaturaRemovida(
+      candidatura.id_usuario,
+      candidatura.empresa_id,
+      candidatura.id_vaga,
+      candidatura.id
+    );
+
     // Excluir a candidatura
     const resultado = await Candidatura.delete(id);
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
-
-    // Criar notificação
-    await NotificacaoService.criarNotificacaoCandidaturaRemovida(
-      candidatura.id_usuario,
-      candidatura.empresa_id,
-      candidatura.id_vaga
-    );
 
     res.status(200).json({ 
       message: 'Candidatura removida com sucesso',

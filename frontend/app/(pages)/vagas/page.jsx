@@ -128,7 +128,7 @@ export default function Vagas() {
 
   function mostrarMensagem(texto, tipo = 'info') {
     setMensagem({ texto, tipo });
-    setTimeout(() => setMensagem(null), 4000);
+    setTimeout(() => setMensagem(null), 1500);
   }
 
 
@@ -141,7 +141,7 @@ export default function Vagas() {
 
     if (!authData) {
       mostrarMensagem('Você precisa estar logado para se candidatar. Redirecionando para login...', 'info');
-      setTimeout(redirecionarParaLogin, 2000);
+      setTimeout(redirecionarParaLogin, 1500);
       return;
     }
 

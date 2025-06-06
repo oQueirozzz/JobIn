@@ -48,7 +48,7 @@ export default function CriarVaga() {
     setNotificacao({ mostrar: true, tipo, mensagem });
     setTimeout(() => {
       setNotificacao({ mostrar: false, tipo: '', mensagem: '' });
-    }, 3000);
+    }, 1500);
   };
 
   const handleInputChange = (e) => {
