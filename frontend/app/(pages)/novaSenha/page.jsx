@@ -70,13 +70,29 @@ export default function NovaSenha() {
             return;
         }
 
+        // Verificar se há um código gerado
+        if (!codigoGerado) {
+            setTipoMensagem('erro');
+            setMensagem('Nenhum código foi solicitado. Por favor, solicite um novo código.');
+            return;
+        }
+
         setCarregando(true);
         setMensagem('');
 
         try {
             const codigoDigitado = codigoVerificacao.toUpperCase().trim();
+            const codigoCorreto = codigoGerado.toUpperCase().trim();
 
-            // Verificar o código no backend
+            // Primeiro verificar se o código está correto localmente
+            if (codigoDigitado !== codigoCorreto) {
+                setTipoMensagem('erro');
+                setMensagem('Código inválido. Por favor, verifique e tente novamente.');
+                setCarregando(false);
+                return;
+            }
+
+            // Se o código estiver correto localmente, prosseguir com a verificação no backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/verificar-codigo`, {
                 method: 'POST',
                 headers: {
@@ -84,7 +100,8 @@ export default function NovaSenha() {
                 },
                 body: JSON.stringify({
                     email: email.trim().toLowerCase(),
-                    codigo: codigoDigitado
+                    codigo: codigoDigitado,
+                    codigoGerado: codigoCorreto // Enviando o código gerado para comparação no backend
                 }),
             });
 
@@ -93,7 +110,7 @@ export default function NovaSenha() {
             if (response.ok) {
                 setTipoMensagem('sucesso');
                 setMensagem('Código verificado com sucesso');
-                setTokenRedefinicao(data.token); // Salvar o token retornado pelo backend
+                setTokenRedefinicao(data.token); // Salvar o token para usar na redefinição
                 setEtapa(3); // Avançar para a etapa de definição de nova senha
 
                 // Limpar o intervalo quando o código for verificado com sucesso
@@ -135,6 +152,28 @@ export default function NovaSenha() {
             // Limpar intervalo anterior se existir
             if (intervaloId) {
                 clearInterval(intervaloId);
+            }
+
+            // Verificar se o email existe na API - apenas verificação
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    senha: 'verificacao-apenas' // Senha fictícia apenas para verificação
+                })
+            });
+
+            const data = await response.json();
+
+            // Se a resposta contém uma mensagem específica de email não encontrado
+            if (data.message && (data.message.includes('não encontrado') || data.message.includes('não cadastrado'))) {
+                setTipoMensagem('erro');
+                setMensagem('Este e-mail não está cadastrado em nossa base.');
+                setCarregando(false);
+                return;
             }
 
             // Gerar código de verificação
@@ -298,7 +337,7 @@ export default function NovaSenha() {
                     setCodigoGerado('');
                     setTokenRedefinicao('');
                     window.location.href = '/login';
-                }, 1500);
+                }, 3000);
             } else {
                 setTipoMensagem('erro');
                 setMensagem(data.message || 'Erro ao atualizar senha');

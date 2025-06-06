@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 
+
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
@@ -327,7 +328,7 @@ export default function NovaSenha() {
                 setTipoMensagem('sucesso');
                 setMensagem('Senha atualizada com sucesso!');
 
-                // Limpar campos e voltar para a etapa inicial após 3 segundos
+              
                 setTimeout(() => {
                     setEmail('');
                     setNovaSenha('');
