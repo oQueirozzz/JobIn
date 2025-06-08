@@ -197,14 +197,26 @@ router.put('/redefinir-senha', async (req, res) => {
   console.log('URL completa:', req.originalUrl);
   console.log('Método:', req.method);
   console.log('Body completo:', req.body);
+  console.log('Headers:', req.headers);
   
-  const { email, token, novaSenha } = req.body;
-  console.log('Dados recebidos para redefinição:', { email, token });
+  const { email, novaSenha } = req.body;
+  const authHeader = req.headers.authorization;
+  const token = authHeader ? authHeader.split(' ')[1] : null;
+
+  console.log('Dados recebidos para redefinição:', { 
+    email, 
+    token: !!token,
+    novaSenha: !!novaSenha 
+  });
 
   try {
     // Verificar se o email e token existem
     if (!email || !token || !novaSenha) {
-      console.log('Dados faltando:', { email: !!email, token: !!token, novaSenha: !!novaSenha });
+      console.log('Dados faltando:', { 
+        email: !!email, 
+        token: !!token, 
+        novaSenha: !!novaSenha 
+      });
       return res.status(400).json({ 
         message: 'Email, token e nova senha são obrigatórios' 
       });
@@ -212,6 +224,14 @@ router.put('/redefinir-senha', async (req, res) => {
 
     const emailNormalizado = email.trim().toLowerCase();
     console.log('Email normalizado:', emailNormalizado);
+
+    // Verificar se o usuário existe
+    const userResult = await db.query('SELECT id FROM usuarios WHERE email = $1', [emailNormalizado]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ 
+        message: 'Usuário não encontrado' 
+      });
+    }
 
     // Verificar token de redefinição
     const tokenResult = await db.query(
@@ -223,14 +243,6 @@ router.put('/redefinir-senha', async (req, res) => {
       console.log('Token inválido ou expirado para:', emailNormalizado);
       return res.status(400).json({ 
         message: 'Token de redefinição inválido ou expirado. Por favor, solicite um novo código.' 
-      });
-    }
-
-    // Verificar se o usuário existe
-    const userResult = await db.query('SELECT id FROM usuarios WHERE email = $1', [emailNormalizado]);
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ 
-        message: 'Usuário não encontrado' 
       });
     }
     
@@ -273,6 +285,9 @@ router.put('/redefinir-senha', async (req, res) => {
     });
   }
 });
+
+// Nova rota para alterar senha quando o usuário está autenticado
+router.put('/alterar-senha-autenticado/:id', protect, usuariosController.updateSenha);
 
 // Rotas protegidas
 router.get('/perfil', protect, usuariosController.getPerfil);

@@ -11,7 +11,7 @@ class Usuario {
     }
   }
 
-  static async findById(id) {
+  static async findById(id, includePassword = false) {
     try {
       const userId = parseInt(id, 10);
       console.log('Executando findById com ID:', userId);
@@ -22,8 +22,14 @@ class Usuario {
         return null;
       }
 
+      let queryText = 'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados';
+      if (includePassword) {
+        queryText += ', senha'; // Adiciona a senha se solicitado
+      }
+      queryText += ' FROM usuarios WHERE id = $1';
+
       const { rows } = await pool.query(
-        'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios WHERE id = $1', 
+        queryText, 
         [userId]
       );
       console.log('Resultado da consulta:', rows);
@@ -140,10 +146,10 @@ class Usuario {
         paramCount++;
       }
       if ('senha' in userData && userData.senha) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(userData.senha, salt);
+        // A senha já deve vir hasheada do controlador quando for uma atualização
+        // Não hashear novamente aqui para evitar hash duplo.
         updateFields.push(`senha = $${paramCount}`);
-        values.push(hashedPassword);
+        values.push(userData.senha); // Usar a senha já hasheada
         paramCount++;
       }
       if ('cpf' in userData) {
@@ -224,9 +230,18 @@ class Usuario {
 
   static async delete(id) {
     try {
+      // Primeiro, excluir todas as notificações associadas a este usuário
+      console.log(`Excluindo notificações para o usuário ID: ${id}`);
+      await pool.query('DELETE FROM notificacao WHERE usuario_id = $1', [id]);
+      console.log(`Notificações do usuário ID: ${id} excluídas.`);
+
+      // Em seguida, excluir o usuário
+      console.log(`Excluindo usuário ID: ${id}`);
       const { rows } = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
+      console.log(`Usuário ID: ${id} excluído.`, rows[0]);
       return rows[0];
     } catch (error) {
+      console.error(`Erro ao excluir usuário ID: ${id}:`, error);
       throw error;
     }
   }

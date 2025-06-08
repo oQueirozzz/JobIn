@@ -175,10 +175,12 @@ export const loginUsuario = async (req, res) => {
     console.log('Usuário encontrado para comparação de senha:', {
       id: usuario.id,
       email: usuario.email,
-      hashedPasswordFromDB: usuario.senha ? '[SENHA_CRIP_PRESENTE]' : '[SENHA_CRIP_AUSENTE]' // Indica se a senha criptografada está presente
+      hashedPasswordFromDB: usuario.senha ? '[PRESENTE]' : '[AUSENTE]' // Indica se a senha criptografada está presente
     });
 
     console.log('Verificando senha. Senha recebida (parcial):', senha.substring(0, 3) + '...');
+    console.log('Senha completa recebida:', senha); // ADICIONADO PARA DEPURACAO
+    console.log('Senha hashada do banco de dados:', usuario.senha); // ADICIONADO PARA DEPURACAO
     const senhaCorreta = await Usuario.comparePassword(senha, usuario.senha);
     console.log('Resultado da comparação de senha (bcrypt.compare):', senhaCorreta);
 
@@ -286,16 +288,26 @@ export const updateUsuario = async (req, res) => {
 // Excluir um usuário
 export const deleteUsuario = async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.params.id);
+    const userIdToDelete = req.params.id;
+    console.log(`[DELETE USUARIO] Tentando excluir usuário com ID: ${userIdToDelete}`);
+
+    const usuario = await Usuario.findById(userIdToDelete);
     if (!usuario) {
+      console.log(`[DELETE USUARIO] Usuário com ID ${userIdToDelete} não encontrado.`);
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    await Usuario.delete(req.params.id);
+    const deletedUser = await Usuario.delete(userIdToDelete);
 
-    res.status(200).json({ message: 'Usuário excluído com sucesso' });
+    if (deletedUser) {
+      console.log(`[DELETE USUARIO] Usuário com ID ${userIdToDelete} excluído com sucesso.`, deletedUser);
+      res.status(200).json({ message: 'Usuário excluído com sucesso' });
+    } else {
+      console.warn(`[DELETE USUARIO] Usuário com ID ${userIdToDelete} não foi excluído, mas não houve erro. Pode ser que não existisse.`);
+      res.status(404).json({ message: 'Usuário não encontrado ou não pôde ser excluído.' });
+    }
   } catch (error) {
-    console.error('Erro ao excluir usuário:', error);
+    console.error(`[DELETE USUARIO] Erro ao excluir usuário com ID ${req.params.id}:`, error);
     res.status(500).json({ message: 'Erro ao excluir usuário' });
   }
 };
@@ -327,11 +339,19 @@ export const updateSenha = async (req, res) => {
     const { id } = req.params;
     const { senha_atual, nova_senha } = req.body;
 
-    // Buscar o usuário
-    const usuario = await Usuario.findById(id);
+    // Buscar o usuário, incluindo a senha
+    const usuario = await Usuario.findById(id, true); // Passar true para incluir a senha
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
+
+    // Log para depuração
+    console.log('Dados do usuário para comparação de senha:', {
+      id: usuario.id,
+      email: usuario.email,
+      senhaHashada: usuario.senha ? '[PRESENTE]' : '[AUSENTE]',
+      senhaAtualRecebida: senha_atual ? '[PRESENTE]' : '[AUSENTE]'
+    });
 
     // Verificar senha atual
     const senhaCorreta = await bcrypt.compare(senha_atual, usuario.senha);
@@ -341,6 +361,9 @@ export const updateSenha = async (req, res) => {
 
     // Criptografar nova senha
     const senhaCriptografada = await bcrypt.hash(nova_senha, 10);
+
+    // Log para depuração
+    console.log('Nova senha criptografada (updateSenha):', senhaCriptografada ? '[PRESENTE]' : '[AUSENTE]');
 
     // Atualizar senha
     const resultado = await Usuario.update(id, { senha: senhaCriptografada });

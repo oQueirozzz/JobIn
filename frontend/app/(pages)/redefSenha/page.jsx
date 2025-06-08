@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
-
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '../../../hooks/useAuth';
 
 export default function NovaSenha() {
     const [email, setEmail] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
+    const [senhaAtual, setSenhaAtual] = useState('');
     const [codigoVerificacao, setCodigoVerificacao] = useState('');
     const [codigoGerado, setCodigoGerado] = useState('');
     const [mensagem, setMensagem] = useState('');
@@ -17,6 +19,53 @@ export default function NovaSenha() {
     const [tempoRestante, setTempoRestante] = useState(0); // Tempo restante em segundos
     const [tokenRedefinicao, setTokenRedefinicao] = useState('')
     const [intervaloId, setIntervaloId] = useState(null); // Novo estado para armazenar o ID do intervalo
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { authInfo } = useAuth();
+
+    useEffect(() => {
+        const authenticatedFromConfig = searchParams.get('authenticated');
+
+        console.log('Debug: Estado inicial do useEffect (authenticatedFromConfig):', {
+            authenticatedFromConfig,
+            authInfo,
+            email: authInfo?.entity?.email,
+            token: authInfo?.token
+        });
+
+        if (authenticatedFromConfig === 'true') {
+            // Obter o token do localStorage
+            const token = localStorage.getItem('authToken');
+            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+
+            console.log('Debug: Dados do localStorage (authenticatedFromConfig):', {
+                token: !!token,
+                authEntity
+            });
+
+            if (!token || !authEntity?.email) {
+                console.error('Debug: Dados de autenticação ausentes para authenticatedFromConfig');
+                setTipoMensagem('erro');
+                setMensagem('Erro ao obter dados de autenticação. Por favor, faça login novamente.');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 3000);
+                return;
+            }
+
+            console.log('Debug: Configurando estado para redefinição direta (authenticatedFromConfig):', {
+                email: authEntity.email,
+                token
+            });
+
+            setEmail(authEntity.email);
+            setTokenRedefinicao(token);
+            setEtapa(3);
+            setMensagem('Por favor, defina sua nova senha.');
+            setTipoMensagem('info');
+        }
+    }, [searchParams, authInfo]);
 
     // Initialize EmailJS when component mounts
     useEffect(() => {
@@ -250,9 +299,22 @@ export default function NovaSenha() {
         }
     }
 
-    // Função para redefinir a senha
+    // Função para redefinir a senha (fluxo por email/código)
     async function redefinirSenha(event) {
         event.preventDefault();
+
+        console.log('Debug: Chamado redefinirSenha (fluxo por email/código)');
+
+        // Obter o token do localStorage
+        const token = localStorage.getItem('authToken');
+        const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+
+        console.log('Debug: Dados de autenticação em redefinirSenha:', {
+            token: !!token,
+            email: authEntity?.email,
+            novaSenha: novaSenha ? '***' : null,
+            confirmarSenha: confirmarSenha ? '***' : null
+        });
 
         if (!novaSenha) {
             setTipoMensagem('erro');
@@ -278,9 +340,13 @@ export default function NovaSenha() {
             return;
         }
 
-        if (!tokenRedefinicao) {
+        if (!token || !authEntity?.email) {
+            console.error('Debug: Dados de autenticação ausentes em redefinirSenha');
             setTipoMensagem('erro');
-            setMensagem('Token de redefinição inválido. Por favor, solicite um novo código.');
+            setMensagem('Erro ao obter dados de autenticação. Por favor, faça login novamente.');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 3000);
             return;
         }
 
@@ -289,46 +355,33 @@ export default function NovaSenha() {
 
         try {
             const dadosRequisicao = {
-                email: email.trim().toLowerCase(),
-                token: tokenRedefinicao,
+                email: authEntity.email.trim().toLowerCase(),
+                token: token,
                 novaSenha: novaSenha
             };
 
-            console.log('Enviando dados para redefinição:', dadosRequisicao);
+            console.log('Debug: Enviando dados para redefinição (redefinirSenha):', {
+                ...dadosRequisicao,
+                novaSenha: '***'
+            });
 
             // Chamar a API para atualizar a senha no backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/redefinir-senha`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(dadosRequisicao),
             });
 
             const data = await response.json();
-            console.log('Resposta da API:', data);
+            console.log('Debug: Resposta da API (redefinirSenha):', data);
 
             if (response.ok) {
-                // Enviar email de confirmação
-                const templateParams = {
-                    to_email: email.trim().toLowerCase(),
-                    name: 'JobIn Support',
-                    from_email: 'suporte@jobin.com',
-                    message: 'Sua senha foi redefinida com sucesso no JobIn.'
-                };
-
-                await emailjs.send(
-                    'service_r9l70po',
-                    'template_0t894rd',
-                    templateParams
-                );
-
-                console.log('Email de confirmação enviado para:', email);
-
                 setTipoMensagem('sucesso');
                 setMensagem('Senha atualizada com sucesso!');
 
-              
                 setTimeout(() => {
                     setEmail('');
                     setNovaSenha('');
@@ -337,14 +390,15 @@ export default function NovaSenha() {
                     setCodigoGerado('');
                     setTokenRedefinicao('');
                     window.location.href = '/config';
-                }, 3000);
+                }, 2000);
             } else {
+                console.error('Debug: Erro na resposta da API (redefinirSenha):', data);
                 setTipoMensagem('erro');
                 setMensagem(data.message || 'Erro ao atualizar senha');
             }
 
         } catch (error) {
-            console.error('Erro na redefinição:', error);
+            console.error('Debug: Erro na redefinição (redefinirSenha):', error);
             setTipoMensagem('erro');
             setMensagem(error.message || 'Erro ao atualizar senha');
         } finally {
@@ -352,8 +406,192 @@ export default function NovaSenha() {
         }
     }
 
+    // Função para alterar a senha quando o usuário está autenticado
+    async function alterarSenhaAutenticado(event) {
+        event.preventDefault();
+
+        console.log('Debug: Chamado alterarSenhaAutenticado (fluxo autenticado)');
+
+        console.log('Debug: Iniciando alteração de senha autenticada:', {
+            email: authInfo?.entity?.email,
+            senhaAtual: senhaAtual ? '***' : null,
+            novaSenha: novaSenha ? '***' : null,
+            confirmarSenha: confirmarSenha ? '***' : null
+        });
+
+        if (!senhaAtual) {
+            setTipoMensagem('erro');
+            setMensagem('Por favor, informe sua senha atual.');
+            return;
+        }
+
+        if (!novaSenha) {
+            setTipoMensagem('erro');
+            setMensagem('Por favor, informe a nova senha.');
+            return;
+        }
+
+        if (novaSenha.length < 6) {
+            setTipoMensagem('erro');
+            setMensagem('A nova senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+
+        if (!confirmarSenha) {
+            setTipoMensagem('erro');
+            setMensagem('Por favor, confirme a nova senha.');
+            return;
+        }
+
+        if (novaSenha !== confirmarSenha) {
+            setTipoMensagem('erro');
+            setMensagem('As novas senhas não coincidem.');
+            return;
+        }
+
+        console.log('Debug: Verificando authInfo antes da validação:', authInfo);
+        console.log('Debug: authInfo.token:', authInfo?.token);
+        console.log('Debug: authInfo.entity.id:', authInfo?.entity?.id);
+
+        if (!authInfo?.entity?.id || !authInfo?.token) {
+            console.error('Debug: Dados de autenticação ausentes para alterar senha autenticada. authInfo:', authInfo);
+            setTipoMensagem('erro');
+            setMensagem('Erro de autenticação. Por favor, faça login novamente.');
+            // Comentado temporariamente para depuração:
+            // setTimeout(() => { window.location.href = '/login'; }, 3000);
+            return;
+        }
+
+        setCarregando(true);
+        setMensagem('');
+
+        try {
+            const dadosRequisicao = {
+                senha_atual: senhaAtual,
+                nova_senha: novaSenha
+            };
+
+            console.log('Debug: Enviando dados para alteração de senha autenticada:', {
+                ...dadosRequisicao,
+                senha_atual: '***',
+                nova_senha: '***'
+            });
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/alterar-senha-autenticado/${authInfo.entity.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authInfo.token}`
+                },
+                body: JSON.stringify(dadosRequisicao),
+            });
+
+            const data = await response.json();
+            console.log('Debug: Resposta da API (alterar senha autenticada):', data);
+
+            if (response.ok) {
+                setTipoMensagem('sucesso');
+                setMensagem('Senha atualizada com sucesso!');
+                setTimeout(() => {
+                    window.location.href = '/config';
+                }, 2000);
+            } else {
+                console.error('Debug: Erro na resposta da API (alterar senha autenticada):', data);
+                setTipoMensagem('erro');
+                setMensagem(data.message || 'Erro ao atualizar senha.');
+            }
+        } catch (error) {
+            console.error('Debug: Erro ao alterar senha autenticada:', error);
+            setTipoMensagem('erro');
+            setMensagem(error.message || 'Erro ao atualizar senha.');
+        } finally {
+            setCarregando(false);
+        }
+    }
+
     // Renderização condicional baseada na etapa atual
     const renderizarFormulario = () => {
+        console.log('Debug: Chamado renderizarFormulario. authenticated=', searchParams.get('authenticated'), 'email=', authInfo?.entity?.email);
+
+        // Se vier da página de configurações, mostrar apenas o formulário de nova senha
+        if (searchParams.get('authenticated') === 'true' && authInfo?.entity?.email) {
+            console.log('Debug: Renderizando formulário para usuário autenticado.');
+            return (
+                <form className="w-full" onSubmit={alterarSenhaAutenticado}>
+                    <div className="relative z-0 w-full mb-5 group">
+                        <input
+                            type="password"
+                            name="senhaAtual"
+                            id="senhaAtual"
+                            value={senhaAtual}
+                            onChange={(e) => setSenhaAtual(e.target.value)}
+                            className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
+                            placeholder=" "
+                            required
+                            disabled={carregando}
+                        />
+                        <label htmlFor="senhaAtual" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+                            Senha Atual
+                        </label>
+                    </div>
+
+                    <div className="relative z-0 w-full mb-5 group">
+                        <input
+                            type="password"
+                            name="novaSenha"
+                            id="novaSenha"
+                            value={novaSenha}
+                            onChange={(e) => setNovaSenha(e.target.value)}
+                            className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
+                            placeholder=" "
+                            required
+                            disabled={carregando}
+                            minLength={6}
+                        />
+                        <label htmlFor="novaSenha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+                            Nova Senha
+                        </label>
+                        <p className="mt-1 text-xs text-gray-500">Mínimo de 6 caracteres</p>
+                    </div>
+
+                    <div className="relative z-0 w-full mb-5 group">
+                        <input
+                            type="password"
+                            name="confirmarSenha"
+                            id="confirmarSenha"
+                            value={confirmarSenha}
+                            onChange={(e) => setConfirmarSenha(e.target.value)}
+                            className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
+                            placeholder=" "
+                            required
+                            disabled={carregando}
+                            minLength={6}
+                        />
+                        <label htmlFor="confirmarSenha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+                            Confirmar Nova Senha
+                        </label>
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center"
+                        disabled={carregando}
+                    >
+                        {carregando ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processando...
+                            </>
+                        ) : 'Redefinir Senha'}
+                    </button>
+                </form>
+            );
+        }
+
+        // Caso contrário, mostrar o fluxo normal
         switch (etapa) {
             case 1: // Etapa de email
                 return (
@@ -454,62 +692,7 @@ export default function NovaSenha() {
                 );
 
             case 3: // Etapa de nova senha
-                return (
-                    <form className="w-full" onSubmit={redefinirSenha}>
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input
-                                type="password"
-                                name="novaSenha"
-                                id="novaSenha"
-                                value={novaSenha}
-                                onChange={(e) => setNovaSenha(e.target.value)}
-                                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-                                placeholder=" "
-                                required
-                                disabled={carregando}
-                                minLength={6}
-                            />
-                            <label htmlFor="novaSenha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
-                                Nova Senha
-                            </label>
-                            <p className="mt-1 text-xs text-gray-500">Mínimo de 6 caracteres</p>
-                        </div>
-
-                        <div className="relative z-0 w-full mb-5 group">
-                            <input
-                                type="password"
-                                name="confirmarSenha"
-                                id="confirmarSenha"
-                                value={confirmarSenha}
-                                onChange={(e) => setConfirmarSenha(e.target.value)}
-                                className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-vinho peer"
-                                placeholder=" "
-                                required
-                                disabled={carregando}
-                                minLength={6}
-                            />
-                            <label htmlFor="confirmarSenha" className="peer-focus:font-medium absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:text-vinho peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
-                                Confirmar Nova Senha
-                            </label>
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="cursor-pointer text-white bg-vinho font-medium rounded-3xl text-sm w-full px-5 py-3 text-center shadow-md transition-colors duration-300 flex justify-center items-center"
-                            disabled={carregando}
-                        >
-                            {carregando ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Processando...
-                                </>
-                            ) : 'Redefinir Senha'}
-                        </button>
-                    </form>
-                );
+                return renderizarFormulario();
 
             default:
                 return null;

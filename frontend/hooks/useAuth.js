@@ -45,7 +45,7 @@ function getInitialAuthInfo() {
       return null;
     }
 
-    const authInfo = { type: authType, entity };
+    const authInfo = { type: authType, entity, token };
     console.log('[useAuth] getInitialAuthInfo: AuthInfo válido retornado:', authInfo);
     return authInfo;
   } catch (error) {
@@ -132,7 +132,7 @@ export function AuthProvider({ children }) {
 
       Cookies.set('authToken', token, { expires: 7 });
 
-      setAuthInfo({ type: authType, entity });
+      setAuthInfo({ type: authType, entity, token });
       router.push('/');
     } catch (error) {
       console.error('Erro durante o login:', error);
