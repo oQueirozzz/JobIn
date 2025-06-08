@@ -3,14 +3,26 @@ const router = express.Router();
 import db from '../config/db.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Configuração do __dirname para ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuração do Multer para upload de imagens
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/posts')
+    // Caminho para a pasta public do frontend
+    const uploadPath = path.join(__dirname, '..', '..', 'frontend', 'public', 'uploads', 'posts');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname))
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
@@ -29,7 +41,7 @@ const upload = multer({
 router.post('/', upload.single('imagem'), async (req, res) => {
   try {
     const { empresa_id, titulo, conteudo } = req.body;
-    const imagem = req.file ? req.file.path : null;
+    const imagem = req.file ? `/uploads/posts/${req.file.filename}` : null;
 
     const query = `
       INSERT INTO posts (empresa_id, titulo, conteudo, imagem)

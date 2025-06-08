@@ -19,33 +19,19 @@ import './jobs/notificacaoTeste.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
-// Obter o diretório atual em ESM
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Configurar pasta de uploads como estática
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-app.use(cors({
-  origin: ['https://jobin-mu.vercel.app', 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: true,
-}));
-
-app.use(express.json({ limit: '50mb' }));
-
-// Configurar pasta de uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Criar pastas de uploads se não existirem
-const uploadsPostsDir = path.join(__dirname, 'uploads', 'posts');
-const uploadsUsuariosDir = path.join(__dirname, 'uploads', 'usuarios');
-
-if (!fs.existsSync(uploadsPostsDir)) {
-  fs.mkdirSync(uploadsPostsDir, { recursive: true });
-}
-
-if (!fs.existsSync(uploadsUsuariosDir)) {
-  fs.mkdirSync(uploadsUsuariosDir, { recursive: true });
-}
+app.use('/uploads', express.static(path.join(__dirname, '..', 'frontend', 'public', 'uploads')));
 
 // Rotas
 app.use('/api/usuarios', usuariosRoutes);
@@ -59,12 +45,14 @@ app.use('/api/rotas', rotasRoutes);
 app.use('/api/pontos-rotas', pontosRotasRoutes);
 app.use('/api/posts', postsRoutes);
 
-// Rota padrão
-app.get('/', (req, res) => {
-  res.json({ message: 'Bem-vindo à API do JobIn' });
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Iniciar servidor
+const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

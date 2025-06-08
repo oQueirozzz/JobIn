@@ -33,7 +33,7 @@ export default function Feed() {
 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [vagasRecomendadas, setVagasRecomendadas] = useState([]);
-  const [perfilCompleto, setPerfilCompleto] = useState(true);
+  const [perfilCompleto, setPerfilCompleto] = useState(false);
   const [camposFaltantes, setCamposFaltantes] = useState([]);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState('');
@@ -41,25 +41,85 @@ export default function Feed() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'vaga', message: 'Nova vaga compatível com seu perfil', time: '5m' },
-    { id: 2, type: 'mensagem', message: 'Você tem 3 novas mensagens', time: '15m' },
-    { id: 3, type: 'conexao', message: '5 novas conexões esta semana', time: '1h' }
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [posts, setPosts] = useState([]);
   const [showMoreNews, setShowMoreNews] = useState(false);
-  const [news, setNews] = useState([
-    { id: 1, title: 'Mercado de TI segue aquecido em 2023', info: 'há 2h • 1.245 leitores', trending: true },
-    { id: 2, title: 'Novas tendências em entrevistas de emprego', info: 'há 5h • 876 leitores', trending: false },
-    { id: 3, title: 'Como se destacar no JobIn', info: 'há 1d • 3.421 leitores', trending: true },
-    { id: 4, title: 'Salários em alta para desenvolvedores', info: 'há 3h • 2.156 leitores', trending: true },
-    { id: 5, title: 'Empresas buscam profissionais com soft skills', info: 'há 6h • 1.890 leitores', trending: true },
-    { id: 6, title: 'Tendências de trabalho remoto em 2024', info: 'há 4h • 3.245 leitores', trending: true },
-  ]);
-
+  const [news, setNews] = useState([]);
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [vagas, setVagas] = useState([]);
+
+  const verificarCamposObrigatorios = (usuario) => {
+    if (!usuario) return [];
+    
+    const isCompany = usuario.tipo === 'empresa';
+    const camposObrigatorios = isCompany ? {
+      nome: 'Nome da Empresa',
+      email: 'Email Corporativo',
+      cnpj: 'CNPJ',
+      localizacao: 'Localização',
+      descricao: 'Descrição da Empresa'
+    } : {
+      nome: 'Nome',
+      email: 'Email',
+      formacao: 'Formação Acadêmica',
+      area_interesse: 'Área de Interesse',
+      habilidades: 'Habilidades',
+      descricao: 'Resumo Profissional',
+      curriculo: 'Currículo',
+      certificados: 'Certificados',
+      foto: 'Foto'
+    };
+
+    return Object.entries(camposObrigatorios)
+      .filter(([campo]) => !usuario[campo] || usuario[campo].trim() === '')
+      .map(([_, label]) => label);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && authInfo?.entity) {
+      const usuario = authInfo.entity;
+      const camposIncompletos = verificarCamposObrigatorios(usuario);
+      setCamposFaltantes(camposIncompletos);
+      setPerfilCompleto(camposIncompletos.length === 0);
+      setShowCompleteProfile(camposIncompletos.length > 0);
+
+      // Carregar vagas recomendadas apenas para usuários
+      if (usuario.tipo !== 'empresa') {
+        const carregarVagasRecomendadas = async () => {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`);
+            const data = await res.json();
+            const vagasAleatorias = data
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 2);
+            setVagas(vagasAleatorias);
+          } catch (error) {
+            console.error("Erro ao carregar vagas:", error);
+          }
+        };
+        carregarVagasRecomendadas();
+      }
+    }
+  }, [isAuthenticated, authInfo]);
+
+  // Listener para atualizações do perfil
+  useEffect(() => {
+    const handleProfileUpdate = (event) => {
+      const { updatedUser } = event.detail;
+      if (updatedUser) {
+        console.log('Perfil atualizado recebido:', updatedUser);
+        const camposIncompletos = verificarCamposObrigatorios(updatedUser);
+        console.log('Campos incompletos:', camposIncompletos);
+        setCamposFaltantes(camposIncompletos);
+        setPerfilCompleto(camposIncompletos.length === 0);
+        setShowCompleteProfile(camposIncompletos.length > 0);
+      }
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -69,72 +129,6 @@ export default function Feed() {
       setIsLoading(false);
     }
   }, [isAuthenticated, router, setIsLoading]);
-
-  useEffect(() => {
-    if (isAuthenticated && authInfo?.entity) {
-      const usuario = authInfo.entity;
-      const isCompany = !!usuario.cnpj;
-
-      if (!isCompany) {
-        const camposObrigatorios = {
-          nome: 'Nome',
-          email: 'Email',
-          telefone: 'Telefone',
-          formacao: 'Formação Acadêmica',
-          area_interesse: 'Área de Interesse',
-          habilidades: 'Habilidades',
-          descricao: 'Resumo Profissional'
-        };
-
-        const camposIncompletos = Object.entries(camposObrigatorios)
-          .filter(([campo]) => !usuario[campo])
-          .map(([_, label]) => label);
-
-        setCamposFaltantes(camposIncompletos);
-        setPerfilCompleto(camposIncompletos.length === 0);
-        setShowCompleteProfile(camposIncompletos.length > 0);
-
-        // Carregar vagas recomendadas apenas para usuários
-        const carregarVagasRecomendadas = async () => {
-          try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`	);
-            const data = await res.json();
-            setVagas(data);
-
-            const vagasAleatorias = data
-              .sort(() => Math.random() - 0.5)
-              .slice(0, 2);
-
-            setVagas(vagasAleatorias);
-          } catch (error) {
-            console.error("Erro ao carregar vagas:", error);
-          }
-        };
-
-
-        carregarVagasRecomendadas();
-
-      } else {
-        // Para empresas
-        const camposObrigatorios = {
-          nome: 'Nome da Empresa',
-          email: 'Email Corporativo',
-          cnpj: 'CNPJ',
-          localizacao: 'Localização',
-          descricao: 'Descrição da Empresa'
-        };
-
-        const camposIncompletos = Object.entries(camposObrigatorios)
-          .filter(([campo]) => !usuario[campo])
-          .map(([_, label]) => label);
-
-        setCamposFaltantes(camposIncompletos);
-        setPerfilCompleto(camposIncompletos.length === 0);
-        setShowCompleteProfile(camposIncompletos.length > 0);
-        setVagasRecomendadas([]);
-      }
-    }
-  }, [isLoading, isAuthenticated, authInfo]);
 
   // Carregar posts
   useEffect(() => {
@@ -244,7 +238,41 @@ export default function Feed() {
   if (isAuthenticated && authInfo?.entity) {
     const usuario = authInfo.entity;
     const isCompany = !!usuario.cnpj;
-    console.log('É empresa?', isCompany);
+    console.log('--- Depuração da Porcentagem ---');
+    console.log('Usuário (authInfo.entity):', usuario);
+    console.log('Tipo de usuário (isCompany):', isCompany);
+
+    // Define camposObrigatorios e calcula a porcentagem
+    const camposObrigatorios = isCompany ? {
+      nome: 'Nome da Empresa',
+      email: 'Email Corporativo',
+      cnpj: 'CNPJ',
+      localizacao: 'Localização',
+      descricao: 'Descrição da Empresa'
+    } : {
+      nome: 'Nome',
+      email: 'Email',
+      formacao: 'Formação Acadêmica',
+      area_interesse: 'Área de Interesse',
+      habilidades: 'Habilidades',
+      descricao: 'Resumo Profissional',
+      curriculo: 'Currículo',
+      certificados: 'Certificados',
+      foto: 'Foto'
+    };
+    console.log('Campos Obrigatórios Definidos:', camposObrigatorios);
+
+    // Calcula a porcentagem usando a mesma lógica da página de perfil
+    const totalCamposObrigatorios = Object.keys(camposObrigatorios).length;
+    console.log('Total de Campos Obrigatórios:', totalCamposObrigatorios);
+    
+    // Calcula campos preenchidos com base nos campos faltantes
+    const camposPreenchidos = totalCamposObrigatorios - camposFaltantes.length;
+    
+    console.log('Campos Preenchidos:', camposPreenchidos);
+    const porcentagemCompleta = Math.round((camposPreenchidos / totalCamposObrigatorios) * 100);
+    console.log('Porcentagem Completa Calculada:', porcentagemCompleta);
+    console.log('-------------------------------');
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -289,20 +317,16 @@ export default function Feed() {
               <div className="bg-white rounded-xl shadow-sm mb-6 border border-gray-100">
                 <div className="p-4">
                   <h2 className="font-semibold mb-3">Vagas recomendadas</h2>
-
-
                   <div className="space-y-4 cursor-pointer">
                     {vagas.map((vaga) => (
                       <Link href={`/vagas?vaga=${vaga.id}`} key={vaga.id}>
-                        <div
-                          className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors"
-                        >
+                        <div className="p-3 border border-gray-100 rounded-lg hover:border-[#7B2D26]/20 transition-colors">
                           <div className="flex items-start">
                             <div className="flex-1">
                               <h3 className="font-medium text-2sm transition-colors cursor-pointer">
                                 {vaga.nome_vaga.length > 30 ? vaga.nome_vaga.slice(0, 80) + '...' : vaga.nome_vaga}
                               </h3>
-                              <p className="text-sm text-[#7B2D26] ">{vaga.nome_empresa}</p>
+                              <p className="text-sm text-[#7B2D26]">{vaga.nome_empresa}</p>
                               <span className="text-xs text-gray-500 flex mt-1">
                                 {vaga.local_vaga}
                                 <span className="text-[#7B2D26] pr-1 pl-1">|</span>
@@ -311,7 +335,7 @@ export default function Feed() {
                               <h3 className="text-xs mt-1">{vaga.categoria}</h3>
                               <div className="flex items-center text-sm mt-1">
                                 R$
-                                <span className="   text-[#7B2D26]  text-sm pl-1" >{vaga.salario}</span>
+                                <span className="text-[#7B2D26] text-sm pl-1">{vaga.salario}</span>
                               </div>
                             </div>
                           </div>
@@ -500,7 +524,7 @@ export default function Feed() {
                       {post.imagem && (
                         <div className="mb-4">
                           <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL}/${post.imagem}`}
+                            src={post.imagem}
                             alt="Post"
                             className="w-full rounded-lg"
                           />
@@ -530,43 +554,89 @@ export default function Feed() {
             <div className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden border border-gray-100">
               <div className="text-center px-4 pt-8 pb-4">
                 <div className="inline-block rounded-full bg-white p-1 shadow-md mx-auto mb-4">
-                  <div className="w-20 h-20 rounded-full bg-[#7B2D26] text-white text-center text-2xl font-bold leading-[5rem]">
-                    {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
-                  </div>
+                  {authInfo?.entity?.foto ? (
+                    <div className="w-20 h-20 rounded-full overflow-hidden">
+                      <img
+                        src={authInfo.entity.foto}
+                        alt="Foto do perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-[#7B2D26] text-white text-center text-2xl font-bold leading-[5rem]">
+                      {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
+                    </div>
+                  )}
                 </div>
                 <h2 className="font-semibold text-lg mt-3">{authInfo?.entity?.nome || 'Usuário'}</h2>
 
                 {!isCompany ? (
                   <p className="text-sm text-gray-600 mt-1">Aluno</p>
+                ) : (
+                  <p className="text-sm text-gray-600 mt-1">Empresa</p>
+                )}
 
-                ) : (<p className="text-sm text-gray-600 mt-1">Empresa</p>)
-                }
-
-
-
-                {authInfo?.entity?.tipo !== 'empresa' && !perfilCompleto && (
-                  <div className="mt-4 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 border border-amber-100 text-left">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">Perfil Incompleto</span>
-                      <span className="text-amber-600">
-                        {Math.round(((7 - camposFaltantes.length) / 7) * 100)}%
-                      </span>
+                {/* Barra de Progresso do Perfil */}
+                {!perfilCompleto && (
+                  <div className="w-full bg-gradient-to-br from-[#7B2D26]/5 to-[#7B2D26]/10 rounded-xl mt-6 p-6 border border-[#7B2D26]/20 shadow-sm mb-4">
+                    {/* Cabeçalho */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 rounded-full bg-[#7B2D26]/10 flex items-center justify-center mr-3">
+                          <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-[#7B2D26]">Perfil Incompleto</h3>
+                          <p className="text-xs text-[#7B2D26]/70">Complete seu perfil para aumentar suas chances</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[#7B2D26] font-bold text-lg">
+                          {porcentagemCompleta}%
+                        </span>
+                        <span className="text-xs text-[#7B2D26]/70">completo</span>
+                      </div>
                     </div>
-                    <div className="w-full bg-amber-200 rounded-full h-1.5">
-                      <div
-                        className="bg-amber-600 h-1.5 rounded-full transition-all duration-300"
-                        style={{ width: `${((7 - camposFaltantes.length) / 7) * 100}%` }}
-                      ></div>
+
+                    {/* Barra de Progresso */}
+                    <div className="w-full bg-[#7B2D26]/20 rounded-full h-2.5 shadow-inner mb-6">
+                      <div 
+                        className="bg-gradient-to-r from-[#7B2D26] to-[#7B2D26]/90 h-2.5 rounded-full transition-all duration-500 ease-out shadow-md" 
+                        style={{ width: `${porcentagemCompleta}%` }}
+                      />
                     </div>
-                    <Link href="/perfil" className="text-[#7B2D26] font-medium mt-2 block hover:underline">
-                      Complete seu perfil
+                    
+                    {/* Lista de Campos Faltantes */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-[#7B2D26] flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Campos pendentes
+                      </h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {camposFaltantes.map((campo, index) => (
+                          <div key={index} className="flex items-center text-sm text-[#7B2D26] bg-white p-3 rounded-lg border border-[#7B2D26]/10 hover:border-[#7B2D26]/20 transition-colors">
+                            <div className="w-2 h-2 rounded-full bg-[#7B2D26] mr-3" />
+                            {campo}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Botão para Completar Perfil */}
+                    <Link
+                      href="/perfil"
+                      className="mt-6 block text-center px-6 py-3 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md"
+                    >
+                      Completar Perfil
                     </Link>
                   </div>
                 )}
               </div>
             </div>
-
-
           </div>
         </main>
       </div>
@@ -577,9 +647,6 @@ export default function Feed() {
   router.push('/dashboard');
   return null;
 }
-
-
-
 
 function NewsItem({ title, info, trending = false }) {
   return (

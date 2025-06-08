@@ -4,6 +4,7 @@ import NotificacaoService from '../services/notificacaoService.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Empresa from '../models/Empresa.js';
+import path from 'path';
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -87,6 +88,7 @@ export const registerUsuario = async (req, res) => {
       email,
       senha,
       cpf,
+      data_nascimento: req.body.data_nascimento,
       descricao,
       tipo: 'usuario'
     });
@@ -170,15 +172,15 @@ export const loginUsuario = async (req, res) => {
       });
     }
 
-    console.log('Usuário encontrado:', {
+    console.log('Usuário encontrado para comparação de senha:', {
       id: usuario.id,
-      nome: usuario.nome,
-      email: usuario.email
+      email: usuario.email,
+      hashedPasswordFromDB: usuario.senha ? '[SENHA_CRIP_PRESENTE]' : '[SENHA_CRIP_AUSENTE]' // Indica se a senha criptografada está presente
     });
 
-    console.log('Verificando senha...');
+    console.log('Verificando senha. Senha recebida (parcial):', senha.substring(0, 3) + '...');
     const senhaCorreta = await Usuario.comparePassword(senha, usuario.senha);
-    console.log('Senha correta?', senhaCorreta);
+    console.log('Resultado da comparação de senha (bcrypt.compare):', senhaCorreta);
 
     if (!senhaCorreta) {
       console.log('Senha incorreta para o usuário:', email);
@@ -206,9 +208,11 @@ export const loginUsuario = async (req, res) => {
       habilidades: usuario.habilidades || '',
       descricao: usuario.descricao || '',
       curriculo: usuario.curriculo || '',
-      foto: usuario.foto || usuario.foto_perfil || '',
+      foto: usuario.foto ? `/uploads/usuarios/${path.basename(usuario.foto)}` : '',
       tipo: 'usuario',
-      autenticado: true
+      autenticado: true,
+      cpf: usuario.cpf || '',
+      data_nascimento: usuario.data_nascimento || ''
     };
 
     // Gerar token JWT
@@ -245,15 +249,28 @@ export const updateUsuario = async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    // Verificar se houve alteração no currículo
-    const curriculoAlterado = req.files && req.files.curriculo && req.files.curriculo[0];
+    // Preparar dados para atualização
+    const dadosAtualizacao = { ...req.body };
 
-    // Atualizar dados do usuário
-    const dadosAtualizados = await usuario.update(req.body, req.files);
+    // Processar arquivos se existirem
+    if (req.files) {
+      if (req.files.foto && req.files.foto[0]) {
+        dadosAtualizacao.foto = req.files.foto[0].path;
+      }
+      if (req.files.curriculo && req.files.curriculo[0]) {
+        dadosAtualizacao.curriculo = req.files.curriculo[0].path;
+      }
+      if (req.files.certificados && req.files.certificados[0]) {
+        dadosAtualizacao.certificados = req.files.certificados[0].path;
+      }
+    }
+
+    // Atualizar dados do usuário usando o método estático update
+    const dadosAtualizados = await Usuario.update(usuarioId, dadosAtualizacao);
 
     // Se houve alteração no currículo, criar notificação
-    if (curriculoAlterado) {
-      await NotificacaoService.criarNotificacaoPerfilAlterado(usuarioId, 0, false);
+    if (req.files && req.files.curriculo && req.files.curriculo[0]) {
+      await NotificacaoService.criarNotificacaoPerfilAtualizado(usuarioId, 0, false);
     }
 
     res.json({

@@ -11,6 +11,7 @@ const AuthContext = createContext(null);
 // Função auxiliar para verificar localStorage de forma segura
 function getInitialAuthInfo() {
   if (typeof window === 'undefined') {
+    console.log('[useAuth] getInitialAuthInfo: window is undefined');
     return null;
   }
 
@@ -19,15 +20,36 @@ function getInitialAuthInfo() {
     const entityData = localStorage.getItem('authEntity');
     const authType = localStorage.getItem('authType');
 
-    if (token && entityData && authType) {
-      const entity = JSON.parse(entityData);
-      if (entity && typeof entity === 'object') {
-        return { type: authType, entity };
-      }
+    console.log('[useAuth] getInitialAuthInfo: Verificando dados de autenticação', {
+      temToken: !!token,
+      temEntityData: !!entityData,
+      temAuthType: !!authType
+    });
+
+    if (!token || !entityData || !authType) {
+      console.log('[useAuth] getInitialAuthInfo: Dados de autenticação incompletos');
+      return null;
     }
-    return null;
+
+    let entity;
+    try {
+      entity = JSON.parse(entityData);
+      console.log('[useAuth] getInitialAuthInfo: Entity parseada com sucesso:', entity);
+    } catch (parseError) {
+      console.error('[useAuth] getInitialAuthInfo: Erro ao fazer parse da entity:', parseError);
+      return null;
+    }
+
+    if (!entity || typeof entity !== 'object') {
+      console.log('[useAuth] getInitialAuthInfo: Entity inválida');
+      return null;
+    }
+
+    const authInfo = { type: authType, entity };
+    console.log('[useAuth] getInitialAuthInfo: AuthInfo válido retornado:', authInfo);
+    return authInfo;
   } catch (error) {
-    console.error('useAuth - getInitialAuthInfo: Erro ao ler localStorage:', error);
+    console.error('[useAuth] getInitialAuthInfo: Erro ao ler localStorage:', error);
     return null;
   }
 }
@@ -36,29 +58,41 @@ function getInitialAuthInfo() {
 export function AuthProvider({ children }) {
   const [authInfo, setAuthInfo] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const { setIsLoading } = useLoading();
+  const { setIsLoading: setGlobalIsLoading } = useLoading();
   const router = useRouter();
 
   // Efeito para verificar autenticação inicial
   useEffect(() => {
-    try {
-      // Ativar o loader global durante a verificação de autenticação
-      setIsLoading(true);
-      const initialAuth = getInitialAuthInfo();
-      setAuthInfo(initialAuth);
-    } catch (error) {
-      console.error('Erro ao verificar autenticação inicial:', error);
-      setAuthInfo(null);
-    } finally {
-      setIsAuthLoading(false);
-      // O loader global será controlado pelos componentes individuais
-    }
-  }, [setIsLoading]);
+    const checkAuth = async () => {
+      console.log('[useAuth] Iniciando verificação de autenticação');
+      try {
+        const initialAuth = getInitialAuthInfo();
+        console.log('[useAuth] Resultado da verificação inicial:', initialAuth);
+        
+        if (initialAuth) {
+          setAuthInfo(initialAuth);
+        } else {
+          console.log('[useAuth] Limpando dados de autenticação inválidos');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authEntity');
+          localStorage.removeItem('authType');
+          Cookies.remove('authToken');
+          setAuthInfo(null);
+        }
+      } catch (error) {
+        console.error('[useAuth] Erro ao verificar autenticação inicial:', error);
+        setAuthInfo(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const login = async (email, senha, authType = 'user') => {
     try {
-      // Ativar o loader global durante o processo de login
-      setIsLoading(true);
+      setGlobalIsLoading(true);
       
       const apiUrl = authType === 'user' 
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/login`
@@ -70,7 +104,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, senha }),
-        credentials: 'include' // Incluir cookies na requisição
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -89,29 +123,28 @@ export function AuthProvider({ children }) {
         throw new Error('Dados de login inválidos');
       }
 
-      // Salvar no localStorage
       localStorage.setItem('authToken', token);
-      localStorage.setItem('authEntity', JSON.stringify(entity));
+      localStorage.setItem('authEntity', JSON.stringify({
+        ...entity,
+        tipo: authType === 'user' ? 'usuario' : 'empresa'
+      }));
       localStorage.setItem('authType', authType);
 
-      // Salvar no cookie
       Cookies.set('authToken', token, { expires: 7 });
 
       setAuthInfo({ type: authType, entity });
       router.push('/');
     } catch (error) {
       console.error('Erro durante o login:', error);
-      // Desativar o loader global em caso de erro
-      setIsLoading(false);
+      setGlobalIsLoading(false);
       throw error;
     } finally {
-      setIsLoading(false);
+      setGlobalIsLoading(false);
     }
   };
 
   const logout = () => {
-    // Ativar o loader global durante o processo de logout
-    setIsLoading(true);
+    setGlobalIsLoading(true);
     
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
@@ -121,17 +154,30 @@ export function AuthProvider({ children }) {
     }
     setAuthInfo(null);
     router.push('/dashboard');
+    setGlobalIsLoading(false);
+  };
+
+  const refreshAuthInfo = () => {
+    try {
+      const updatedAuth = getInitialAuthInfo();
+      setAuthInfo(updatedAuth);
+    } catch (error) {
+      console.error('Erro ao refrescar autenticação:', error);
+      setAuthInfo(null);
+    } finally {
+      setIsAuthLoading(false);
+    }
   };
 
   const isAuthenticated = !!authInfo;
 
-  // Valor do contexto
   const value = {
     isAuthenticated,
     isLoading: isAuthLoading,
     authInfo,
     login,
-    logout
+    logout,
+    refreshAuthInfo
   };
 
   return (

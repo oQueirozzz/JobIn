@@ -69,16 +69,13 @@ class Usuario {
         senha: '[PROTEGIDA]'
       });
 
-      // Definir data_nascimento padrão se não fornecida
-      const dataNascimento = userData.data_nascimento || '2000-01-01';
-
       // Campos obrigatórios
       const camposObrigatorios = {
         nome: userData.nome,
         email: userData.email,
         senha: hashedPassword,
         cpf: userData.cpf,
-        data_nascimento: dataNascimento,
+        data_nascimento: userData.data_nascimento,
         tipo: userData.tipo || 'usuario'
       };
 

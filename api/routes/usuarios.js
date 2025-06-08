@@ -18,7 +18,8 @@ const __dirname = path.dirname(__filename);
 // Configuração do Multer para upload de arquivos
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '..', 'uploads', 'usuarios');
+    // Caminho para a pasta public do frontend
+    const uploadPath = path.join(__dirname, '..', '..', 'frontend', 'public', 'uploads', 'usuarios');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -281,6 +282,18 @@ router.put('/:id', protect, upload.fields([
   { name: 'certificados', maxCount: 1 }
 ]), usuariosController.updateUsuario);
 router.delete('/:id', protect, usuariosController.deleteUsuario);
+
+// Rota para notificar atualização de perfil
+router.post('/:id/notificar-perfil-atualizado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await NotificacaoService.criarNotificacaoPerfilAtualizado(id, null, false);
+        res.status(200).json({ message: 'Notificação criada com sucesso' });
+    } catch (error) {
+        console.error('Erro ao criar notificação de perfil atualizado:', error);
+        res.status(500).json({ message: 'Erro ao criar notificação' });
+    }
+});
 
 // Remover o objeto em memória, pois não é mais usado
 // const codigosVerificacao = {};

@@ -51,12 +51,113 @@ export default function CadastroAlunos() {
     const router = useRouter();
     const { login } = useAuth();
 
+    const validarCPF = (cpf) => {
+        // Remove caracteres não numéricos
+        cpf = cpf.replace(/\D/g, '');
+
+        // Verifica se tem 11 dígitos
+        if (cpf.length !== 11) return false;
+
+        // Verifica se todos os dígitos são iguais
+        if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+        // Validação do primeiro dígito verificador
+        let soma = 0;
+        for (let i = 0; i < 9; i++) {
+            soma += parseInt(cpf.charAt(i)) * (10 - i);
+        }
+        let resto = 11 - (soma % 11);
+        let digitoVerificador1 = resto > 9 ? 0 : resto;
+        if (digitoVerificador1 !== parseInt(cpf.charAt(9))) return false;
+
+        // Validação do segundo dígito verificador
+        soma = 0;
+        for (let i = 0; i < 10; i++) {
+            soma += parseInt(cpf.charAt(i)) * (11 - i);
+        }
+        resto = 11 - (soma % 11);
+        let digitoVerificador2 = resto > 9 ? 0 : resto;
+        if (digitoVerificador2 !== parseInt(cpf.charAt(10))) return false;
+
+        return true;
+    };
+
+    const validarDataNascimento = (data, isBlur = false) => {
+        if (!data) return true;
+        
+        // Se não for blur (estiver digitando), apenas verifica se a data é válida
+        if (!isBlur) {
+            const dataNascimento = new Date(data);
+            return !isNaN(dataNascimento.getTime());
+        }
+        
+        // Validação completa apenas quando o campo perder o foco
+        const dataAtual = new Date();
+        const dataNascimento = new Date(data);
+        const anoMinimo = 1950;
+        
+        // Verifica se a data é válida
+        if (isNaN(dataNascimento.getTime())) return false;
+        
+        // Verifica se a data é anterior à data atual
+        if (dataNascimento > dataAtual) return false;
+        
+        // Verifica se o ano é maior que 1950
+        if (dataNascimento.getFullYear() < anoMinimo) return false;
+        
+        return true;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+
+        if (name === 'cpf') {
+            const cpfLimpo = value.replace(/\D/g, '').slice(0, 11); // Apenas números, até 11 dígitos
+
+            let cpfFormatado = cpfLimpo;
+
+            if (cpfLimpo.length > 9) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+            } else if (cpfLimpo.length > 6) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+            } else if (cpfLimpo.length > 3) {
+                cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                [name]: cpfFormatado
+            }));
+        } else if (name === 'data_nascimento') {
+            if (!validarDataNascimento(value, false)) {
+                return;
+            }
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        
+        if (name === 'data_nascimento') {
+            if (!validarDataNascimento(value, true)) {
+                setError('Data de nascimento inválida. Deve ser entre 1950 e a data atual.');
+                // Resetar para a data anterior válida
+                const dataAnterior = formData.data_nascimento;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: dataAnterior
+                }));
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -77,6 +178,27 @@ export default function CadastroAlunos() {
             return;
         }
 
+        // Validar CPF
+        const cpfLimpo = formData.cpf.replace(/\D/g, '');
+        if (!validarCPF(cpfLimpo)) {
+            setError('CPF inválido');
+            setIsLoading(false);
+            return;
+        }
+
+        // Validar data de nascimento
+        if (!formData.data_nascimento) {
+            setError('Data de nascimento é obrigatória');
+            setIsLoading(false);
+            return;
+        }
+
+        if (!validarDataNascimento(formData.data_nascimento, true)) {
+            setError('Data de nascimento inválida. Deve ser entre 1950 e a data atual.');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/register`, {
                 method: 'POST',
@@ -87,7 +209,7 @@ export default function CadastroAlunos() {
                     nome: formData.nome,
                     email: formData.email,
                     senha: formData.senha,
-                    cpf: formData.cpf,
+                    cpf: cpfLimpo,
                     data_nascimento: formData.data_nascimento,
                     formacao: formData.formacao,
                     area_interesse: formData.area_interesse,
@@ -235,6 +357,7 @@ export default function CadastroAlunos() {
                                             required
                                             value={formData.data_nascimento}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
                                             className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                         />
                                     </div>

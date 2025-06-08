@@ -5,6 +5,7 @@ import Notificacao from '../models/Notificacao.js';
 import NotificacaoService from '../services/notificacaoService.js';
 import Usuario from '../models/Usuario.js';
 import jwt from 'jsonwebtoken';
+import path from 'path';
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -141,7 +142,7 @@ export const loginEmpresa = async (req, res) => {
       email: empresa.email,
       cnpj: empresa.cnpj,
       descricao: empresa.descricao || '',
-      logo: empresa.logo || '',
+      logo: empresa.logo ? `/uploads/usuarios/${path.basename(empresa.logo)}` : '',
       tipo: 'empresa',
       autenticado: true
     };

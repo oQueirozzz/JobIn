@@ -337,18 +337,19 @@ export default function Header() {
                   className="flex flex-col items-center px-3 text-gray-200 cursor-pointer hover:text-white transition-colors"
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden mt-2 hover:ring-2 hover:ring-white/20 transition-all">
-                    {usuario?.foto_perfil ? (
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/10 hover:ring-white/30 transition-all duration-200">
+                    {authInfo?.entity?.foto ? (
                       <Image
-                        src={usuario.foto_perfil}
-                        alt={usuario.nome}
-                        width={32}
-                        height={32}
+                        src={authInfo.entity.foto}
+                        alt="Foto do perfil"
+                        layout="fill"
                         className="object-cover"
+                        quality={100}
+                        priority
                       />
                     ) : (
-                      <div className="w-full h-full bg-white text-[#7B2D26] text-center text-sm font-bold leading-8">
-                        {getInitials(usuario?.nome || 'U')}
+                      <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
+                        {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
                       </div>
                     )}
                   </div>
@@ -361,24 +362,25 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center space-x-3">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                          {usuario?.foto_perfil ? (
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100">
+                          {authInfo?.entity?.foto ? (
                             <Image
-                              src={usuario.foto_perfil}
-                              alt={usuario.nome}
-                              width={40}
-                              height={40}
+                              src={authInfo.entity.foto}
+                              alt={authInfo.entity.nome}
+                              layout="fill"
                               className="object-cover"
+                              quality={100}
+                              priority
                             />
                           ) : (
-                            <div className="w-full h-full bg-[#7B2D26] text-white text-center text-sm font-bold leading-10">
-                              {getInitials(usuario?.nome || 'U')}
+                            <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
+                              {getInitials(authInfo?.entity?.nome || 'U')}
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{usuario?.nome || 'Usuário'}</p>
-                          <p className="text-xs text-gray-500">{usuario?.email || ''}</p>
+                          <p className="font-medium text-sm">{authInfo?.entity?.nome || 'Usuário'}</p>
+                          <p className="text-xs text-gray-500">{authInfo?.entity?.email || ''}</p>
                         </div>
                       </div>
                     </div>

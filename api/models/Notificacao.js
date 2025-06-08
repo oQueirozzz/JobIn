@@ -3,91 +3,67 @@ import pool from '../config/db.js';
 class Notificacao {
   // Buscar todas as notificações
   static async findAll() {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao ORDER BY data_notificacao DESC');
+      const { rows } = await pool.query('SELECT * FROM notificacao ORDER BY data_notificacao DESC');
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Buscar notificação por ID
   static async findById(id) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE id = $1', [id]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE id = $1', [id]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao buscar notificação por ID:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Buscar notificações por usuário
   static async findByUsuario(usuarioId) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuario_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuario_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por usuário:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Buscar notificações não lidas por usuário
   static async findNaoLidasByUsuario(usuarioId) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE usuario_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuario_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações não lidas:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Buscar notificações por empresa
   static async findByEmpresa(empresaId) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE empresa_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE empresa_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por empresa:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Buscar notificações por candidatura
   static async findByCandidatura(candidaturaId) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('SELECT * FROM notificacao WHERE candidaturas_id = $1 ORDER BY id DESC', [candidaturaId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE candidaturas_id = $1 ORDER BY id DESC', [candidaturaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por candidatura:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
@@ -109,8 +85,6 @@ class Notificacao {
     } catch (error) {
       console.error('Erro ao criar notificação:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
@@ -129,17 +103,13 @@ class Notificacao {
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Marcar todas as notificações do usuário como lidas
   static async marcarTodasComoLidas(usuarioId) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query(
+      const { rows } = await pool.query(
         'UPDATE notificacao SET lida = TRUE WHERE usuario_id = $1 RETURNING *',
         [usuarioId]
       );
@@ -147,16 +117,12 @@ class Notificacao {
     } catch (error) {
       console.error('Erro ao marcar todas as notificações como lidas:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Atualizar notificação
   static async update(id, notificacaoData) {
-    let client;
     try {
-      client = await pool.connect();
       const { mensagem_usuario, mensagem_empresa, status_candidatura } = notificacaoData;
 
       let query = 'UPDATE notificacao SET ';
@@ -190,28 +156,22 @@ class Notificacao {
       query += ` WHERE id = $${paramCount} RETURNING *`;
       values.push(id);
 
-      const { rows } = await client.query(query, values);
+      const { rows } = await pool.query(query, values);
       return rows[0];
     } catch (error) {
       console.error('Erro ao atualizar notificação:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
   // Excluir notificação
   static async delete(id) {
-    let client;
     try {
-      client = await pool.connect();
-      const { rows } = await client.query('DELETE FROM notificacao WHERE id = $1 RETURNING *', [id]);
+      const { rows } = await pool.query('DELETE FROM notificacao WHERE id = $1 RETURNING *', [id]);
       return rows[0];
     } catch (error) {
       console.error('Erro ao excluir notificação:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 
@@ -243,15 +203,11 @@ class Notificacao {
   }
 
   static async deleteByEmpresaId(empresaId) {
-    let client;
     try {
-      client = await pool.connect();
-      await client.query('DELETE FROM notificacao WHERE empresa_id = $1', [empresaId]);
+      await pool.query('DELETE FROM notificacao WHERE empresa_id = $1', [empresaId]);
     } catch (error) {
       console.error('Erro ao excluir notificações da empresa:', error);
       throw error;
-    } finally {
-      if (client) client.release();
     }
   }
 }

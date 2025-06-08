@@ -13,7 +13,10 @@ export default function Perfil() {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const router = useRouter();
-    const { authInfo, isLoading } = useAuth();
+    const { authInfo, isLoading, refreshAuthInfo } = useAuth();
+
+    // Novo estado para armazenar os campos obrigatórios
+    const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
 
     useEffect(() => {
         if (!isLoading && !authInfo) {
@@ -21,8 +24,31 @@ export default function Perfil() {
             return;
         }
 
-        if (authInfo) {
+        if (authInfo && authInfo.entity) {
             const dadosUsuario = authInfo.entity;
+            console.log('Dados do usuário carregados:', dadosUsuario);
+
+            // Definir camposObrigatorios aqui com base no tipo de usuário
+            const isEmpresa = authInfo?.type === 'company';
+            const obrigatorios = isEmpresa ? {
+                nome: 'Nome da Empresa',
+                email: 'Email Corporativo',
+                cnpj: 'CNPJ',
+                localizacao: 'Localização',
+                descricao: 'Descrição da Empresa'
+            } : {
+                nome: 'Nome',
+                email: 'Email',
+                formacao: 'Formação Acadêmica',
+                area_interesse: 'Área de Interesse',
+                habilidades: 'Habilidades',
+                descricao: 'Resumo Profissional',
+                curriculo: 'Currículo',
+                certificados: 'Certificados',
+                foto: 'Foto'
+            };
+            setCamposObrigatoriosDefinidos(obrigatorios);
+
             // Garantir que todos os campos necessários existam
             const dadosIniciais = {
                 nome: dadosUsuario.nome || '',
@@ -33,55 +59,119 @@ export default function Perfil() {
                 area_interesse: dadosUsuario.area_interesse || '',
                 habilidades: dadosUsuario.habilidades || '',
                 curriculo: dadosUsuario.curriculo || null,
-                certificados: dadosUsuario.certificados || null,
+                certificados: Array.isArray(dadosUsuario.certificados) ? dadosUsuario.certificados : 
+                            (dadosUsuario.certificados ? [dadosUsuario.certificados] : []),
                 local: dadosUsuario.local || '',
-                cpf: dadosUsuario.cpf || '',
+                cpf: dadosUsuario.cpf ? formatarCPF(dadosUsuario.cpf) : '',
                 cnpj: dadosUsuario.cnpj || '',
                 data_nascimento: dadosUsuario.data_nascimento || ''
             };
+            console.log('Dados iniciais formatados:', dadosIniciais);
             setFormData(dadosIniciais);
-            verificarCamposObrigatorios(dadosIniciais);
+            verificarCamposObrigatorios(dadosIniciais, obrigatorios);
+
+            console.log('--- Depuração da Porcentagem Perfil ---');
+            console.log('Usuário (authInfo.entity):', dadosUsuario);
+            console.log('Tipo de usuário (isEmpresa):', isEmpresa);
+            console.log('Campos Obrigatórios Definidos (perfil):', obrigatorios);
+            
+            const totalCamposObrigatoriosPerfil = Object.keys(obrigatorios).length;
+            console.log('Total de Campos Obrigatórios (perfil):', totalCamposObrigatoriosPerfil);
+            
+            const camposPreenchidosPerfil = Object.entries(obrigatorios)
+              .filter(([campo]) => dadosUsuario[campo] && dadosUsuario[campo].trim() !== '')
+              .length;
+
+            console.log('Campos Preenchidos (perfil):', camposPreenchidosPerfil);
+            const porcentagemCompletaPerfil = Math.round((camposPreenchidosPerfil / totalCamposObrigatoriosPerfil) * 100);
+            console.log('Porcentagem Completa Calculada (perfil):', porcentagemCompletaPerfil);
+            console.log('---------------------------------------');
         }
     }, [authInfo, isLoading, router]);
 
-    const verificarCamposObrigatorios = (dadosUsuario) => {
-        const isEmpresa = authInfo?.type === 'company';
+    const verificarCamposObrigatorios = (dadosUsuario, camposObrigatorios) => {
+        // A variável isEmpresa e a definição de camposObrigatorios foram movidas para o useEffect
+        // para serem definidas apenas uma vez e passadas para esta função.
         
-        const camposObrigatorios = isEmpresa ? {
-            nome: 'Nome',
-            descricao: 'Descrição da Empresa',
-            local: 'Local'
-        } : {
-            nome: 'Nome',
-            formacao: 'Formação Acadêmica',
-            area_interesse: 'Área de Interesse',
-            habilidades: 'Habilidades',
-            descricao: 'Resumo Profissional'
-        };
-
         const camposIncompletos = Object.entries(camposObrigatorios)
-            .filter(([campo]) => !dadosUsuario[campo])
+            .filter(([campo]) => !dadosUsuario[campo] || (typeof dadosUsuario[campo] === 'string' && dadosUsuario[campo].trim() === ''))
             .map(([_, label]) => label);
 
         setCamposFaltantes(camposIncompletos);
         setPerfilCompleto(camposIncompletos.length === 0);
     };
 
+    const validarCPF = (cpf) => {
+        // Remove caracteres não numéricos
+        cpf = cpf.replace(/\D/g, '');
+
+        // Verifica se tem 11 dígitos
+        if (cpf.length !== 11) return false;
+
+        // Verifica se todos os dígitos são iguais
+        if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+        // Validação do primeiro dígito verificador
+        let soma = 0;
+        for (let i = 0; i < 9; i++) {
+            soma += parseInt(cpf.charAt(i)) * (10 - i);
+        }
+        let resto = 11 - (soma % 11);
+        let digitoVerificador1 = resto > 9 ? 0 : resto;
+        if (digitoVerificador1 !== parseInt(cpf.charAt(9))) return false;
+
+        // Validação do segundo dígito verificador
+        soma = 0;
+        for (let i = 0; i < 10; i++) {
+            soma += parseInt(cpf.charAt(i)) * (11 - i);
+        }
+        resto = 11 - (soma % 11);
+        let digitoVerificador2 = resto > 9 ? 0 : resto;
+        if (digitoVerificador2 !== parseInt(cpf.charAt(10))) return false;
+
+        return true;
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         try {
+            let valorProcessado = value;
+
+            // Formatar e validar CPF
+            if (name === 'cpf') {
+                const cpfLimpo = value.replace(/\D/g, '');
+                if (cpfLimpo.length === 11 && !validarCPF(cpfLimpo)) {
+                    showMessage('CPF inválido', 'error');
+                    return;
+                }
+                valorProcessado = formatarCPF(value);
+            }
+
+            // Validar data de nascimento apenas se for blur
+            if (name === 'data_nascimento') {
+                if (!validarDataNascimento(value, false)) {
+                    return;
+                }
+            }
+
+            // Processar área de interesse
+            if (name === 'area_interesse') {
+                valorProcessado = value;
+            }
+
             // Atualizar o estado local
             const newData = {
                 ...formData,
-                [name]: value
+                [name]: valorProcessado
             };
             setFormData(newData);
+            verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
 
             // Atualizar o localStorage
             const authEntity = JSON.parse(localStorage.getItem('authEntity'));
             const updatedEntity = {
                 ...authEntity,
-                [name]: value
+                [name]: valorProcessado
             };
             localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
 
@@ -92,6 +182,24 @@ export default function Perfil() {
         } catch (error) {
             console.error('Erro ao atualizar campo:', error);
             showMessage('Erro ao atualizar campo. Tente novamente.', 'error');
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        
+        if (name === 'data_nascimento') {
+            if (!validarDataNascimento(value, true)) {
+                showMessage('Data de nascimento inválida. Deve ser entre 1950 e a data atual.', 'error');
+                // Resetar para a data anterior válida
+                const dataAnterior = formData.data_nascimento;
+                const newData = {
+                    ...formData,
+                    [name]: dataAnterior
+                };
+                setFormData(newData);
+                verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+            }
         }
     };
 
@@ -218,16 +326,35 @@ export default function Perfil() {
             }
 
             // Para arquivos que não são imagens, apenas armazenar o arquivo
-            if (field === 'curriculo' || field === 'certificados') {
-                setFormData(prev => ({ ...prev, [field]: file }));
-                showMessage(`${field === 'curriculo' ? 'Currículo' : 'Certificado'} selecionado com sucesso!`, 'success');
+            if (field === 'curriculo') {
+                setFormData(prev => {
+                    const newData = { ...prev, [field]: file };
+                    verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                    return newData;
+                });
+                showMessage('Currículo selecionado com sucesso!', 'success');
+                return;
+            }
+
+            // Para certificados, substituir o arquivo atual
+            if (field === 'certificados') {
+                setFormData(prev => {
+                    const newData = { ...prev, certificados: file };
+                    verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                    return newData;
+                });
+                showMessage('Certificado adicionado com sucesso!', 'success');
                 return;
             }
 
             // Para imagens, criar URL temporária para preview
             if (field === 'foto') {
                 const fileUrl = URL.createObjectURL(file);
-                setFormData(prev => ({ ...prev, [field]: fileUrl }));
+                setFormData(prev => {
+                    const newData = { ...prev, [field]: fileUrl };
+                    verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                    return newData;
+                });
                 localStorage.setItem('userPhoto', fileUrl);
                 showMessage('Foto selecionada com sucesso! Clique em "Salvar Alterações" para confirmar.', 'success');
             }
@@ -240,26 +367,33 @@ export default function Perfil() {
     // Função para baixar arquivo
     const downloadFile = (data, filename) => {
         try {
-            console.log('Tentando baixar arquivo:', { data: data.substring(0, 100) + '...', filename });
+            console.log('Tentando baixar arquivo:', { data: data?.substring?.(0, 100) + '...', filename });
             
             // Se for uma URL, baixa diretamente
-            if (data.startsWith('http')) {
+            if (data?.startsWith?.('http')) {
                 window.open(data, '_blank');
                 return;
             }
 
             // Se for um caminho de arquivo, baixa do servidor
-            if (data.startsWith('/')) {
+            if (data?.startsWith?.('/')) {
                 window.open(`${process.env.NEXT_PUBLIC_API_URL}${data}`, '_blank');
                 return;
             }
 
+            // Se for um caminho completo do Windows
+            if (data?.includes?.('\\')) {
+                const fileName = data.split('\\').pop();
+                window.open(`${process.env.NEXT_PUBLIC_API_URL}/uploads/usuarios/${fileName}`, '_blank');
+                return;
+            }
+
             // Se for base64, converte e baixa
-            if (data.startsWith('data:')) {
+            if (data?.startsWith?.('data:')) {
                 // Extrair o tipo MIME e os dados base64
                 const matches = data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
                 if (!matches || matches.length !== 3) {
-                    console.error('Formato inválido de base64:', data.substring(0, 100));
+                    console.error('Formato inválido de base64:', data?.substring?.(0, 100));
                     throw new Error('Formato de arquivo inválido');
                 }
 
@@ -323,10 +457,11 @@ export default function Perfil() {
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
-            } else {
-                console.error('Formato de dados não reconhecido:', data.substring(0, 50));
-                throw new Error('Formato de arquivo não suportado');
+                return;
             }
+
+            console.error('Formato de dados não reconhecido:', data?.substring?.(0, 50));
+            throw new Error('Formato de arquivo não suportado');
         } catch (error) {
             console.error('Erro ao baixar arquivo:', error);
             showMessage(error.message || 'Erro ao baixar arquivo. Tente novamente.', 'error');
@@ -337,10 +472,10 @@ export default function Perfil() {
     const showMessage = (message, type) => {
         if (type === 'error') {
             setError(message);
-            setTimeout(() => setError(null), 5000);
+            setTimeout(() => setError(null), 2000);
         } else {
             setSuccess(message);
-            setTimeout(() => setSuccess(null), 3000);
+            setTimeout(() => setSuccess(null), 2000);
         }
     };
 
@@ -351,146 +486,132 @@ export default function Perfil() {
         setSuccess(null);
 
         try {
-            const userId = authInfo?.entity?.id;
-            if (!userId) {
-                showMessage('ID do usuário não encontrado!', 'error');
-                setIsSaving(false);
-                return;
-            }
-            
-            const isEmpresa = authInfo?.type === 'company';
-            const apiUrl = isEmpresa 
-                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
-                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
-
-            // Preparar dados para envio
-            const dadosParaEnviar = {
-                ...formData
-            };
-            
-            // Remover o ID do corpo da requisição pois já está na URL
-            delete dadosParaEnviar.id;
-
             const token = localStorage.getItem('authToken');
             if (!token) {
-                showMessage('Token de autenticação não encontrado', 'error');
-                setIsSaving(false);
-                return;
+                throw new Error('Token de autenticação não encontrado');
             }
-
-            // Filtrar campos vazios ou nulos
-            const dadosFiltrados = Object.fromEntries(
-                Object.entries(dadosParaEnviar).filter(([_, value]) => value !== null && value !== '')
-            );
 
             let response;
-            if (formData.foto?.startsWith?.('data:') || formData.curriculo instanceof File || formData.certificados instanceof File) {
-                // Usar FormData para arquivos
-                const formDataToSend = new FormData();
-                Object.entries(dadosFiltrados).forEach(([key, value]) => {
-                    if (value instanceof File) {
-                        formDataToSend.append(key, value);
-                    } else if (value?.startsWith?.('data:')) {
-                        // Converter base64 para blob
-                        const base64Data = value.split(',')[1];
-                        const byteCharacters = atob(base64Data);
-                        const byteArrays = [];
-                        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                            const slice = byteCharacters.slice(offset, offset + 512);
-                            const byteNumbers = new Array(slice.length);
-                            for (let i = 0; i < slice.length; i++) {
-                                byteNumbers[i] = slice.charCodeAt(i);
-                            }
-                            const byteArray = new Uint8Array(byteNumbers);
-                            byteArrays.push(byteArray);
-                        }
-                        const blob = new Blob(byteArrays, { type: 'image/jpeg' });
-                        formDataToSend.append(key, blob, `${key}.jpg`);
-                    } else {
-                        formDataToSend.append(key, value);
-                    }
-                });
+            let bodyData;
+            let headers = {
+                'Authorization': `Bearer ${token}`
+            };
 
-                response = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formDataToSend
-                });
+            // Se houver um arquivo de currículo (objeto File), usar FormData
+            if (formData.curriculo instanceof File) {
+                const formDataToSend = new FormData();
+                // Adicionar todos os campos do formData ao FormData
+                for (const key in formData) {
+                    // Excluir a foto se ela for uma URL temporária (data:image/)
+                    if (key === 'foto' && typeof formData[key] === 'string' && formData[key].startsWith('data:image/')) {
+                        // Não adicionar a foto temporária aqui, ela será tratada separadamente
+                    } else if (key === 'curriculo' && formData[key] instanceof File) {
+                        formDataToSend.append(key, formData[key]);
+                    } else if (key === 'certificados' && formData[key] instanceof File) {
+                        // Se houver um novo certificado, tratá-lo aqui (se necessário, ou um array de arquivos)
+                        formDataToSend.append(key, formData[key]);
+                    } else if (formData[key] !== null) {
+                        // Garantir que arrays (habilidades, certificados) sejam stringified se não forem arquivos
+                        if (Array.isArray(formData[key])) {
+                            formDataToSend.append(key, JSON.stringify(formData[key]));
+                        } else if (key === 'cpf') {
+                            formDataToSend.append(key, formData[key].replace(/\D/g, ''));
+                        } else {
+                            formDataToSend.append(key, formData[key]);
+                        }
+                    }
+                }
+                bodyData = formDataToSend;
+                // Não definir Content-Type para FormData, o navegador faz isso
             } else {
-                // Usar JSON para dados sem arquivos
-                response = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(dadosFiltrados)
-                });
+                // Caso contrário, enviar como JSON
+                bodyData = {
+                    ...formData,
+                    cpf: formData.cpf.replace(/\D/g, ''), // Remover formatação do CPF
+                    area_interesse: formData.area_interesse // Já está no formato correto
+                };
+
+                // Certificados que já estão no servidor ou foram adicionados como URL
+                if (Array.isArray(bodyData.certificados)) {
+                    bodyData.certificados = bodyData.certificados.map(c => typeof c === 'object' && c !== null && 'url' in c ? c.url : c);
+                }
+
+                // Se a foto for uma URL temporária, não a envie no JSON
+                if (typeof bodyData.foto === 'string' && bodyData.foto.startsWith('data:image/')) {
+                    delete bodyData.foto;
+                }
+                headers['Content-Type'] = 'application/json';
+                bodyData = JSON.stringify(bodyData);
             }
+
+            // Enviar a requisição para o servidor
+            response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${authInfo.entity.id}`, {
+                method: 'PUT',
+                headers: headers,
+                body: bodyData
+            });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Erro ao atualizar perfil');
+                const error = await response.json();
+                throw new Error(error.message || 'Erro ao atualizar perfil');
             }
 
-            const dadosAtualizados = await response.json();
-            console.log('Dados atualizados recebidos do servidor:', dadosAtualizados);
+            const data = await response.json();
+            console.log('Dados do usuário recebidos do servidor após atualização:', data.usuario);
 
-            // Criar um objeto atualizado combinando os dados existentes com os retornados pelo servidor
+            // Atualizar dados no localStorage
+            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
             const updatedEntity = {
-                ...authInfo.entity,
-                ...dadosAtualizados.usuario // Usar dados do servidor como prioridade
+                ...authEntity,
+                ...data.usuario
             };
-            
-            // Para arquivos, manter a versão base64 local se o servidor não retornou o caminho
-            if (dadosFiltrados.foto?.startsWith?.('data:') && !updatedEntity.foto) {
-                updatedEntity.foto = dadosFiltrados.foto;
-            }
-            if (dadosFiltrados.curriculo instanceof File && !updatedEntity.curriculo) {
-                updatedEntity.curriculo = dadosFiltrados.curriculo;
-            }
-            if (dadosFiltrados.certificados instanceof File && !updatedEntity.certificados) {
-                updatedEntity.certificados = dadosFiltrados.certificados;
-            }
-
-            // Atualizar o localStorage
             localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
 
-            // Atualizar o estado local com todos os campos necessários
-            const dadosAtualizadosCompletos = {
-                nome: updatedEntity.nome || '',
-                email: updatedEntity.email || '',
-                foto: updatedEntity.foto || null,
-                descricao: updatedEntity.descricao || '',
-                formacao: updatedEntity.formacao || '',
-                area_interesse: updatedEntity.area_interesse || '',
-                habilidades: updatedEntity.habilidades || '',
-                curriculo: updatedEntity.curriculo || null,
-                certificados: updatedEntity.certificados || null,
-                local: updatedEntity.local || '',
-                cpf: updatedEntity.cpf || '',
-                cnpj: updatedEntity.cnpj || '',
-                data_nascimento: updatedEntity.data_nascimento || ''
-            };
-            setFormData(dadosAtualizadosCompletos);
-            verificarCamposObrigatorios(dadosAtualizadosCompletos);
-
             // Atualizar o contexto de autenticação
-            if (authInfo?.entity) {
+            if (authInfo && authInfo.entity) {
                 authInfo.entity = updatedEntity;
             }
 
-            // Fechar o modal
+            // Atualizar o estado local e verificar campos obrigatórios
+            setFormData(prev => {
+                const newData = { ...prev, ...data.usuario };
+                verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                return newData;
+            });
+
+            // Forçar atualização do authInfo para refletir os dados mais recentes, incluindo o currículo
+            refreshAuthInfo();
+
+            // Criar notificação de atualização de perfil usando o serviço
+            const notificationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${authInfo.entity.id}/notificar-perfil-atualizado`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!notificationResponse.ok) {
+                const errorData = await notificationResponse.json();
+                console.error('Erro ao criar notificação:', errorData);
+            }
+
+            // Mostrar mensagem de sucesso e fechar o modal
+            setSuccess('Perfil atualizado com sucesso!');
             setIsModalOpen(false);
 
-            // Mostrar mensagem de sucesso
-            showMessage('Perfil atualizado com sucesso!', 'success');
+            // Remover a mensagem de sucesso após 3 segundos
+            setTimeout(() => {
+                setSuccess(null);
+            }, 3000);
 
         } catch (error) {
             console.error('Erro ao atualizar perfil:', error);
-            showMessage(error.message || 'Erro ao atualizar perfil. Tente novamente.', 'error');
+            setError(error.message || 'Erro ao atualizar perfil');
+            // Remover a mensagem de erro após 3 segundos
+            setTimeout(() => {
+                setError(null);
+            }, 3000);
         } finally {
             setIsSaving(false);
         }
@@ -506,6 +627,61 @@ export default function Perfil() {
           .substring(0, 2);
     };
 
+    const formatarData = (data) => {
+        if (!data) return 'Data de nascimento não informada';
+        try {
+            if (data.includes('/')) {
+                return data;
+            }
+            
+            if (data.includes('-')) {
+                const [ano, mes, dia] = data.split('-');
+                return `${dia}/${mes}/${ano}`;
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Erro ao formatar data:', error);
+            return data;
+        }
+    };
+
+    const formatarCPF = (cpf) => {
+        if (!cpf) return '';
+        // Remove tudo que não for número
+        const cpfLimpo = cpf.replace(/\D/g, '');
+        // Limita a 11 dígitos
+        const cpfLimitado = cpfLimpo.slice(0, 11);
+        // Aplica a máscara
+        return cpfLimitado.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    };
+
+    const validarDataNascimento = (data, isBlur = false) => {
+        if (!data) return true;
+        
+        // Se não for blur (estiver digitando), apenas verifica se a data é válida
+        if (!isBlur) {
+            const dataNascimento = new Date(data);
+            return !isNaN(dataNascimento.getTime());
+        }
+        
+        // Validação completa apenas quando o campo perder o foco
+        const dataAtual = new Date();
+        const dataNascimento = new Date(data);
+        const anoMinimo = 1950;
+        
+        // Verifica se a data é válida
+        if (isNaN(dataNascimento.getTime())) return false;
+        
+        // Verifica se a data é anterior à data atual
+        if (dataNascimento > dataAtual) return false;
+        
+        // Verifica se o ano é maior que 1950
+        if (dataNascimento.getFullYear() < anoMinimo) return false;
+        
+        return true;
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F0F3F5]">
@@ -517,17 +693,21 @@ export default function Perfil() {
         );
     }
 
-    if (!authInfo) {
+    // Verifica se authInfo e authInfo.entity existem
+    if (!authInfo || !authInfo.entity) {
+        console.log('Redirecionando para login - authInfo ou entity não disponíveis');
+        router.push('/login');
         return null;
     }
 
+    // Define usuario após todas as verificações
     const usuario = authInfo.entity;
 
     return (
-        <section className="min-h-screen flex flex-col items-center bg-[#F0F3F5] px-4 py-10 space-y-6">
+        <section className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 px-4 py-8 space-y-6">
             {/* Mensagens de Erro/Sucesso */}
             {error && (
-                <div className="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50 animate-fade-in">
+                <div className="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in backdrop-blur-sm">
                     <div className="flex items-center">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -538,7 +718,7 @@ export default function Perfil() {
             )}
 
             {success && (
-                <div className="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50 animate-fade-in">
+                <div className="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in backdrop-blur-sm">
                     <div className="flex items-center">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -550,39 +730,47 @@ export default function Perfil() {
 
             {/* Status do Perfil */}
             {!perfilCompleto && (
-                <div className="w-full max-w-5xl bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200 shadow-lg transform hover:scale-[1.02] transition-transform duration-300">
+                <div className="w-full max-w-5xl bg-gradient-to-r from-amber-100 to-amber-200 rounded-2xl p-6 border border-amber-300 shadow-xl transform hover:scale-[1.02] transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold text-amber-800 text-lg">Perfil Incompleto</h3>
-                        <span className="text-amber-600 font-medium bg-amber-200 px-3 py-1 rounded-full">
-                            {Math.round(((authInfo?.type === 'company' ? 3 : 5) - camposFaltantes.length) / (authInfo?.type === 'company' ? 3 : 5) * 100)}% completo
+                        <div className="flex items-center">
+                            <svg className="w-6 h-6 text-amber-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 className="font-bold text-amber-800 text-lg">Perfil Incompleto</h3>
+                        </div>
+                        <span className="text-amber-700 font-semibold bg-amber-300 px-4 py-2 rounded-full shadow-sm">
+                            {Math.round(Math.max(0, (Object.keys(camposObrigatoriosDefinidos).length - camposFaltantes.length) / Object.keys(camposObrigatoriosDefinidos).length * 100))}% completo
                         </span>
                     </div>
-                    <div className="w-full bg-amber-200 rounded-full h-3">
+                    <div className="w-full bg-amber-300 rounded-full h-3 shadow-inner">
                         <div 
-                            className="bg-amber-600 h-3 rounded-full transition-all duration-500 ease-out" 
-                            style={{ width: `${((authInfo?.type === 'company' ? 3 : 5) - camposFaltantes.length) / (authInfo?.type === 'company' ? 3 : 5) * 100}%` }}
+                            className="bg-gradient-to-r from-amber-500 to-amber-600 h-3 rounded-full transition-all duration-500 ease-out shadow-md" 
+                            style={{ width: `${Math.round(Math.max(0, (Object.keys(camposObrigatoriosDefinidos).length - camposFaltantes.length) / Object.keys(camposObrigatoriosDefinidos).length * 100))}%` }}
                         ></div>
                     </div>
-                    <p className="text-sm text-amber-700 mt-3">
+                    <p className="text-sm text-amber-700 mt-3 font-medium flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
                         Campos faltantes: {camposFaltantes.join(', ')}
                     </p>
                 </div>
             )}
 
             {/* Informações Básicas */}
-            <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl flex flex-col md:flex-row p-8 space-y-6 md:space-y-0 md:space-x-8 transform hover:scale-[1.01] transition-transform duration-300">
+            <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl flex flex-col md:flex-row p-6 space-y-4 md:space-y-0 md:space-x-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
                         {authInfo?.type === 'company' ? (
                             // Exibição para empresa
                             formData.logo ? (
                                 <img 
-                                    className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-lg transform transition-transform duration-300 group-hover:scale-105" 
+                                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
                                     src={formData.logo} 
                                     alt="Logo da Empresa" 
                                 />
                             ) : (
-                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] bg-[#7B2D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-105">
+                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-gradient-to-br from-[#7B2D26] to-[#9B3D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
                                     {getInitials(formData.nome || 'E')}
                                 </div>
                             )
@@ -590,58 +778,79 @@ export default function Perfil() {
                             // Exibição para usuário
                             formData.foto ? (
                                 <img 
-                                    className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] object-cover shadow-lg transform transition-transform duration-300 group-hover:scale-105" 
-                                    src={formData.foto} 
-                                    alt="Foto de Perfil" 
+                                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
+                                    src={formData.foto.startsWith('data:') ? formData.foto : formData.foto}
+                                    alt="Preview" 
                                 />
                             ) : (
-                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#7B2D26] bg-[#7B2D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-105">
+                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-gradient-to-br from-[#7B2D26] to-[#9B3D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
                                     {getInitials(formData.nome || 'U')}
                                 </div>
                             )
                         )}
-                        <div className="absolute inset-0 rounded-full bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-                            <button 
-                                onClick={() => setIsModalOpen(true)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-full shadow-lg"
-                            >
-                                
-                            </button>
-                        </div>
+                        <button 
+                            onClick={() => setIsModalOpen(true)}
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
+                        >
+                            <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
                 <div className="flex flex-col justify-between flex-1">
-                    <div className="space-y-3">
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">{formData.nome || 'Nome não informado'}</h1>
-                        <div className="space-y-2">
-                            <h2 className="flex items-center text-gray-700">
-                                <img className="h-5 pr-2" src="/img/perfil/email.svg" alt="Email" />
-                                {formData.email || 'Email não informado'}
-                            </h2>
+                    <div className="space-y-4">
+                        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">{formData.nome || 'Nome não informado'}</h1>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="font-medium text-gray-700">{formData.email || 'Email não informado'}</span>
+                                </div>
+                            </div>
                             {authInfo?.type === 'company' && (
                                 <>
-                                    <h2 className="flex items-center text-gray-700">
-                                        <img className="h-5 pr-2" src="/img/perfil/cnpj.svg" alt="CNPJ" />
-                                        {formData.cnpj || 'CNPJ não informado'}
-                                    </h2>
+                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                        <div className="flex items-center">
+                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">{formData.cnpj || 'CNPJ não informado'}</span>
+                                        </div>
+                                    </div>
                                     {formData.local && (
-                                        <h2 className="flex items-center text-gray-700">
-                                            <img className="h-5 pr-2" src="/img/perfil/location.svg" alt="Local" />
-                                            {formData.local}
-                                        </h2>
+                                        <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                            <div className="flex items-center">
+                                                <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <span className="font-medium text-gray-700">{formData.local}</span>
+                                            </div>
+                                        </div>
                                     )}
                                 </>
                             )}
                             {authInfo?.type !== 'company' && (
                                 <>
-                                    <h2 className="flex items-center text-gray-700">
-                                        <img className="h-5 pr-2" src="/img/perfil/cpf.svg" alt="CPF" />
-                                        {formData.cpf || 'CPF não informado'}
-                                    </h2>
-                                    <h2 className="flex items-center text-gray-700">
-                                        <img className="h-5 pr-2" src="/img/perfil/calendar.svg" alt="Data de Nascimento" />
-                                        {formData.data_nascimento || 'Data de nascimento não informada'}
-                                    </h2>
+                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                        <div className="flex items-center">
+                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">{formData.cpf || 'CPF não informado'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                        <div className="flex items-center">
+                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span className="font-medium text-gray-700">{formatarData(formData.data_nascimento)}</span>
+                                        </div>
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -649,9 +858,11 @@ export default function Perfil() {
                     <div className="mt-6 md:mt-0 md:self-end">
                         <button 
                             onClick={() => setIsModalOpen(true)}
-                            className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 flex items-center transform hover:scale-105"
+                            className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center transform hover:scale-105 font-medium"
                         >
-                            <img className="h-5 pr-2" src="/img/perfil/pencil.svg" alt="pencil" />
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
                             Editar Perfil
                         </button>
                     </div>
@@ -659,56 +870,102 @@ export default function Perfil() {
             </div>
 
             {/* Resumo Profissional */}
-            <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-8 transform hover:scale-[1.01] transition-transform duration-300">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800">Resumo Profissional</h2>
+            <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Resumo Profissional</h2>
+                        <p className="text-gray-600 mt-1">Sua apresentação profissional</p>
+                    </div>
                 </div>
-                <p className="text-gray-700 leading-relaxed">
-                    {formData.descricao || 'Nenhum resumo profissional informado.'}
-                </p>
+                <div className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                    <p className="text-gray-700 leading-relaxed">
+                        {formData.descricao || 'Nenhum resumo profissional informado.'}
+                    </p>
+                </div>
             </div>
 
             {/* Formação Acadêmica */}
             {authInfo?.type !== 'company' && (
-                <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-8 transform hover:scale-[1.01] transition-transform duration-300">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-800">Formação Acadêmica</h2>
+                <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Formação Acadêmica</h2>
+                            <p className="text-gray-600 mt-1">Sua trajetória educacional</p>
+                        </div>
                     </div>
-                    <p className="text-gray-700 leading-relaxed">
-                        {formData.formacao || 'Nenhuma formação acadêmica informada.'}
-                    </p>
+                    <div className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <p className="text-gray-700 leading-relaxed">
+                            {formData.formacao || 'Nenhuma formação acadêmica informada.'}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Áreas de Interesse */}
+            {authInfo?.type !== 'company' && (
+                <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Áreas de Interesse</h2>
+                            <p className="text-gray-600 mt-1">Temas e setores que você deseja atuar</p>
+                        </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-wrap gap-3">
+                            {formData.area_interesse ? (
+                                formData.area_interesse.split(',').map((area, index) => (
+                                    <span
+                                        key={index}
+                                        className="bg-gradient-to-r from-[#7B2D26]/10 to-[#9B3D26]/10 text-[#7B2D26] px-4 py-2 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
+                                    >
+                                        {area.trim()}
+                                    </span>
+                                ))
+                            ) : (
+                                <p className="text-gray-700">Nenhuma área de interesse informada.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
             {/* Habilidades */}
             {authInfo?.type !== 'company' && (
-                <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-8 transform hover:scale-[1.01] transition-transform duration-300">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-800">Habilidades</h2>
+                <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                    <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Habilidades</h2>
+                            <p className="text-gray-600 mt-1">Suas competências profissionais</p>
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        {formData.habilidades ? (
-                            formData.habilidades.split(',').map((habilidade, index) => (
-                                <span 
-                                    key={index}
-                                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow duration-300"
-                                >
-                                    {habilidade.trim()}
-                                </span>
-                            ))
-                        ) : (
-                            <p className="text-gray-700">Nenhuma habilidade informada.</p>
-                        )}
+                    <div className="bg-gradient-to-br from-gray-100 to-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-wrap gap-3">
+                            {formData.habilidades ? (
+                                formData.habilidades.split(',').map((habilidade, index) => (
+                                    <span 
+                                        key={index}
+                                        className="bg-gradient-to-r from-[#7B2D26]/10 to-[#9B3D26]/10 text-[#7B2D26] px-4 py-2 rounded-xl text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
+                                    >
+                                        {habilidade.trim()}
+                                    </span>
+                                ))
+                            ) : (
+                                <p className="text-gray-700">Nenhuma habilidade informada.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Currículo */}
             {authInfo?.type !== 'company' && (
-                <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-8 transform hover:scale-[1.01] transition-transform duration-300">
+                <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <h2 className="text-xl font-semibold text-gray-800">Currículo</h2>
-                        <div className="flex gap-4">
+                        <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Currículo</h2>
+                            <p className="text-gray-600 mt-1">Seu currículo profissional</p>
+                        </div>
+                        <div className="flex gap-3">
                             {formData.curriculo ? (
                                 <>
                                     <button 
@@ -720,24 +977,86 @@ export default function Perfil() {
                                                 downloadFile(formData.curriculo, 'curriculo');
                                             }
                                         }}
-                                        className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center"
+                                        className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center transform hover:scale-105 font-medium"
                                     >
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
                                         Baixar Currículo
                                     </button>
-                                    <label
-                                        htmlFor="curriculo-input"
-                                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm"
+                                    <button 
+                                        onClick={async () => {
+                                            try {
+                                                const userId = authInfo?.entity?.id;
+                                                if (!userId) {
+                                                    showMessage('ID do usuário não encontrado!', 'error');
+                                                    return;
+                                                }
+
+                                                const token = localStorage.getItem('authToken');
+                                                if (!token) {
+                                                    showMessage('Token de autenticação não encontrado', 'error');
+                                                    return;
+                                                }
+
+                                                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`, {
+                                                    method: 'PUT',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify({
+                                                        ...formData,
+                                                        curriculo: null
+                                                    })
+                                                });
+
+                                                if (!response.ok) {
+                                                    throw new Error('Erro ao remover currículo');
+                                                }
+
+                                                // Atualizar estado local
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    curriculo: null
+                                                }));
+
+                                                // Atualizar localStorage e contexto de autenticação
+                                                const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+                                                const updatedEntity = {
+                                                    ...authEntity,
+                                                    curriculo: null
+                                                };
+                                                localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
+
+                                                if (authInfo && authInfo.entity) {
+                                                    authInfo.entity = updatedEntity;
+                                                }
+
+                                                showMessage('Currículo removido com sucesso!', 'success');
+                                                
+                                                // Atualizar o estado local sem recarregar a página
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    curriculo: null
+                                                }));
+                                            } catch (error) {
+                                                console.error('Erro ao remover currículo:', error);
+                                                showMessage('Erro ao remover currículo. Tente novamente.', 'error');
+                                            }
+                                        }}
+                                        className="cursor-pointer bg-red-100 hover:bg-red-200 text-red-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center transform hover:scale-105 font-medium"
                                     >
-                                        Atualizar Currículo
-                                    </label>
+                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Remover Currículo
+                                    </button>
                                 </>
                             ) : (
                                 <label
                                     htmlFor="curriculo-input"
-                                    className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm"
+                                    className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm transform hover:scale-105 font-medium"
                                 >
                                     Enviar Currículo
                                 </label>
@@ -755,39 +1074,119 @@ export default function Perfil() {
             )}
 
             {/* Certificados */}
-            {authInfo?.type !== 'company' && formData.certificados && formData.certificados !== "" && (
-                <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-8 transform hover:scale-[1.01] transition-transform duration-300">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-                        <h2 className="text-xl font-semibold text-gray-800">Certificados</h2>
-                        <button 
-                            onClick={() => document.getElementById('certificados-input').click()}
-                            className="cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Adicionar Certificado
-                        </button>
+            {authInfo?.type !== 'company' && (
+                <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Certificados</h2>
+                            <p className="text-gray-600 mt-1">Suas certificações profissionais</p>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type="file"
+                                id="certificados-input"
+                                onChange={(e) => handleFileChange(e, 'certificados')}
+                                className="hidden"
+                                accept=".pdf,.doc,.docx"
+                            />
+                            <button 
+                                onClick={() => document.getElementById('certificados-input').click()}
+                                className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center transform hover:scale-105 font-medium"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Adicionar Certificado
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="space-y-4">
-                        {formData.certificados && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#7B2D26] transition-colors duration-300">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-medium text-gray-800">Certificado</h3>
-                                        <span className="text-sm text-gray-500">PDF</span>
+                        {formData.certificados ? (
+                            <div className="bg-gradient-to-br from-gray-100 to-white rounded-xl p-6 border border-gray-200 hover:border-[#7B2D26] transition-all duration-300 shadow-lg hover:shadow-xl">
+                                <div className="flex flex-col">
+                                    {/* Cabeçalho do documento */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div>
+                                            <h3 className="text-xl font-semibold text-gray-800">Certificado Profissional</h3>
+                                            <p className="text-gray-600 mt-1">Documento de qualificação profissional</p>
+                                        </div>
                                     </div>
-                                    <button 
-                                        onClick={() => downloadFile(formData.certificados, 'certificado')}
-                                        className="w-full cursor-pointer bg-[#7B2D26] hover:bg-red-800 text-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center justify-center"
-                                    >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        Baixar Certificado
-                                    </button>
+                                    
+                                    {/* Informações do documento */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                        <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                            <div className="flex items-center">
+                                                <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-500">Nome do Arquivo</p>
+                                                    <p className="text-base text-gray-700 font-medium">
+                                                        {formData.certificados instanceof File ? 
+                                                            formData.certificados.name : 
+                                                            'Certificado carregado'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                            <div className="flex items-center">
+                                                <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-500">Tamanho do Arquivo</p>
+                                                    <p className="text-base text-gray-700 font-medium">
+                                                        {formData.certificados instanceof File ? 
+                                                            `${(formData.certificados.size / 1024 / 1024).toFixed(2)} MB` : 
+                                                            'Disponível para download'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Botões de ação */}
+                                    <div className="flex gap-4">
+                                        <button 
+                                            onClick={() => {
+                                                if (formData.certificados instanceof File) {
+                                                    const url = URL.createObjectURL(formData.certificados);
+                                                    window.open(url, '_blank');
+                                                } else {
+                                                    downloadFile(formData.certificados, 'certificado');
+                                                }
+                                            }}
+                                            className="flex-1 cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center transform hover:scale-105 font-medium"
+                                        >
+                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Baixar Certificado
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    certificados: null
+                                                }));
+                                                showMessage('Certificado removido com sucesso!', 'success');
+                                            }}
+                                            className="flex-1 cursor-pointer bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center border border-gray-200 transform hover:scale-105 font-medium"
+                                        >
+                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Remover
+                                        </button>
+                                    </div>
                                 </div>
+                            </div>
+                        ) : (
+                            <div className="bg-gradient-to-br from-gray-100 to-white rounded-xl p-6 border border-gray-200 text-center">
+                                <p className="text-gray-600">Nenhum certificado adicionado ainda.</p>
                             </div>
                         )}
                     </div>
@@ -795,21 +1194,26 @@ export default function Perfil() {
             )}
 
             {/* Candidaturas */}
-            <div className="w-full max-w-5xl bg-white rounded-xl shadow-2xl p-6 mb-10">
+            <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 mb-8">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-base font-semibold">Candidaturas</h2>
+                    <div>
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Candidaturas</h2>
+                        <p className="text-gray-600 mt-1">Suas candidaturas ativas</p>
+                    </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {usuario.candidaturas && usuario.candidaturas.length > 0 ? (
                         usuario.candidaturas.map((candidatura, index) => (
-                            <div key={index} className="border rounded-lg p-4">
-                                <h3 className="font-medium">{candidatura.vaga}</h3>
-                                <p className="text-sm text-gray-600">{candidatura.empresa}</p>
-                                <p className="text-sm text-gray-500">{candidatura.status}</p>
+                            <div key={index} className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <h3 className="font-medium text-gray-800">{candidatura.vaga}</h3>
+                                <p className="text-gray-600 mt-1">{candidatura.empresa}</p>
+                                <p className="text-[#7B2D26] font-medium mt-2">{candidatura.status}</p>
                             </div>
                         ))
                     ) : (
-                        <p className="text-gray-700 text-sm">Nenhuma candidatura encontrada.</p>
+                        <div className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm text-center">
+                            <p className="text-gray-600">Nenhuma candidatura encontrada.</p>
+                        </div>
                     )}
                 </div>
             </div>
@@ -846,30 +1250,43 @@ export default function Perfil() {
                                 {authInfo?.type !== 'company' ? (
                                     // Campos editáveis para alunos
                                     <>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Formação Acadêmica</label>
+                                        <div className="mb-6">
+                                            <label htmlFor="formacao" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Formação Acadêmica
+                                            </label>
                                             <input
                                                 type="text"
+                                                id="formacao"
                                                 name="formacao"
-                                                value={formData.formacao || ''}
+                                                value={formData.formacao}
                                                 onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent"
+                                                placeholder="Ex: Ensino Médio Completo, Graduação em..."
                                             />
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Área de Interesse</label>
+                                        <div className="mb-6">
+                                            <label htmlFor="area_interesse" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Áreas de Interesse
+                                            </label>
                                             <input
                                                 type="text"
+                                                id="area_interesse"
                                                 name="area_interesse"
-                                                value={formData.area_interesse || ''}
+                                                value={formData.area_interesse}
                                                 onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent"
+                                                placeholder="Ex: Desenvolvimento Web, Marketing Digital, Design Gráfico"
                                             />
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Separe as áreas por vírgula
+                                            </p>
                                         </div>
 
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Habilidades (separadas por vírgula)</label>
+                                        <div className="mb-6">
+                                            <label htmlFor="habilidades" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Habilidades
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="habilidades"
@@ -890,6 +1307,35 @@ export default function Perfil() {
                                             ></textarea>
                                         </div>
 
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                                            <input
+                                                type="text"
+                                                name="cpf"
+                                                value={formData.cpf || ''}
+                                                onChange={handleInputChange}
+                                                maxLength={14}
+                                                placeholder="000.000.000-00"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                                            <input
+                                                type="date"
+                                                id="data_nascimento"
+                                                name="data_nascimento"
+                                                max="2025-12-31"
+                                                min="1950-01-01"
+                                                required
+                                                value={formData.data_nascimento}
+                                                onChange={handleInputChange}
+                                                onBlur={handleBlur}
+                                                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
+                                            />
+                                        </div>
+
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
@@ -897,7 +1343,7 @@ export default function Perfil() {
                                                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
                                                         {formData.foto ? (
                                                             <img 
-                                                                src={formData.foto} 
+                                                                src={formData.foto.startsWith('data:') ? formData.foto : formData.foto}
                                                                 alt="Preview" 
                                                                 className="w-full h-full object-cover"
                                                             />
@@ -970,12 +1416,13 @@ export default function Perfil() {
                                                                             }
 
                                                                             // Atualizar estado local
-                                                                            setFormData(prev => ({
-                                                                                ...prev,
-                                                                                foto: null
-                                                                            }));
+                                                                            setFormData(prev => {
+                                                                                const newData = { ...prev, foto: null };
+                                                                                verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                                                                                return newData;
+                                                                            });
 
-                                                                            // Atualizar localStorage
+                                                                            // Atualizar localStorage e contexto de autenticação
                                                                             const authEntity = JSON.parse(localStorage.getItem('authEntity'));
                                                                             const updatedEntity = {
                                                                                 ...authEntity,
@@ -983,7 +1430,6 @@ export default function Perfil() {
                                                                             };
                                                                             localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
 
-                                                                            // Atualizar contexto de autenticação
                                                                             if (authInfo && authInfo.entity) {
                                                                                 authInfo.entity = updatedEntity;
                                                                             }
@@ -1100,7 +1546,7 @@ export default function Perfil() {
                                                     ) : (
                                                         <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
+                                                            </svg>
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
