@@ -9,6 +9,7 @@ JobIn é uma empresa de vagas, com o principal objetivo de conectar alunos de cu
 A aplicação está implantada na Vercel e pode ser acessada em:  
 🔗 https://jobin-mu.vercel.app
 
+---
 
 ### ⚙️ Implementação (Desenvolvimento Local)
 
