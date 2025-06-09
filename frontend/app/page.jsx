@@ -44,14 +44,21 @@ export default function Feed() {
   const [notifications, setNotifications] = useState([]);
   const [posts, setPosts] = useState([]);
   const [showMoreNews, setShowMoreNews] = useState(false);
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState([
+    { id: 1, title: 'Mercado de TI segue aquecido em 2023', info: 'há 2h • 1.245 leitores', trending: true },
+    { id: 2, title: 'Novas tendências em entrevistas de emprego', info: 'há 5h • 876 leitores', trending: false },
+    { id: 3, title: 'Como se destacar no JobIn', info: 'há 1d • 3.421 leitores', trending: true },
+    { id: 4, title: 'Salários em alta para desenvolvedores', info: 'há 3h • 2.156 leitores', trending: true },
+    { id: 5, title: 'Empresas buscam profissionais com soft skills', info: 'há 6h • 1.890 leitores', trending: true },
+    { id: 6, title: 'Tendências de trabalho remoto em 2024', info: 'há 4h • 3.245 leitores', trending: true },
+  ]);
   const [showCompleteProfile, setShowCompleteProfile] = useState(true);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [vagas, setVagas] = useState([]);
 
   const verificarCamposObrigatorios = (usuario) => {
     if (!usuario) return [];
-    
+
     const isCompany = usuario.tipo === 'empresa';
     const camposObrigatorios = isCompany ? {
       nome: 'Nome da Empresa',
@@ -265,14 +272,16 @@ export default function Feed() {
     // Calcula a porcentagem usando a mesma lógica da página de perfil
     const totalCamposObrigatorios = Object.keys(camposObrigatorios).length;
     console.log('Total de Campos Obrigatórios:', totalCamposObrigatorios);
-    
+
     // Calcula campos preenchidos com base nos campos faltantes
     const camposPreenchidos = totalCamposObrigatorios - camposFaltantes.length;
-    
+
     console.log('Campos Preenchidos:', camposPreenchidos);
     const porcentagemCompleta = Math.round((camposPreenchidos / totalCamposObrigatorios) * 100);
     console.log('Porcentagem Completa Calculada:', porcentagemCompleta);
     console.log('-------------------------------');
+
+
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -383,7 +392,7 @@ export default function Feed() {
                 {news.slice(0, showMoreNews ? news.length : 3).map(item => (
                   <Link href={`/noticias/${item.id}`} key={item.id}>
                     <NewsItem
-                      title={item.title}
+                      title={notifications.nome}
                       info={item.info}
                       trending={item.trending}
                     />
@@ -602,12 +611,12 @@ export default function Feed() {
 
                     {/* Barra de Progresso */}
                     <div className="w-full bg-[#7B2D26]/20 rounded-full h-2.5 shadow-inner mb-6">
-                      <div 
-                        className="bg-gradient-to-r from-[#7B2D26] to-[#7B2D26]/90 h-2.5 rounded-full transition-all duration-500 ease-out shadow-md" 
+                      <div
+                        className="bg-gradient-to-r from-[#7B2D26] to-[#7B2D26]/90 h-2.5 rounded-full transition-all duration-500 ease-out shadow-md"
                         style={{ width: `${porcentagemCompleta}%` }}
                       />
                     </div>
-                    
+
                     {/* Lista de Campos Faltantes */}
                     <div className="space-y-3">
                       <h4 className="text-sm font-semibold text-[#7B2D26] flex items-center">
