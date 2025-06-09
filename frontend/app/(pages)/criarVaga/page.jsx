@@ -6,29 +6,29 @@ import { useRouter } from 'next/navigation';
 export default function CriarVaga() {
   const maxSalario = (e) => {
     const { name, value } = e.target;
-  
+
     if (name === 'salario') {
-      
+
       let onlyNumbers = value.replace(/\D/g, '');
-  
-     
+
+
       onlyNumbers = onlyNumbers.slice(0, 7);
-  
-   
+
+
       const numberValue = parseFloat(onlyNumbers) / 100;
 
       const formattedValue = numberValue.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-  
+
       setFormData(prev => ({
         ...prev,
         [name]: formattedValue
       }));
     }
   };
-  
+
 
   const router = useRouter();
   const [carregando, setCarregando] = useState(false);
@@ -205,9 +205,9 @@ export default function CriarVaga() {
                   onChange={handleInputChange}
                 >
                   <option value="" disabled hidden>Modalidade de Trabalho</option>
-                  <option value="PRESENCIAL">Presencial</option>
-                  <option value="HIBRIDO">Híbrido</option>
-                  <option value="REMOTO">Remoto</option>
+                  <option value="presencial">Presencial</option>
+                  <option value="hibrido">Híbrido</option>
+                  <option value="remoto">Remoto</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
