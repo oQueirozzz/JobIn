@@ -66,7 +66,6 @@ frontend -> .env.local
 ---
 
 ### 🐱‍👤 Colaboradores
-
-| ![Charlotte Guedes](https://github.com/Charlotte0717.png?size=100) | ![Gustavo Torelli](https://github.com/gustavotorelli.png?size=100) | ![Renan Queiroz](https://github.com/oQueirozzz.png?size=100) |
-|:--------------------------------------------------------------------:|:------------------------------------------------------------------:|:----------------------------------------------------------------:|
-|        [Charlotte Guedes](https://github.com/Charlotte0717)        |        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Renan Queiroz](https://github.com/oQueirozzz)          |
+| <img src="https://github.com/Charlotte0717.png" width="100" height="100" alt="Charlotte Guedes" /> | <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/oQueirozzz.png" width="100" height="100" alt="Renan Queiroz" /> |
+|:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
+|       [Charlotte Guedes](https://github.com/Charlotte0717)        |        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Renan Queiroz](https://github.com/oQueirozzz)          |
