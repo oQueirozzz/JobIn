@@ -1,4 +1,5 @@
 import Vaga from '../models/Vaga.js';
+import Candidatura from '../models/Candidatura.js'; 
 import * as logsController from './logsController.js';
 import NotificacaoService from '../services/notificacaoService.js';
 import Candidatura from '../models/Candidatura.js';
