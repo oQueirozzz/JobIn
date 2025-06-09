@@ -224,7 +224,7 @@ export default function Config() {
                             <button
                                 type="button"
                                 onClick={handleExcluirContaClick}
-                                className="px-5 py-2 cursor-pointer bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105"
+                                className="px-5 py-2 bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105"
                             >
                                 Excluir
                             </button>

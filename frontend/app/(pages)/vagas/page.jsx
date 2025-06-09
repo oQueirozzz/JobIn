@@ -343,55 +343,7 @@ export default function Vagas() {
     const filtraTipo = tipo ? vaga.tipo_vaga === tipo : true;
     const filtraEmpresa = empresa ? vaga.nome_empresa === empresa : true;
     return filtraCategoria && filtraTipo && filtraEmpresa;
-
   });
-
-  async function excluirVaga(vagaId) {
-    setMensagem('');
-    setTipoMensagem('');
-
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      setTipoMensagem('erro');
-      setMensagem('Erro: Token de autenticação ausente. Faça login novamente.');
-      return;
-    }
-
-    try {
-      const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/vagas/${vagaId}`;
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao excluir a vaga.');
-      }
-
-      setVagas(prev => prev.filter(v => v.id !== vagaId));
-      setVagaSelecionada(null);
-
-      setMensagem('Vaga excluída com sucesso!');
-      setTipoMensagem('sucesso');
-    } catch (error) {
-      setMensagem(error.message || 'Erro ao excluir a vaga.');
-      setTipoMensagem('erro');
-    } finally {
-      setShowConfirmModal(false);
-    }
-  }
-
-  const handleExcluirVagaClick = () => setShowConfirmModal(true);
-  const handleConfirmExclusao = () => excluirVaga(vagaSelecionada.id);
-  const handleCancelExclusao = () => {
-    setMensagem('Exclusão da vaga cancelada.');
-    setTipoMensagem('info');
-    setShowConfirmModal(false);
-  }
 
   const isCandidatado = vagaSelecionada ? candidaturas.includes(vagaSelecionada.id) : false;
 
@@ -400,10 +352,10 @@ export default function Vagas() {
       {/* Mensagem de erro/sucesso */}
       {mensagem && (
         <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-in-out ${mensagem.tipo === 'error'
-          ? 'bg-white border-l-4 border-red-500 text-red-700'
-          : mensagem.tipo === 'success'
-            ? 'bg-white border-l-4 border-green-500 text-green-700'
-            : 'bg-white border-l-4 border-blue-500 text-blue-700'
+            ? 'bg-white border-l-4 border-red-500 text-red-700'
+            : mensagem.tipo === 'success'
+              ? 'bg-white border-l-4 border-green-500 text-green-700'
+              : 'bg-white border-l-4 border-blue-500 text-blue-700'
           }`}>
           <div className="flex items-center">
             {mensagem.tipo === 'error' ? (
@@ -421,8 +373,8 @@ export default function Vagas() {
             )}
             <div>
               <p className="font-semibold">
-                {mensagem.tipo === 'error' ? 'Erro ao excluir vaga!' :
-                  mensagem.tipo === 'success' ? 'Sucesso!' : 'Vaga excluida com sucesso!'}
+                {mensagem.tipo === 'error' ? 'Atenção!' :
+                  mensagem.tipo === 'success' ? 'Sucesso!' : 'Informação'}
               </p>
               <p className="text-sm mt-1">{mensagem.texto}</p>
             </div>
@@ -945,14 +897,14 @@ export default function Vagas() {
 
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Descrição</h3>
-                  <p className="text-gray-600 whitespace-pre-line break-words h-full w-auto">
+                  <p className="text-gray-600 whitespace-pre-line">
                     {vagaSelecionada.descricao}
                   </p>
                 </div>
 
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Requisitos</h3>
-                  <p className="text-gray-600 whitespace-pre-line break-words h-full w-auto">
+                  <p className="text-gray-600 whitespace-pre-line">
                     {vagaSelecionada.requisitos}
                   </p>
                 </div>
@@ -1021,31 +973,6 @@ export default function Vagas() {
           </div>
         </div>
       </div>
-
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl p-8 max-w-sm w-full text-center border border-gray-200 animate-scale-in">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Excluir Vaga</h3>
-            <p className="text-gray-600 mb-6">
-              Tem certeza que deseja excluir esta vaga? Esta ação é irreversível e removerá permanentemente os dados da vaga selecionada.
-            </p>
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={handleCancelExclusao}
-                className="px-6 py-2 bg-gray-200 cursor-pointer text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmExclusao}
-                className="px-6 py-2 cursor-pointer bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
