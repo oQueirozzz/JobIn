@@ -18,9 +18,26 @@ export default function Perfil() {
     // Novo estado para armazenar os campos obrigatórios
     const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
 
+    // Função utilitária para calcular a porcentagem do perfil
+    const calcularPorcentagemPerfil = (dados, camposObrigatorios) => {
+        const totalCampos = Object.keys(camposObrigatorios).length;
+        const camposPreenchidos = Object.entries(camposObrigatorios)
+            .filter(([campo]) => {
+                const valor = dados[campo];
+                if (Array.isArray(valor)) {
+                    return valor.length > 0; // Campo de array é preenchido se não estiver vazio
+                }
+                return valor && (typeof valor === 'string' ? valor.trim() !== '' : true); // Outros tipos: preenchido se não nulo/vazio
+            })
+            .length;
+        return Math.round((camposPreenchidos / totalCampos) * 100);
+    };
+
     useEffect(() => {
         if (!isLoading && !authInfo?.entity) {
-            router.push('/login');
+            setTimeout(() => {
+                router.push('/login');
+            }, 0);
             return;
         }
 
@@ -29,7 +46,9 @@ export default function Perfil() {
             
             // Verificar se é uma empresa e redirecionar se necessário
             if (dadosUsuario.tipo === 'empresa') {
-                router.push('/perfil-empresa');
+                setTimeout(() => {
+                    router.push('/perfil-empresa');
+                }, 0);
                 return;
             }
 
@@ -71,18 +90,11 @@ export default function Perfil() {
 
             console.log('--- Depuração da Porcentagem Perfil ---');
             console.log('Usuário (authInfo.entity):', dadosUsuario);
-            console.log('Tipo de usuário (isEmpresa):', dadosUsuario.tipo === 'empresa');
             console.log('Campos Obrigatórios Definidos (perfil):', obrigatorios);
+            console.log('Total de Campos Obrigatórios (perfil - length of obrigatorios):', Object.keys(obrigatorios).length);
+            console.log('Total de Chaves em dadosUsuario (entity):', Object.keys(dadosUsuario).length);
             
-            const totalCamposObrigatoriosPerfil = Object.keys(obrigatorios).length;
-            console.log('Total de Campos Obrigatórios (perfil):', totalCamposObrigatoriosPerfil);
-            
-            const camposPreenchidosPerfil = Object.entries(obrigatorios)
-              .filter(([campo]) => dadosUsuario[campo] && dadosUsuario[campo].trim() !== '')
-              .length;
-
-            console.log('Campos Preenchidos (perfil):', camposPreenchidosPerfil);
-            const porcentagemCompletaPerfil = Math.round((camposPreenchidosPerfil / totalCamposObrigatoriosPerfil) * 100);
+            const porcentagemCompletaPerfil = calcularPorcentagemPerfil(dadosUsuario, obrigatorios);
             console.log('Porcentagem Completa Calculada (perfil):', porcentagemCompletaPerfil);
             console.log('---------------------------------------');
         }
@@ -93,7 +105,13 @@ export default function Perfil() {
         // para serem definidas apenas uma vez e passadas para esta função.
         
         const camposIncompletos = Object.entries(camposObrigatorios)
-            .filter(([campo]) => !dadosUsuario[campo] || (typeof dadosUsuario[campo] === 'string' && dadosUsuario[campo].trim() === ''))
+            .filter(([campo]) => {
+                const valor = dadosUsuario[campo];
+                if (Array.isArray(valor)) {
+                    return valor.length === 0; // Se for um array, é faltante se estiver vazio
+                }
+                return !valor || (typeof valor === 'string' && valor.trim() === ''); // Para outros tipos, a lógica existente
+            })
             .map(([_, label]) => label);
 
         setCamposFaltantes(camposIncompletos);

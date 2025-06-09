@@ -3,31 +3,31 @@ import Log from '../models/Log.js';
 
 // Obter todas as notificações
 export const getNotificacoes = async (req, res) => {
+  console.log('[NotificacoesController] Recebendo requisição GET para /api/notificacoes');
+  console.log('[NotificacoesController] Usuário autenticado (req.usuario):', req.usuario);
   try {
-    // Check if the authenticated entity is a user or a company
-    const authType = req.usuario.type; // Assuming req.usuario contains the authenticated entity details including type
-    const authId = req.usuario.id;
+    const { id, type } = req.usuario;
 
-    console.log(`[NotificacoesController] Fetching notifications for entity type: ${authType}, ID: ${authId}`);
-
-    let notificacoes;
-
-    if (authType === 'user') {
-      notificacoes = await Notificacao.findByUsuario(authId);
-    } else if (authType === 'company') {
-      notificacoes = await Notificacao.findByEmpresa(authId);
-    } else {
-      console.warn(`[NotificacoesController] Unknown authenticated entity type: ${authType}`);
-      return res.status(400).json({ message: 'Tipo de entidade autenticada desconhecido' });
+    if (!id || !type) {
+      console.error('[NotificacoesController] Usuário ou tipo de usuário não definido em req.usuario');
+      return res.status(401).json({ message: 'Não autorizado: informações do usuário ausentes.' });
     }
 
-    console.log(`[NotificacoesController] Found ${notificacoes.length} notifications for entity ID ${authId}`);
-    console.log('[NotificacoesController] Notifications data:', notificacoes);
+    let notificacoes;
+    if (type === 'user') {
+      notificacoes = await Notificacao.findByUsuario(id);
+    } else if (type === 'company') {
+      notificacoes = await Notificacao.findByEmpresa(id);
+    } else {
+      console.warn('[NotificacoesController] Tipo de usuário desconhecido:', type);
+      return res.status(400).json({ message: 'Tipo de usuário desconhecido.' });
+    }
 
-    res.json(notificacoes);
+    console.log('[NotificacoesController] Notificações encontradas:', notificacoes.length);
+    res.status(200).json(notificacoes);
   } catch (error) {
-    console.error('Erro ao buscar notificações:', error);
-    res.status(500).json({ message: 'Erro ao buscar notificações' });
+    console.error('[NotificacoesController] Erro ao buscar notificações:', error);
+    res.status(500).json({ message: 'Erro ao buscar notificações', error: error.message });
   }
 };
 

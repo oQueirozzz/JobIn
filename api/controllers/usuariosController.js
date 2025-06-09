@@ -90,6 +90,7 @@ export const registerUsuario = async (req, res) => {
       cpf,
       data_nascimento: req.body.data_nascimento,
       descricao,
+      area_interesse: req.body.area_interesse,
       tipo: 'usuario'
     });
 
@@ -122,9 +123,15 @@ export const registerUsuario = async (req, res) => {
       nome: usuario.nome,
       email: usuario.email,
       cpf: usuario.cpf,
-      descricao: usuario.descricao,
-      tipo: usuario.tipo,
-      curriculo: usuario.curriculo || null
+      data_nascimento: usuario.data_nascimento || null,
+      descricao: usuario.descricao || null,
+      formacao: usuario.formacao || null,
+      area_interesse: usuario.area_interesse || null,
+      habilidades: usuario.habilidades || null,
+      curriculo: usuario.curriculo || null,
+      certificados: usuario.certificados || null,
+      foto: usuario.foto || null,
+      tipo: usuario.tipo
     });
   } catch (error) {
     console.error('=== ERRO NO REGISTRO DE USUÁRIO ===');
@@ -204,17 +211,17 @@ export const loginUsuario = async (req, res) => {
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
-      telefone: usuario.telefone || '',
+      cpf: usuario.cpf || '',
+      data_nascimento: usuario.data_nascimento || '',
       formacao: usuario.formacao || '',
       area_interesse: usuario.area_interesse || '',
       habilidades: usuario.habilidades || '',
       descricao: usuario.descricao || '',
-      curriculo: usuario.curriculo || '',
-      foto: usuario.foto ? `/uploads/usuarios/${path.basename(usuario.foto)}` : '',
+      curriculo: usuario.curriculo || null,
+      certificados: usuario.certificados || null,
+      foto: usuario.foto ? `/uploads/usuarios/${path.basename(usuario.foto)}` : null,
       tipo: 'usuario',
-      autenticado: true,
-      cpf: usuario.cpf || '',
-      data_nascimento: usuario.data_nascimento || ''
+      autenticado: true
     };
 
     // Gerar token JWT

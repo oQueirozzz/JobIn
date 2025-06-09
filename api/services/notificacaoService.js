@@ -122,34 +122,9 @@ class NotificacaoService {
     }
   }
 
-  // Notificação de vaga excluída
-  static async criarNotificacaoVagaExcluida(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaExcluida', { usuarioId, empresaId, vagaId });
-    try {
-      const vaga = await Vaga.findById(vagaId);
-      if (!vaga) {
-        throw new Error('Vaga não encontrada');
-      }
-      
-      return await Notificacao.create({
-        usuario_id: usuarioId,
-        empresa_id: empresaId,
-        candidaturas_id: vagaId,
-        mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi excluída`,
-        mensagem_empresa: `Você excluiu a vaga "${vaga.nome_vaga}"`,
-        status_candidatura: 'PENDENTE',
-        tipo: 'VAGA_EXCLUIDA',
-        lida: false
-      });
-    } catch (error) {
-      console.error('Erro ao criar notificação de vaga excluída:', error);
-      throw error;
-    }
-  }
-
   // Notificação de vaga atualizada
-  static async criarNotificacaoVagaAtualizada(usuarioId, empresaId, vagaId) {
-    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaAtualizada', { usuarioId, empresaId, vagaId });
+  static async criarNotificacaoVagaAtualizada(usuarioId, empresaId, vagaId, candidaturaId = null) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaAtualizada', { usuarioId, empresaId, vagaId, candidaturaId });
     try {
       const vaga = await Vaga.findById(vagaId);
       if (!vaga) {
@@ -159,7 +134,7 @@ class NotificacaoService {
       return await Notificacao.create({
         usuario_id: usuarioId,
         empresa_id: empresaId,
-        candidaturas_id: vagaId,
+        candidaturas_id: candidaturaId,
         mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi atualizada`,
         mensagem_empresa: `Você atualizou a vaga "${vaga.nome_vaga}"`,
         status_candidatura: 'PENDENTE',
@@ -168,6 +143,31 @@ class NotificacaoService {
       });
     } catch (error) {
       console.error('Erro ao criar notificação de vaga atualizada:', error);
+      throw error;
+    }
+  }
+
+  // Notificação de vaga excluída
+  static async criarNotificacaoVagaExcluida(usuarioId, empresaId, vagaId, candidaturaId = null) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoVagaExcluida', { usuarioId, empresaId, vagaId, candidaturaId });
+    try {
+      const vaga = await Vaga.findById(vagaId);
+      if (!vaga) {
+        throw new Error('Vaga não encontrada');
+      }
+      
+      return await Notificacao.create({
+        usuario_id: usuarioId,
+        empresa_id: empresaId,
+        candidaturas_id: candidaturaId,
+        mensagem_usuario: `A vaga "${vaga.nome_vaga}" que você se candidatou foi excluída`,
+        mensagem_empresa: `Você excluiu a vaga "${vaga.nome_vaga}"`,
+        status_candidatura: 'PENDENTE',
+        tipo: 'VAGA_EXCLUIDA',
+        lida: false
+      });
+    } catch (error) {
+      console.error('Erro ao criar notificação de vaga excluída:', error);
       throw error;
     }
   }

@@ -107,14 +107,18 @@ export const updateVaga = async (req, res) => {
     // Buscar todas as candidaturas para esta vaga
     const candidaturas = await Candidatura.findByVaga(id);
 
-    // Criar notificação para cada candidato e para a empresa
+    // Criar notificação para cada candidato
     for (const candidatura of candidaturas) {
       await NotificacaoService.criarNotificacaoVagaAtualizada(
         candidatura.id_usuario,
         vaga.empresa_id,
-        id
+        id,
+        candidatura.id
       );
     }
+
+    // Notificar a empresa que a vaga foi atualizada
+    await NotificacaoService.criarNotificacaoVagaAtualizada(null, vaga.empresa_id, id, null);
 
     res.status(200).json({ message: 'Vaga atualizada com sucesso' });
   } catch (error) {
@@ -144,14 +148,18 @@ export const deleteVaga = async (req, res) => {
       return res.status(404).json({ message: 'Vaga não encontrada' });
     }
 
-    // Criar notificação para cada candidato e para a empresa
+    // Criar notificação para cada candidato
     for (const candidatura of candidaturas) {
       await NotificacaoService.criarNotificacaoVagaExcluida(
         candidatura.id_usuario,
         vaga.empresa_id,
-        id
+        id,
+        candidatura.id
       );
     }
+
+    // Notificar a empresa que a vaga foi excluída
+    await NotificacaoService.criarNotificacaoVagaExcluida(null, vaga.empresa_id, id, null);
 
     res.status(200).json({ message: 'Vaga excluída com sucesso' });
   } catch (error) {

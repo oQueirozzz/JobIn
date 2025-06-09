@@ -1,16 +1,18 @@
 import express from 'express';
-import * as empresasController from '../controllers/empresasController.js';
+import { registerEmpresa, loginEmpresa, getEmpresaById, updateEmpresa, deleteEmpresa } from '../controllers/empresasController.js';
+import { protect } from '../middleware/authMiddleware.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
 // Rotas públicas
-router.post('/register', empresasController.registerEmpresa);
-router.post('/login', empresasController.loginEmpresa);
-router.get('/', empresasController.getEmpresas);
-router.get('/:id', empresasController.getEmpresaById);
+router.post('/register', registerEmpresa);
+router.post('/login', loginEmpresa);
 
-// Todas as rotas são públicas
-router.put('/:id', empresasController.updateEmpresa);
-router.delete('/:id', empresasController.deleteEmpresa);
+// Rotas protegidas
+router.use(protect);
+router.get('/:id', getEmpresaById);
+router.put('/:id', upload.single('logo'), updateEmpresa);
+router.delete('/:id', deleteEmpresa);
 
 export default router;

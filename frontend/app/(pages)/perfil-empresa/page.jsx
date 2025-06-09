@@ -11,7 +11,7 @@ export default function PerfilEmpresa() {
     const [formData, setFormData] = useState({
         nome: '',
         email: '',
-        foto: null,
+        logo: null,
         descricao: '',
         cnpj: '',
         local: '',
@@ -28,6 +28,21 @@ export default function PerfilEmpresa() {
     const [perfilCompleto, setPerfilCompleto] = useState(false);
     const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Função utilitária para calcular a porcentagem do perfil
+    const calcularPorcentagemPerfil = (dados, camposObrigatorios) => {
+        const totalCampos = Object.keys(camposObrigatorios).length;
+        const camposPreenchidos = Object.entries(camposObrigatorios)
+            .filter(([campo]) => {
+                const valor = dados[campo];
+                if (Array.isArray(valor)) {
+                    return valor.length > 0; // Campo de array é preenchido se não estiver vazio
+                }
+                return valor && (typeof valor === 'string' ? valor.trim() !== '' : true); // Outros tipos: preenchido se não nulo/vazio
+            })
+            .length;
+        return Math.round((camposPreenchidos / totalCampos) * 100);
+    };
 
     useEffect(() => {
         if (!isLoading && !authInfo?.entity) {
@@ -50,14 +65,14 @@ export default function PerfilEmpresa() {
                 cnpj: 'CNPJ',
                 local: 'Localização',
                 descricao: 'Descrição da Empresa',
-                foto: 'Logo da Empresa'
+                logo: 'Logo da Empresa'
             };
             setCamposObrigatoriosDefinidos(obrigatorios);
 
             const dadosIniciais = {
                 nome: dadosEmpresa.nome || '',
                 email: dadosEmpresa.email || '',
-                foto: dadosEmpresa.foto || null,
+                logo: dadosEmpresa.logo || null,
                 descricao: dadosEmpresa.descricao || '',
                 cnpj: dadosEmpresa.cnpj ? formatarCNPJ(dadosEmpresa.cnpj) : '',
                 local: dadosEmpresa.local || '',
@@ -68,22 +83,17 @@ export default function PerfilEmpresa() {
                 twitter: dadosEmpresa.twitter || ''
             };
 
+            console.log('[DEPURACAO LOCALIZACAO] dadosEmpresa.local ANTES de setFormData:', dadosEmpresa.local);
             setFormData(dadosIniciais);
+            console.log('[DEPURACAO LOCALIZACAO] formData.local DEPOIS de setFormData (sincrono):', dadosIniciais.local);
+            console.log('[DEBUG] formData.logo ao carregar:', dadosIniciais.logo);
             verificarCamposObrigatorios(dadosIniciais, obrigatorios);
 
             console.log('--- Depuração da Porcentagem Perfil Empresa ---');
             console.log('Empresa (authInfo.entity):', dadosEmpresa);
             console.log('Campos Obrigatórios Definidos (perfil-empresa):', obrigatorios);
             
-            const totalCamposObrigatoriosPerfilEmpresa = Object.keys(obrigatorios).length;
-            console.log('Total de Campos Obrigatórios (perfil-empresa):', totalCamposObrigatoriosPerfilEmpresa);
-            
-            const camposPreenchidosPerfilEmpresa = Object.entries(obrigatorios)
-              .filter(([campo]) => dadosEmpresa[campo] && dadosEmpresa[campo].trim() !== '')
-              .length;
-
-            console.log('Campos Preenchidos (perfil-empresa):', camposPreenchidosPerfilEmpresa);
-            const porcentagemCompletaPerfilEmpresa = Math.round((camposPreenchidosPerfilEmpresa / totalCamposObrigatoriosPerfilEmpresa) * 100);
+            const porcentagemCompletaPerfilEmpresa = calcularPorcentagemPerfil(dadosEmpresa, obrigatorios);
             console.log('Porcentagem Completa Calculada (perfil-empresa):', porcentagemCompletaPerfilEmpresa);
             console.log('---------------------------------------');
         }
@@ -91,7 +101,13 @@ export default function PerfilEmpresa() {
 
     const verificarCamposObrigatorios = (dadosEmpresa, camposObrigatorios) => {
         const camposIncompletos = Object.entries(camposObrigatorios)
-            .filter(([campo]) => !dadosEmpresa[campo] || (typeof dadosEmpresa[campo] === 'string' && dadosEmpresa[campo].trim() === ''))
+            .filter(([campo]) => {
+                const valor = dadosEmpresa[campo];
+                if (Array.isArray(valor)) {
+                    return valor.length === 0; // Se for um array, é faltante se estiver vazio
+                }
+                return !valor || (typeof valor === 'string' && valor.trim() === ''); // Para outros tipos, a lógica existente
+            })
             .map(([_, label]) => label);
 
         setCamposFaltantes(camposIncompletos);
@@ -145,9 +161,53 @@ export default function PerfilEmpresa() {
         return `${cnpjLimpo.slice(0, 2)}.${cnpjLimpo.slice(2, 5)}.${cnpjLimpo.slice(5, 8)}/${cnpjLimpo.slice(8, 12)}-${cnpjLimpo.slice(12, 14)}`;
     };
 
+    // Função para converter base64 em File (copiada de perfil/page.jsx)
+    const base64ToFile = (base64String, filename) => {
+        return new Promise((resolve, reject) => {
+            try {
+                const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                if (!matches || matches.length !== 3) {
+                    reject(new Error('Formato inválido de base64'));
+                    return;
+                }
+
+                const mimeType = matches[1];
+                const base64Data = matches[2];
+
+                const byteCharacters = atob(base64Data);
+                const byteArrays = [];
+
+                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                    const slice = byteCharacters.slice(offset, offset + 512);
+                    const byteNumbers = new Array(slice.length);
+                    
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i);
+                    }
+                    
+                    const byteArray = new Uint8Array(byteNumbers);
+                    byteArrays.push(byteArray);
+                }
+
+                const blob = new Blob(byteArrays, { type: mimeType });
+                const file = new File([blob], filename, { type: mimeType });
+                resolve(file);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
     const compressImage = (base64String, maxWidth = 800) => {
         return new Promise((resolve, reject) => {
-            const img = new Image();
+            const img = typeof window !== 'undefined' ? new window.Image() : null;
+            
+            if (!img) {
+                console.warn("Image constructor not available, skipping image compression.");
+                resolve(base64String); 
+                return;
+            }
+
             img.src = base64String;
             
             img.onload = () => {
@@ -190,7 +250,7 @@ export default function PerfilEmpresa() {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (field === 'foto') {
+        if (field === 'logo') {
             if (!file.type.startsWith('image/')) {
                 showMessage('Por favor, selecione uma imagem válida.', 'error');
                 return;
@@ -200,10 +260,10 @@ export default function PerfilEmpresa() {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     const base64String = event.target.result;
-                    const compressedImage = await compressImage(base64String);
+                    const processedFile = await compressImage(base64String); // Compress the image
                     setFormData(prev => ({
                         ...prev,
-                        foto: compressedImage
+                        logo: processedFile // Store the processed base64 string
                     }));
                 };
                 reader.readAsDataURL(file);
@@ -237,32 +297,32 @@ export default function PerfilEmpresa() {
             }
 
             const formDataToSend = new FormData();
+
+            // Adicionar campos de texto
             for (const key in formData) {
-                if (key === 'foto' && typeof formData[key] === 'string' && formData[key].startsWith('data:image/')) {
-                    // Se a foto é uma string base64 temporária, converta-a para um Blob e anexe como arquivo
-                    const blob = await fetch(formData[key]).then(res => res.blob());
-                    formDataToSend.append('foto', blob, 'company_logo.jpeg');
-                } else if (formData[key] !== null) {
+                if (key !== 'logo' && formData[key] !== null) {
                     if (key === 'cnpj') {
                         formDataToSend.append(key, formData[key].replace(/\D/g, ''));
                     } else {
-                        // Garantir que arrays (se houver, como em usuários) sejam stringified se não forem arquivos
-                        if (Array.isArray(formData[key])) {
-                            formDataToSend.append(key, JSON.stringify(formData[key]));
-                        } else {
-                            formDataToSend.append(key, formData[key]);
-                        }
+                        formDataToSend.append(key, formData[key]);
                     }
                 }
             }
-            bodyData = formDataToSend;
-            // Não definir Content-Type para FormData, o navegador faz isso
 
-            // Enviar a requisição para o servidor
-            response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${authInfo.entity.id}`, {
+            // Adicionar foto (logo) convertendo de base64 para File
+            if (formData.logo && typeof formData.logo === 'string' && formData.logo.startsWith('data:image')) {
+                const logoFile = await base64ToFile(formData.logo, 'company_logo.jpeg');
+                formDataToSend.append('logo', logoFile); // Campo agora é 'logo', não 'image'
+            }
+
+            console.log('FormData preparado para envio', formDataToSend);
+            
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${authInfo.entity.id}`, {
                 method: 'PUT',
-                headers: headers,
-                body: bodyData
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formDataToSend
             });
 
             if (!response.ok) {
@@ -271,7 +331,7 @@ export default function PerfilEmpresa() {
             }
 
             const data = await response.json();
-            console.log('Dados da empresa recebidos do servidor após atualização:', data.empresa);
+            console.log('Resposta do servidor:', data);
 
             // Atualizar dados no localStorage
             const authEntity = JSON.parse(localStorage.getItem('authEntity'));
@@ -293,14 +353,11 @@ export default function PerfilEmpresa() {
                 return newData;
             });
 
-            // Forçar atualização do authInfo para refletir os dados mais recentes
             refreshAuthInfo();
 
-            // Mostrar mensagem de sucesso e fechar o modal
             setSuccess('Perfil da empresa atualizado com sucesso!');
             setIsModalOpen(false);
 
-            // Remover a mensagem de sucesso após 3 segundos
             setTimeout(() => {
                 setSuccess(null);
             }, 3000);
@@ -308,12 +365,58 @@ export default function PerfilEmpresa() {
         } catch (error) {
             console.error('Erro ao atualizar perfil da empresa:', error);
             setError(error.message || 'Erro ao atualizar perfil da empresa');
-            // Remover a mensagem de erro após 3 segundos
             setTimeout(() => {
                 setError(null);
             }, 3000);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleRemoveLogo = async () => {
+        if (!formData.logo) return; // Só permite remover se houver logo
+        // Lógica para remover a logo (se aplicável, ou apenas resetar no frontend)
+        setFormData(prev => ({ ...prev, logo: null }));
+        // Se a remoção envolver o backend, faça a requisição aqui.
+        // Por exemplo, uma requisição PUT para /api/empresas/:id com { logo: null }
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Token de autenticação não encontrado');
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${authInfo.entity.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ logo: null }) // Envia null para remover a logo
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Erro ao remover logo');
+            }
+
+            const data = await response.json();
+            // Atualizar localStorage e contexto de autenticação
+            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+            const updatedEntity = {
+                ...authEntity,
+                ...data.empresa
+            };
+            localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
+            if (authInfo && authInfo.entity) {
+                authInfo.entity = updatedEntity;
+            }
+            refreshAuthInfo();
+            setSuccess('Logo removida com sucesso!');
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (error) {
+            console.error('Erro ao remover logo:', error);
+            setError(error.message || 'Erro ao remover logo');
+            setTimeout(() => setError(null), 3000);
         }
     };
 
@@ -341,6 +444,12 @@ export default function PerfilEmpresa() {
     if (!authInfo || !authInfo.entity) {
         console.log('Redirecionando para login - authInfo ou entity não disponíveis');
         router.push('/login');
+        return null;
+    }
+
+    // Adicionar uma verificação para garantir que formData não é null/undefined
+    if (!formData) {
+        console.log('[DEBUG] formData is null/undefined during render. Returning null.');
         return null;
     }
 
@@ -404,11 +513,24 @@ export default function PerfilEmpresa() {
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl flex flex-col md:flex-row p-6 space-y-4 md:space-y-0 md:space-x-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
-                        <img 
-                            className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                            src={formData.foto ? formData.foto : `/path/to/default-company-logo.png`}
-                            alt="Logo da empresa" 
-                        />
+                        {formData.logo ? (
+                            <img 
+                                src={formData?.logo?.startsWith('data:image') 
+                                    ? formData.logo 
+                                    : (formData?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${formData.logo}` : '')
+                                }
+                                alt="Logo da empresa"
+                                width={144}
+                                height={144}
+                                className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
+                            />
+                        ) : (
+                            <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-white p-2 shadow-xl flex items-center justify-center">
+                                <span className="text-4xl font-bold text-[#7B2D26]">
+                                    {getInitials(formData.nome)}
+                                </span>
+                            </div>
+                        )}
                         <button 
                             onClick={() => setIsModalOpen(true)}
                             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
@@ -417,6 +539,16 @@ export default function PerfilEmpresa() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                         </button>
+                        {formData.logo && (
+                            <button 
+                                onClick={handleRemoveLogo}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-10"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="flex flex-col justify-between flex-1">
@@ -628,9 +760,12 @@ export default function PerfilEmpresa() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
                                         <div className="flex items-center space-x-4">
                                             <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
-                                                {formData.foto ? (
+                                                {formData.logo ? (
                                                     <img 
-                                                        src={formData.foto} 
+                                                        src={formData?.logo?.startsWith('data:image') 
+                                                            ? formData.logo 
+                                                            : (formData?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${formData.logo}` : '')
+                                                        }
                                                         alt="Logo Preview" 
                                                         className="w-full h-full object-contain"
                                                     />
@@ -644,8 +779,8 @@ export default function PerfilEmpresa() {
                                                 <div className="relative">
                                                     <input
                                                         type="file"
-                                                        name="foto"
-                                                        onChange={(e) => handleFileChange(e, 'foto')}
+                                                        name="logo"
+                                                        onChange={(e) => handleFileChange(e, 'logo')}
                                                         className="hidden"
                                                         id="logo-input"
                                                         accept="image/*"
@@ -657,65 +792,9 @@ export default function PerfilEmpresa() {
                                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
-                                                        {formData.foto ? 'Atualizar Logo' : 'Escolher Logo'}
+                                                        {formData.logo ? 'Atualizar Logo' : 'Escolher Logo'}
                                                     </label>
                                                 </div>
-                                                {formData.foto && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={async () => {
-                                                            try {
-                                                                const empresaId = authInfo?.entity?.id;
-                                                                if (!empresaId) {
-                                                                    showMessage('ID da empresa não encontrado!', 'error');
-                                                                    return;
-                                                                }
-
-                                                                const token = localStorage.getItem('authToken');
-                                                                if (!token) {
-                                                                    showMessage('Token de autenticação não encontrado', 'error');
-                                                                    return;
-                                                                }
-
-                                                                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${empresaId}`, {
-                                                                    method: 'PUT',
-                                                                    headers: {
-                                                                        'Content-Type': 'application/json',
-                                                                        'Authorization': `Bearer ${token}`
-                                                                    },
-                                                                    body: JSON.stringify({ ...formData, foto: null })
-                                                                });
-
-                                                                if (!response.ok) {
-                                                                    throw new Error('Erro ao remover logo');
-                                                                }
-
-                                                                setFormData(prev => ({ ...prev, foto: null }));
-
-                                                                const authEntity = JSON.parse(localStorage.getItem('authEntity'));
-                                                                const updatedEntity = { ...authEntity, foto: null };
-                                                                localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
-
-                                                                if (authInfo && authInfo.entity) {
-                                                                    authInfo.entity = updatedEntity;
-                                                                }
-
-                                                                showMessage('Logo removida com sucesso!', 'success');
-                                                                setTimeout(() => { window.location.reload(); }, 1500);
-
-                                                            } catch (error) {
-                                                                console.error('Erro ao remover logo:', error);
-                                                                showMessage('Erro ao remover logo. Tente novamente.', 'error');
-                                                            }
-                                                        }}
-                                                        className="cursor-pointer bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg border border-red-300 flex items-center justify-center transition-all duration-300"
-                                                    >
-                                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                        Remover Logo
-                                                    </button>
-                                                )}
                                             </div>
                                             <p className="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG, GIF</p>
                                         </div>

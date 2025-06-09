@@ -57,8 +57,9 @@ export default function Feed() {
       nome: 'Nome da Empresa',
       email: 'Email Corporativo',
       cnpj: 'CNPJ',
-      localizacao: 'Localização',
-      descricao: 'Descrição da Empresa'
+      local: 'Localização',
+      descricao: 'Descrição da Empresa',
+      foto: 'Logo da Empresa'
     } : {
       nome: 'Nome',
       email: 'Email',
@@ -68,12 +69,35 @@ export default function Feed() {
       descricao: 'Resumo Profissional',
       curriculo: 'Currículo',
       certificados: 'Certificados',
-      foto: 'Foto'
+      foto: 'Foto',
+      cpf: 'CPF',
+      data_nascimento: 'Data de Nascimento'
     };
 
     return Object.entries(camposObrigatorios)
-      .filter(([campo]) => !usuario[campo] || usuario[campo].trim() === '')
+      .filter(([campo]) => {
+          const valor = usuario[campo];
+          if (Array.isArray(valor)) {
+              return valor.length === 0; // Se for um array, é faltante se estiver vazio
+          }
+          return !valor || (typeof valor === 'string' && valor.trim() === ''); // Para outros tipos, a lógica existente
+      })
       .map(([_, label]) => label);
+  };
+
+  // Função utilitária para calcular a porcentagem do perfil
+  const calcularPorcentagemPerfil = (dados, camposObrigatorios) => {
+    const totalCampos = Object.keys(camposObrigatorios).length;
+    const camposPreenchidos = Object.entries(camposObrigatorios)
+      .filter(([campo]) => {
+          const valor = dados[campo];
+          if (Array.isArray(valor)) {
+              return valor.length > 0; // Campo de array é preenchido se não estiver vazio
+          }
+          return valor && (typeof valor === 'string' ? valor.trim() !== '' : true); // Outros tipos: preenchido se não nulo/vazio
+      })
+      .length;
+    return Math.round((camposPreenchidos / totalCampos) * 100);
   };
 
   useEffect(() => {
@@ -247,8 +271,9 @@ export default function Feed() {
       nome: 'Nome da Empresa',
       email: 'Email Corporativo',
       cnpj: 'CNPJ',
-      localizacao: 'Localização',
-      descricao: 'Descrição da Empresa'
+      local: 'Localização',
+      descricao: 'Descrição da Empresa',
+      foto: 'Logo da Empresa'
     } : {
       nome: 'Nome',
       email: 'Email',
@@ -258,21 +283,22 @@ export default function Feed() {
       descricao: 'Resumo Profissional',
       curriculo: 'Currículo',
       certificados: 'Certificados',
-      foto: 'Foto'
+      foto: 'Foto',
+      cpf: 'CPF',
+      data_nascimento: 'Data de Nascimento'
     };
     console.log('Campos Obrigatórios Definidos:', camposObrigatorios);
 
     // Calcula a porcentagem usando a mesma lógica da página de perfil
-    const totalCamposObrigatorios = Object.keys(camposObrigatorios).length;
-    console.log('Total de Campos Obrigatórios:', totalCamposObrigatorios);
-    
-    // Calcula campos preenchidos com base nos campos faltantes
-    const camposPreenchidos = totalCamposObrigatorios - camposFaltantes.length;
-    
-    console.log('Campos Preenchidos:', camposPreenchidos);
-    const porcentagemCompleta = Math.round((camposPreenchidos / totalCamposObrigatorios) * 100);
+    const porcentagemCompleta = calcularPorcentagemPerfil(authInfo?.entity, camposObrigatorios);
     console.log('Porcentagem Completa Calculada:', porcentagemCompleta);
     console.log('-------------------------------');
+
+    console.log('--- Depuração da Porcentagem Página Principal ---');
+    console.log('Usuário (authInfo.entity - main page):', authInfo?.entity);
+    console.log('Campos Obrigatórios Definidos (main page):', camposObrigatorios);
+    console.log('Total de Campos Obrigatórios (main page - length of camposObrigatorios):', Object.keys(camposObrigatorios).length);
+    console.log('Total de Chaves em authInfo?.entity (main page):', Object.keys(authInfo?.entity || {}).length);
 
     return (
       <div className="min-h-screen bg-gray-50">

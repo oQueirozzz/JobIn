@@ -6,6 +6,12 @@ import NotificacaoService from '../services/notificacaoService.js';
 import Usuario from '../models/Usuario.js';
 import jwt from 'jsonwebtoken';
 import path from 'path';
+import fs from 'fs';
+import bcrypt from 'bcrypt';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -88,6 +94,7 @@ export const registerEmpresa = async (req, res) => {
       email: empresa.email,
       cnpj: empresa.cnpj,
       descricao: empresa.descricao || '',
+      local: empresa.local || '',
       logo: empresa.logo ? `/uploads/usuarios/${path.basename(empresa.logo)}` : '',
       tipo: 'empresa',
       autenticado: true
@@ -157,6 +164,7 @@ export const loginEmpresa = async (req, res) => {
       email: empresa.email,
       cnpj: empresa.cnpj,
       descricao: empresa.descricao || '',
+      local: empresa.local || '',
       logo: empresa.logo ? `/uploads/usuarios/${path.basename(empresa.logo)}` : '',
       tipo: 'empresa',
       autenticado: true
@@ -183,33 +191,97 @@ export const loginEmpresa = async (req, res) => {
 // Atualizar uma empresa
 export const updateEmpresa = async (req, res) => {
   try {
-    const { id } = req.params;
-    const empresa = await Empresa.findById(id);
-    
-    if (!empresa) {
-      return res.status(404).json({ error: 'Empresa não encontrada' });
-    }
-
-    const updatedEmpresa = await Empresa.update(id, req.body);
-    
-    if (!updatedEmpresa) {
-      return res.status(400).json({ error: 'Nenhum campo foi atualizado' });
-    }
-
-    // Registrar ação no log
-    await Log.create({
-      usuario_id: 0,
-      empresa_id: id,
-      acao: 'UPDATE',
-      tabela: 'empresas',
-      registro_id: id,
-      detalhes: req.body
+    console.log('Recebendo requisição de atualização:', {
+      params: req.params,
+      body: req.body,
+      file: req.file
     });
 
-    res.json({ message: 'Empresa atualizada com sucesso' });
+    const { id } = req.params;
+    const empresaId = parseInt(id);
+
+    if (isNaN(empresaId)) {
+      return res.status(400).json({ message: 'ID da empresa inválido' });
+    }
+
+    // Verificar se a empresa existe
+    const empresa = await Empresa.findById(empresaId);
+    if (!empresa) {
+      return res.status(404).json({ message: 'Empresa não encontrada' });
+    }
+
+    // Se houver um arquivo de imagem, processá-lo
+    if (req.file) {
+      console.log('Arquivo recebido:', req.file);
+      // Remover a logo antiga se existir
+      if (empresa.logo) {
+        const oldLogoPath = path.join(__dirname, '..', empresa.logo);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
+        }
+      }
+      // Atualizar o caminho da logo no corpo da requisição
+      req.body.logo = `/uploads/empresas/${req.file.filename}`;
+      console.log('Novo caminho da logo:', req.body.logo);
+    }
+
+    // Preparar dados para atualização
+    const updateData = {
+      nome: req.body.nome,
+      cnpj: req.body.cnpj,
+      email: req.body.email,
+      telefone: req.body.telefone,
+      descricao: req.body.descricao,
+      site: req.body.site,
+      local: req.body.local,
+      logo: req.body.logo
+    };
+
+    // Se houver uma nova senha, atualizá-la
+    if (req.body.senha) {
+      updateData.senha = await bcrypt.hash(req.body.senha, 10);
+    }
+
+    console.log('Dados para atualização:', updateData);
+
+    // Atualizar a empresa
+    const empresaAtualizada = await Empresa.update(empresaId, updateData);
+    console.log('Empresa atualizada:', empresaAtualizada);
+
+    // Criar log da atualização
+    await Log.create({
+      usuario_id: null, // Ação realizada por uma empresa, não um usuário
+      empresa_id: req.usuario.id, // ID da empresa que realizou a atualização
+      tipo_acao: 'UPDATE',
+      tipo_entidade: 'EMPRESA',
+      entidade_id: empresaId,
+      detalhes: JSON.stringify({
+        campos_atualizados: Object.keys(updateData),
+        empresa_id: empresaId
+      })
+    });
+
+    // Criar notificação de perfil atualizado para a empresa
+    await NotificacaoService.criarNotificacaoPerfilAtualizado(null, empresaId, true);
+
+    // Preparar resposta
+    const empresaFrontend = {
+      id: empresaAtualizada.id,
+      nome: empresaAtualizada.nome,
+      cnpj: empresaAtualizada.cnpj,
+      email: empresaAtualizada.email,
+      telefone: empresaAtualizada.telefone,
+      descricao: empresaAtualizada.descricao,
+      site: empresaAtualizada.site,
+      local: empresaAtualizada.local,
+      logo: empresaAtualizada.logo
+    };
+
+    console.log('Enviando resposta:', { empresa: empresaFrontend });
+    res.json({ empresa: empresaFrontend });
   } catch (error) {
     console.error('Erro ao atualizar empresa:', error);
-    res.status(500).json({ error: 'Erro ao atualizar empresa' });
+    res.status(500).json({ message: 'Erro ao atualizar empresa', error: error.message });
   }
 };
 
