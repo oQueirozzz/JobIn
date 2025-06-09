@@ -340,7 +340,7 @@ export default function Vagas() {
 
   const vagasFiltradas = vagas.filter(vaga => {
     const filtraCategoria = categoria ? vaga.categoria === categoria : true;
-    const filtraTipo = tipo ? vaga.tipo_vaga === tipo : true;
+    const filtraTipo = tipo ? vaga.tipo_vaga.trim().toLowerCase() === tipo.trim().toLowerCase() : true;
     const filtraEmpresa = empresa ? vaga.nome_empresa === empresa : true;
     return filtraCategoria && filtraTipo && filtraEmpresa;
   });
@@ -352,10 +352,10 @@ export default function Vagas() {
       {/* Mensagem de erro/sucesso */}
       {mensagem && (
         <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-xl z-50 transform transition-all duration-300 ease-in-out ${mensagem.tipo === 'error'
-            ? 'bg-white border-l-4 border-red-500 text-red-700'
-            : mensagem.tipo === 'success'
-              ? 'bg-white border-l-4 border-green-500 text-green-700'
-              : 'bg-white border-l-4 border-blue-500 text-blue-700'
+          ? 'bg-white border-l-4 border-red-500 text-red-700'
+          : mensagem.tipo === 'success'
+            ? 'bg-white border-l-4 border-green-500 text-green-700'
+            : 'bg-white border-l-4 border-blue-500 text-blue-700'
           }`}>
           <div className="flex items-center">
             {mensagem.tipo === 'error' ? (
