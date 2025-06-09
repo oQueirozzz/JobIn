@@ -97,7 +97,6 @@ export default function HeroSection() {
               <div className="relative">
                 <select
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent appearance-none bg-white"
-                  disabled
                   onChange={(e) => setEmpresa(e.target.value)}
                 
                 >
