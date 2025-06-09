@@ -19,24 +19,21 @@ export default function Perfil() {
     const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
 
     useEffect(() => {
-        if (!isLoading && !authInfo) {
+        if (!isLoading && !authInfo?.entity) {
             router.push('/login');
             return;
         }
 
-        if (authInfo && authInfo.entity) {
+        if (authInfo?.entity) {
             const dadosUsuario = authInfo.entity;
-            console.log('Dados do usuário carregados:', dadosUsuario);
+            
+            // Verificar se é uma empresa e redirecionar se necessário
+            if (dadosUsuario.tipo === 'empresa') {
+                router.push('/perfil-empresa');
+                return;
+            }
 
-            // Definir camposObrigatorios aqui com base no tipo de usuário
-            const isEmpresa = authInfo?.type === 'company';
-            const obrigatorios = isEmpresa ? {
-                nome: 'Nome da Empresa',
-                email: 'Email Corporativo',
-                cnpj: 'CNPJ',
-                localizacao: 'Localização',
-                descricao: 'Descrição da Empresa'
-            } : {
+            const obrigatorios = {
                 nome: 'Nome',
                 email: 'Email',
                 formacao: 'Formação Acadêmica',
@@ -45,7 +42,9 @@ export default function Perfil() {
                 descricao: 'Resumo Profissional',
                 curriculo: 'Currículo',
                 certificados: 'Certificados',
-                foto: 'Foto'
+                foto: 'Foto',
+                cpf: 'CPF',
+                data_nascimento: 'Data de Nascimento'
             };
             setCamposObrigatoriosDefinidos(obrigatorios);
 
@@ -61,9 +60,9 @@ export default function Perfil() {
                 curriculo: dadosUsuario.curriculo || null,
                 certificados: Array.isArray(dadosUsuario.certificados) ? dadosUsuario.certificados : 
                             (dadosUsuario.certificados ? [dadosUsuario.certificados] : []),
-                local: dadosUsuario.local || '',
+                local: '', // Removido, mas mantido vazio para evitar erro de desestruturação se a API ainda retornar
                 cpf: dadosUsuario.cpf ? formatarCPF(dadosUsuario.cpf) : '',
-                cnpj: dadosUsuario.cnpj || '',
+                cnpj: '', // Removido, mas mantido vazio
                 data_nascimento: dadosUsuario.data_nascimento || ''
             };
             console.log('Dados iniciais formatados:', dadosIniciais);
@@ -72,7 +71,7 @@ export default function Perfil() {
 
             console.log('--- Depuração da Porcentagem Perfil ---');
             console.log('Usuário (authInfo.entity):', dadosUsuario);
-            console.log('Tipo de usuário (isEmpresa):', isEmpresa);
+            console.log('Tipo de usuário (isEmpresa):', dadosUsuario.tipo === 'empresa');
             console.log('Campos Obrigatórios Definidos (perfil):', obrigatorios);
             
             const totalCamposObrigatoriosPerfil = Object.keys(obrigatorios).length;
@@ -501,7 +500,7 @@ export default function Perfil() {
             if (formData.curriculo instanceof File) {
                 const formDataToSend = new FormData();
                 // Adicionar todos os campos do formData ao FormData
-                for (const key in formData) {
+        for (const key in formData) {
                     // Excluir a foto se ela for uma URL temporária (data:image/)
                     if (key === 'foto' && typeof formData[key] === 'string' && formData[key].startsWith('data:image/')) {
                         // Não adicionar a foto temporária aqui, ela será tratada separadamente
@@ -761,33 +760,11 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl flex flex-col md:flex-row p-6 space-y-4 md:space-y-0 md:space-x-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
-                        {authInfo?.type === 'company' ? (
-                            // Exibição para empresa
-                            formData.logo ? (
-                                <img 
-                                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                                    src={formData.logo} 
-                                    alt="Logo da Empresa" 
-                                />
-                            ) : (
-                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-gradient-to-br from-[#7B2D26] to-[#9B3D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
-                                    {getInitials(formData.nome || 'E')}
-                                </div>
-                            )
-                        ) : (
-                            // Exibição para usuário
-                            formData.foto ? (
-                                <img 
-                                    className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                                    src={formData.foto.startsWith('data:') ? formData.foto : formData.foto}
-                                    alt="Preview" 
-                                />
-                            ) : (
-                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-gradient-to-br from-[#7B2D26] to-[#9B3D26] text-white text-center text-4xl font-bold flex items-center justify-center shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
-                                    {getInitials(formData.nome || 'U')}
-                                </div>
-                            )
-                        )}
+                        <img 
+                            className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
+                            src={formData.foto && formData.foto.startsWith('data:') ? formData.foto : formData.foto}
+                            alt="Preview" 
+                        />
                         <button 
                             onClick={() => setIsModalOpen(true)}
                             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
@@ -810,49 +787,22 @@ export default function Perfil() {
                                     <span className="font-medium text-gray-700">{formData.email || 'Email não informado'}</span>
                                 </div>
                             </div>
-                            {authInfo?.type === 'company' && (
-                                <>
-                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                        <div className="flex items-center">
-                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            <span className="font-medium text-gray-700">{formData.cnpj || 'CNPJ não informado'}</span>
-                                        </div>
-                                    </div>
-                                    {formData.local && (
-                                        <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                            <div className="flex items-center">
-                                                <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span className="font-medium text-gray-700">{formData.local}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                            {authInfo?.type !== 'company' && (
-                                <>
-                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                        <div className="flex items-center">
-                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <span className="font-medium text-gray-700">{formData.cpf || 'CPF não informado'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                        <div className="flex items-center">
-                                            <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span className="font-medium text-gray-700">{formatarData(formData.data_nascimento)}</span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                            <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span className="font-medium text-gray-700">{formData.cpf || 'CPF não informado'}</span>
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-gray-100 to-white p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                <div className="flex items-center">
+                                    <svg className="w-5 h-5 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="font-medium text-gray-700">{formatarData(formData.data_nascimento)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div className="mt-6 md:mt-0 md:self-end">
@@ -1104,69 +1054,69 @@ export default function Perfil() {
                     <div className="space-y-4">
                         {formData.certificados ? (
                             <div className="bg-gradient-to-br from-gray-100 to-white rounded-xl p-6 border border-gray-200 hover:border-[#7B2D26] transition-all duration-300 shadow-lg hover:shadow-xl">
-                                <div className="flex flex-col">
+                                    <div className="flex flex-col">
                                     {/* Cabeçalho do documento */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div>
                                             <h3 className="text-xl font-semibold text-gray-800">Certificado Profissional</h3>
-                                            <p className="text-gray-600 mt-1">Documento de qualificação profissional</p>
+                                                <p className="text-gray-600 mt-1">Documento de qualificação profissional</p>
+                                            </div>
                                         </div>
-                                    </div>
                                     
                                     {/* Informações do documento */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                        <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                            <div className="flex items-center">
-                                                <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500">Nome do Arquivo</p>
-                                                    <p className="text-base text-gray-700 font-medium">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                            <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                                <div className="flex items-center">
+                                                    <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-500">Nome do Arquivo</p>
+                                                        <p className="text-base text-gray-700 font-medium">
                                                         {formData.certificados instanceof File ? 
                                                             formData.certificados.name : 
                                                             'Certificado carregado'}
-                                                    </p>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        
-                                        <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                            <div className="flex items-center">
-                                                <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500">Tamanho do Arquivo</p>
-                                                    <p className="text-base text-gray-700 font-medium">
+                                            
+                                            <div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
+                                                <div className="flex items-center">
+                                                    <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-500">Tamanho do Arquivo</p>
+                                                        <p className="text-base text-gray-700 font-medium">
                                                         {formData.certificados instanceof File ? 
                                                             `${(formData.certificados.size / 1024 / 1024).toFixed(2)} MB` : 
-                                                            'Disponível para download'}
-                                                    </p>
+                                                                'Disponível para download'}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
                                     {/* Botões de ação */}
-                                    <div className="flex gap-4">
-                                        <button 
-                                            onClick={() => {
+                                        <div className="flex gap-4">
+                                            <button 
+                                                onClick={() => {
                                                 if (formData.certificados instanceof File) {
                                                     const url = URL.createObjectURL(formData.certificados);
-                                                    window.open(url, '_blank');
-                                                } else {
+                                                        window.open(url, '_blank');
+                                                    } else {
                                                     downloadFile(formData.certificados, 'certificado');
-                                                }
-                                            }}
-                                            className="flex-1 cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center transform hover:scale-105 font-medium"
-                                        >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                            </svg>
-                                            Baixar Certificado
-                                        </button>
-                                        <button 
+                                                    }
+                                                }}
+                                                className="flex-1 cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center transform hover:scale-105 font-medium"
+                                            >
+                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Baixar Certificado
+                                            </button>
+                                            <button 
                                             onClick={() => {
                                                 setFormData(prev => ({
                                                     ...prev,
@@ -1174,16 +1124,16 @@ export default function Perfil() {
                                                 }));
                                                 showMessage('Certificado removido com sucesso!', 'success');
                                             }}
-                                            className="flex-1 cursor-pointer bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center border border-gray-200 transform hover:scale-105 font-medium"
-                                        >
-                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Remover
-                                        </button>
+                                                className="flex-1 cursor-pointer bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center justify-center border border-gray-200 transform hover:scale-105 font-medium"
+                                            >
+                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Remover
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
                         ) : (
                             <div className="bg-gradient-to-br from-gray-100 to-white rounded-xl p-6 border border-gray-200 text-center">
                                 <p className="text-gray-600">Nenhum certificado adicionado ainda.</p>

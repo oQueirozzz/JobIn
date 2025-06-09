@@ -81,14 +81,29 @@ export const registerEmpresa = async (req, res) => {
       { empresa_id: empresa.id }
     );
 
-    res.status(201).json({
+    // Montar objeto de empresa para o frontend
+    const empresaFrontend = {
       id: empresa.id,
       nome: empresa.nome,
       email: empresa.email,
       cnpj: empresa.cnpj,
-      local: empresa.local,
-      descricao: empresa.descricao,
-      tipo: empresa.tipo
+      descricao: empresa.descricao || '',
+      logo: empresa.logo ? `/uploads/usuarios/${path.basename(empresa.logo)}` : '',
+      tipo: 'empresa',
+      autenticado: true
+    };
+
+    // Gerar token JWT
+    const token = jwt.sign(
+      { id: empresa.id, type: 'company' },
+      process.env.JWT_SECRET || 'sua-chave-secreta',
+      { expiresIn: '24h' }
+    );
+
+    // Retornar token e objeto empresa
+    res.status(201).json({
+      token,
+      empresa: empresaFrontend
     });
   } catch (error) {
     console.error('Erro ao registrar empresa:', error);

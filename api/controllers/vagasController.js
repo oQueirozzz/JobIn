@@ -1,6 +1,7 @@
 import Vaga from '../models/Vaga.js';
 import * as logsController from './logsController.js';
 import NotificacaoService from '../services/notificacaoService.js';
+import Candidatura from '../models/Candidatura.js';
 
 // Obter todas as vagas
 export const getVagas = async (req, res) => {
@@ -36,7 +37,7 @@ export const getVagaById = async (req, res) => {
 };
 
 // Obter vagas por empresa
-  export const getVagasByEmpresa = async (req, res) => {
+export const getVagasByEmpresa = async (req, res) => {
   try {
     const vagas = await Vaga.findByEmpresa(req.params.empresaId);
     res.status(200).json(vagas);
@@ -104,7 +105,7 @@ export const updateVaga = async (req, res) => {
     }
 
     // Buscar todas as candidaturas para esta vaga
-    const candidaturas = await require('../models/Candidatura').findByVaga(id);
+    const candidaturas = await Candidatura.findByVaga(id);
 
     // Criar notificação para cada candidato e para a empresa
     for (const candidatura of candidaturas) {
@@ -134,7 +135,7 @@ export const deleteVaga = async (req, res) => {
     }
 
     // Buscar todas as candidaturas para esta vaga
-    const candidaturas = await require('../models/Candidatura').findByVaga(id);
+    const candidaturas = await Candidatura.findByVaga(id);
 
     // Excluir a vaga
     const resultado = await Vaga.delete(id);

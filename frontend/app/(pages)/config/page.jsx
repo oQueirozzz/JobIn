@@ -128,7 +128,10 @@ export default function Config() {
                             Segurança da Conta
                         </h2>
                         
-                        <Link href="/redefSenha?authenticated=true" className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01] group">
+                        <Link
+                            href="/redefSenha?authenticated=true"
+                            className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01] group"
+                        >
                             <div className="flex items-center">
                                 <svg className="w-6 h-6 mr-4 text-[#7B2D26] group-hover:text-[#9B3D26] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2v5a2 2 0 01-2 2h-5a2 2 0 01-2-2V9a2 2 0 012-2h5z"></path>

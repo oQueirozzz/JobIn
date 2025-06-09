@@ -60,7 +60,7 @@ class Candidatura {
     let client;
     try {
       client = await pool.connect();
-      const query = `SELECT c.*, u.nome as nome_usuario 
+      const query = `SELECT c.*, u.nome as nome_usuario, u.email, u.data_nascimento, u.foto
                      FROM candidaturas c 
                      JOIN usuarios u ON c.id_usuario = u.id 
                      WHERE c.id_vaga = $1`;
@@ -192,8 +192,5 @@ class Candidatura {
     }
   }
 }
-
-
-
 
 export default Candidatura;

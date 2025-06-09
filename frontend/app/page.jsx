@@ -303,7 +303,7 @@ export default function Feed() {
                     ))}
                   </div>
                   <Link
-                    href="/perfil"
+                    href={authInfo?.entity?.tipo === 'empresa' ? '/perfil-empresa' : '/perfil'}
                     className="mt-4 block text-center px-4 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-colors"
                   >
                     Completar perfil
@@ -628,7 +628,7 @@ export default function Feed() {
 
                     {/* Botão para Completar Perfil */}
                     <Link
-                      href="/perfil"
+                      href={authInfo?.entity?.tipo === 'empresa' ? '/perfil-empresa' : '/perfil'}
                       className="mt-6 block text-center px-6 py-3 bg-[#7B2D26] text-white rounded-lg hover:bg-[#7B2D26]/90 transition-all duration-300 text-sm font-medium shadow-sm hover:shadow-md"
                     >
                       Completar Perfil

@@ -17,6 +17,12 @@ export default function Vagas() {
   const [isCandidato, setIsCandidato] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [candidaturaToRemove, setCandidaturaToRemove] = useState(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [vagaToDelete, setVagaToDelete] = useState(null);
+  const [showEditVagaModal, setShowEditVagaModal] = useState(false);
+  const [vagaToEdit, setVagaToEdit] = useState(null);
+  const [showCandidatosModal, setShowCandidatosModal] = useState(false);
+  const [candidatosList, setCandidatosList] = useState([]);
 
   const detalhesRef = useRef(null);
 
@@ -254,6 +260,84 @@ export default function Vagas() {
     }
   }
 
+  async function handleVisualizarCandidatos(vagaId) {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        mostrarMensagem('Autenticação necessária para visualizar candidatos.', 'error');
+        setTimeout(redirecionarParaLogin, 1500);
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/vaga/${vagaId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Erro ao buscar candidatos');
+      }
+
+      const data = await res.json();
+      setCandidatosList(data);
+      setShowCandidatosModal(true);
+    } catch (error) {
+      console.error('Erro ao buscar candidatos:', error);
+      mostrarMensagem(error.message || 'Erro ao buscar candidatos. Tente novamente.', 'error');
+    }
+  }
+
+  async function handleEditarVaga(vagaId) {
+    const vaga = vagas.find(v => v.id === vagaId);
+    if (vaga) {
+      setVagaToEdit(vaga);
+      setShowEditVagaModal(true);
+    } else {
+      mostrarMensagem('Vaga não encontrada para edição.', 'error');
+    }
+  }
+
+  async function handleExcluirVaga(vagaId) {
+    setVagaToDelete(vagaId);
+    setShowDeleteConfirmModal(true);
+  }
+
+  async function confirmarExclusaoVaga() {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        mostrarMensagem('Autenticação necessária para excluir vagas.', 'error');
+        setTimeout(redirecionarParaLogin, 1500);
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas/${vagaToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Erro ao excluir vaga');
+      }
+
+      mostrarMensagem('Vaga excluída com sucesso!', 'success');
+      setVagas(prevVagas => prevVagas.filter(vaga => vaga.id !== vagaToDelete));
+      setVagaSelecionada(null);
+      setShowDeleteConfirmModal(false);
+      setVagaToDelete(null);
+    } catch (error) {
+      console.error('Erro ao excluir vaga:', error);
+      mostrarMensagem(error.message || 'Erro ao excluir vaga. Tente novamente.', 'error');
+    }
+  }
+
   const vagasFiltradas = vagas.filter(vaga => {
     const filtraCategoria = categoria ? vaga.categoria === categoria : true;
     const filtraTipo = tipo ? vaga.tipo_vaga === tipo : true;
@@ -331,6 +415,266 @@ export default function Vagas() {
                 </svg>
                 Confirmar Remoção
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão da Vaga */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-in-out">
+            <div className="flex items-center mb-4">
+              <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Confirmar Exclusão da Vaga</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Tem certeza que deseja excluir a vaga <span className="font-semibold text-gray-800">"{vagas.find(v => v.id === vagaToDelete)?.nome_vaga}"</span>?
+              Esta ação não pode ser desfeita e removerá todas as candidaturas associadas.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirmModal(false);
+                  setVagaToDelete(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-300 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarExclusaoVaga}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-300 font-medium flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Vaga */}
+      {showEditVagaModal && vagaToEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-auto my-8 overflow-hidden transform transition-all duration-300 ease-in-out">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-2xl font-bold text-gray-900">Editar Vaga</h3>
+            </div>
+            <div className="p-6 max-h-[80vh] overflow-y-auto">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const token = localStorage.getItem('authToken');
+                  if (!token) {
+                    mostrarMensagem('Autenticação necessária para editar vagas.', 'error');
+                    setTimeout(redirecionarParaLogin, 1500);
+                    return;
+                  }
+
+                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas/${vagaToEdit.id}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(vagaToEdit),
+                  });
+
+                  const data = await res.json();
+
+                  if (!res.ok) {
+                    throw new Error(data.message || 'Erro ao atualizar vaga');
+                  }
+
+                  mostrarMensagem('Vaga atualizada com sucesso!', 'success');
+                  // Atualizar a vaga na lista localmente
+                  setVagas(prevVagas => prevVagas.map(v => v.id === vagaToEdit.id ? vagaToEdit : v));
+                  setVagaSelecionada(vagaToEdit); // Manter a vaga selecionada atualizada
+                  setShowEditVagaModal(false);
+                  setVagaToEdit(null);
+                } catch (error) {
+                  console.error('Erro ao salvar edição da vaga:', error);
+                  mostrarMensagem(error.message || 'Erro ao salvar edição da vaga. Tente novamente.', 'error');
+                }
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Nome da Vaga */}
+                  <div>
+                    <label htmlFor="edit-nome-vaga" className="block text-sm font-medium text-gray-700 mb-1">Nome da Vaga</label>
+                    <input
+                      type="text"
+                      id="edit-nome-vaga"
+                      name="nome_vaga"
+                      value={vagaToEdit.nome_vaga || ''}
+                      onChange={(e) => setVagaToEdit({ ...vagaToEdit, nome_vaga: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
+                      required
+                    />
+                  </div>
+
+                  {/* Tipo de Vaga */}
+                  <div>
+                    <label htmlFor="edit-tipo-vaga" className="block text-sm font-medium text-gray-700 mb-1">Tipo de Vaga</label>
+                    <select
+                      id="edit-tipo-vaga"
+                      name="tipo_vaga"
+                      value={vagaToEdit.tipo_vaga || ''}
+                      onChange={(e) => setVagaToEdit({ ...vagaToEdit, tipo_vaga: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="presencial">Presencial</option>
+                      <option value="hibrido">Híbrido</option>
+                      <option value="remoto">Remoto</option>
+                    </select>
+                  </div>
+
+                  {/* Local da Vaga */}
+                  <div>
+                    <label htmlFor="edit-local-vaga" className="block text-sm font-medium text-gray-700 mb-1">Local da Vaga</label>
+                    <input
+                      type="text"
+                      id="edit-local-vaga"
+                      name="local_vaga"
+                      value={vagaToEdit.local_vaga || ''}
+                      onChange={(e) => setVagaToEdit({ ...vagaToEdit, local_vaga: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
+                      required
+                    />
+                  </div>
+
+                  {/* Categoria */}
+                  <div>
+                    <label htmlFor="edit-categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <select
+                      id="edit-categoria"
+                      name="categoria"
+                      value={vagaToEdit.categoria || ''}
+                      onChange={(e) => setVagaToEdit({ ...vagaToEdit, categoria: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="TI">Tecnologia da Informação</option>
+                      <option value="Mecânica">Mecânica</option>
+                      <option value="Design">Design</option>
+                      <option value="Administração">Administração</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Vendas">Vendas</option>
+                      <option value="Saúde">Saúde</option>
+                      <option value="Educação">Educação</option>
+                      <option value="Engenharia">Engenharia</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+
+                  {/* Salário */}
+                  <div>
+                    <label htmlFor="edit-salario" className="block text-sm font-medium text-gray-700 mb-1">Salário (opcional)</label>
+                    <input
+                      type="text"
+                      id="edit-salario"
+                      name="salario"
+                      value={vagaToEdit.salario || ''}
+                      onChange={(e) => setVagaToEdit({ ...vagaToEdit, salario: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                <div className="mb-6">
+                  <label htmlFor="edit-descricao" className="block text-sm font-medium text-gray-700 mb-1">Descrição da Vaga</label>
+                  <textarea
+                    id="edit-descricao"
+                    name="descricao"
+                    rows="5"
+                    value={vagaToEdit.descricao || ''}
+                    onChange={(e) => setVagaToEdit({ ...vagaToEdit, descricao: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition resize-y"
+                    required
+                  ></textarea>
+                </div>
+
+                {/* Requisitos */}
+                <div className="mb-6">
+                  <label htmlFor="edit-requisitos" className="block text-sm font-medium text-gray-700 mb-1">Requisitos da Vaga</label>
+                  <textarea
+                    id="edit-requisitos"
+                    name="requisitos"
+                    rows="5"
+                    value={vagaToEdit.requisitos || ''}
+                    onChange={(e) => setVagaToEdit({ ...vagaToEdit, requisitos: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7B2D26] transition resize-y"
+                    required
+                  ></textarea>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditVagaModal(false)}
+                    className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-300 font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#7B2D26] text-white rounded-lg hover:bg-[#9B3D26] transition-colors duration-300 font-medium"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Visualização de Candidatos */}
+      {showCandidatosModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-auto my-8 overflow-hidden transform transition-all duration-300 ease-in-out">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-2xl font-bold text-gray-900">Candidatos para a Vaga</h3>
+              <button
+                onClick={() => setShowCandidatosModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 max-h-[70vh] overflow-y-auto">
+              {candidatosList.length === 0 ? (
+                <div className="text-center text-gray-600 py-8">
+                  <p>Nenhum candidato para esta vaga ainda.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {candidatosList.map((candidato) => (
+                    <div key={candidato.id} className="flex items-center bg-gray-50 p-4 rounded-lg shadow-sm">
+                      <img
+                        src={candidato.foto ? `${process.env.NEXT_PUBLIC_API_URL}${candidato.foto.startsWith('/') ? '' : '/'}${candidato.foto}` : '/placeholder-profile.png'}
+                        alt={candidato.nome_usuario}
+                        className="w-16 h-16 rounded-full object-cover mr-4 border-2 border-[#7B2D26]"
+                      />
+                      <div>
+                        <p className="font-semibold text-lg text-gray-900">{candidato.nome_usuario}</p>
+                        <p className="text-gray-600">{candidato.email}</p>
+                        <p className="text-gray-500 text-sm">Nascimento: {new Date(candidato.data_nascimento).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -565,13 +909,36 @@ export default function Vagas() {
                   </p>
                 </div>
 
-                {!isCandidato ? (
-                  <button
-                    className="w-full bg-gray-300 text-gray-600 py-3 rounded-lg shadow cursor-not-allowed"
-                    disabled
-                  >
-                    Desabilitado Para Empresas
-                  </button>
+                {!isCandidato && vagaSelecionada ? (
+                  <div className="space-y-3">
+                    <button
+                      className="w-full bg-[#7B2D26] hover:bg-[#9B3D26] text-white py-3 rounded-lg shadow transition-colors duration-300 flex items-center justify-center font-medium"
+                      onClick={() => handleVisualizarCandidatos(vagaSelecionada.id)}
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      Visualizar Candidatos
+                    </button>
+                    <button
+                      className="w-full bg-[#a8946b] hover:bg-[#C2B79A] text-white py-3 rounded-lg shadow transition-colors duration-300 flex items-center justify-center font-medium"
+                      onClick={() => handleEditarVaga(vagaSelecionada.id)}
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Editar Vaga
+                    </button>
+                    <button
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg shadow transition-colors duration-300 flex items-center justify-center font-medium"
+                      onClick={() => handleExcluirVaga(vagaSelecionada.id)}
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Excluir Vaga
+                    </button>
+                  </div>
                 ) : isCandidatado ? (
                   <button
                     className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg shadow transition-colors duration-300 flex items-center justify-center"

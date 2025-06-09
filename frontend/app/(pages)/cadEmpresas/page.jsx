@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
+import Cookies from 'js-cookie';
 
 export default function CadastroEmpresas() {
     const [formData, setFormData] = useState({
@@ -18,7 +19,59 @@ export default function CadastroEmpresas() {
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { login } = useAuth();
+    const { login, refreshAuthInfo } = useAuth();
+
+    // Função de validação de CNPJ
+    const validarCNPJ = (cnpj) => {
+        cnpj = cnpj.replace(/\D/g, '');
+
+        if (cnpj.length !== 14) {
+            return false;
+        }
+
+        // Elimina CNPJs com todos os dígitos iguais
+        if (/^(\d)\1{13}$/.test(cnpj)) {
+            return false;
+        }
+
+        // Valida os dígitos verificadores
+        let tamanho = cnpj.length - 2;
+        let numeros = cnpj.substring(0, tamanho);
+        let digitos = cnpj.substring(tamanho);
+        let soma = 0;
+        let pos = tamanho - 7;
+
+        for (let i = tamanho; i >= 1; i--) {
+            soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+            if (pos < 2) {
+                pos = 9;
+            }
+        }
+
+        let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        if (resultado !== parseInt(digitos.charAt(0))) {
+            return false;
+        }
+
+        tamanho = tamanho + 1;
+        numeros = cnpj.substring(0, tamanho);
+        soma = 0;
+        pos = tamanho - 7;
+
+        for (let i = tamanho; i >= 1; i--) {
+            soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
+            if (pos < 2) {
+                pos = 9;
+            }
+        }
+
+        resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        if (resultado !== parseInt(digitos.charAt(1))) {
+            return false;
+        }
+
+        return true;
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -74,10 +127,17 @@ export default function CadastroEmpresas() {
             return;
         }
 
+        // Validar CNPJ antes de enviar
+        const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
+        if (!validarCNPJ(cnpjLimpo)) {
+            setError('CNPJ inválido. Por favor, verifique o número e tente novamente.');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             // Formatar o CNPJ para ter 14 dígitos (adicionar zeros à esquerda se necessário)
-            const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
-            if (cnpjLimpo.length !== 14) {
+            if (cnpjLimpo.length !== 14) { // Esta validação agora é redundante com validarCNPJ, mas mantida por segurança
                 setError('CNPJ deve conter 14 dígitos');
                 setIsLoading(false);
                 return;
@@ -118,18 +178,25 @@ export default function CadastroEmpresas() {
 
             setSuccess('Cadastro realizado com sucesso! Redirecionando...');
 
-            try {
-                if (!formData.email || !formData.senha) {
-                    throw new Error('Email e senha são obrigatórios para login');
-                }
+            // Usar os dados retornados do registro para login automático
+            const { token, empresa } = data;
 
-                await login(formData.email, formData.senha, 'empresa');
+            if (token && empresa) {
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('authEntity', JSON.stringify({
+                    ...empresa,
+                    tipo: 'empresa'
+                }));
+                localStorage.setItem('authType', 'empresa');
+                Cookies.set('authToken', token, { expires: 7 }); // Ajuste conforme a duração do token
+
+                refreshAuthInfo(); // Atualiza o estado global de autenticação
+
                 setTimeout(() => {
                     router.push('/');
                 }, 1500);
-            } catch (loginError) {
-                console.error('Erro no login automático:', loginError);
-                // Não mostrar erro se o cadastro foi bem-sucedido
+            } else {
+                console.error('Dados de autenticação incompletos na resposta de registro:', data);
                 setSuccess('Cadastro realizado com sucesso! Redirecionando para o login...');
                 setTimeout(() => {
                     router.push('/login');

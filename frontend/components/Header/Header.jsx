@@ -384,7 +384,10 @@ export default function Header() {
                         </div>
                       </div>
                     </div>
-                    <Link href="/perfil" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
+                    <Link 
+                      href={authInfo?.entity?.tipo === 'empresa' ? "/perfil-empresa" : "/perfil"} 
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
+                    >
                       <User className="h-4 w-4 mr-2" /> Ver perfil
                     </Link>
                     <Link href="/config" className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors">
@@ -451,7 +454,7 @@ export default function Header() {
               </span>
             </Link>
             <Link
-              href="/perfil"
+              href={authInfo?.entity?.tipo === 'empresa' ? "/perfil-empresa" : "/perfil"}
               className="flex items-center px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
             >
               <User className="h-5 w-5 mr-3" />
