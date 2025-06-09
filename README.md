@@ -4,14 +4,12 @@
 
 JobIn é uma empresa de vagas, com o principal objetivo de conectar alunos de cursos técnicos que estão em busca do primeiro emprego e empresas que estão em busca de jovens para alavancar seu negocio!
 
+### 💻 Deploy (Vercel)
 
-### 📋 Estrutura do Projeto
+A aplicação está implantada na Vercel e pode ser acessada em:  
+🔗 https://jobin-mu.vercel.app
 
-- `Backend: API Node.js/Express` 
-- `Frontend: Aplicação Next.js` 
-- `Database: MySql` 
-
-### ⚙️ Implantação (Desenvolvimento Local)
+### ⚙️ Implementação (Desenvolvimento Local)
 
 - Clonar o projeto
 
@@ -35,21 +33,28 @@ cd frontend
 npm i
 npm run dev
 ```
-- 🚨 Atenção (.env & env.local)
+- 🚨 Configurar .env & .env.local
 
-Verifique na documentação do projeto e adicione os seguintes arquivos na raiz de cada pasta
 
 ```bash
+
+Atenção verifique na documentação, e adicione os seguintes arquivos na raiz das seguintes pastas
 backend -> .env 
 frontend -> .env.local
 ```
 
+### 📋 Estrutura do Projeto
+
+- `Backend - API Node.js/Express` 
+- `Frontend - Aplicação Next.js` 
+- `Database - MySql` 
+
+
 ### 🛠️ Tecnologias Utilizadas
 
-Mencione as ferramentas que você usou para criar seu projeto
-
-* [Next.js](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [TailwindCSS](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [Node.js](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [MySQL](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
-* [Render](http://www.dropwizard.io/1.0.2/docs/) - O framework web usado
+- `Vercel - A plataforma de deploy frontend usada`
+- `MySql - Banco de dados relacional usado`
+- `Render - Plataforma de hospedagem usada`
+- `TailwindCSS - Framework de estilização`
+- `Node.js - Ambiente de execução backend`
+- `Next.js - O framework web usado`
