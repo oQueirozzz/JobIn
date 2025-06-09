@@ -70,3 +70,5 @@ frontend -> .env.local
 | <img src="https://github.com/Charlotte0717.png" width="100" height="100" alt="Charlotte Guedes" /> | <img src="https://github.com/gustavotorelli.png" width="100" height="100" alt="Gustavo Torelli" /> | <img src="https://github.com/oQueirozzz.png" width="100" height="100" alt="Renan Queiroz" /> |
 |:------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
 |       [Charlotte Guedes](https://github.com/Charlotte0717)        |        [Gustavo Torelli](https://github.com/gustavotorelli)        |        [Renan Queiroz](https://github.com/oQueirozzz)          |
+
+© 2025 JobIn. Todos os direitos reservados.
