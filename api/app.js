@@ -38,10 +38,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir arquivos estáticos
-const staticUploadsPath = path.join(__dirname, 'uploads');
-console.log(`[APP] Servindo arquivos estáticos de: ${staticUploadsPath}`);
-app.use('/uploads', express.static(staticUploadsPath));
+// Configurar diretório de uploads como estático
+app.use('/uploads', express.static(path.join(__dirname, '..', 'frontend', 'public', 'uploads')));
 
 // Routes
 app.use('/api/usuarios', usuarioRoutes);

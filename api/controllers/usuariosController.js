@@ -5,6 +5,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Empresa from '../models/Empresa.js';
 import path from 'path';
+import fs from 'fs';
+
+// Importar para definir __dirname em módulos ES
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Configuração simplificada sem JWT
 // Removida a geração de token para simplificar a API
@@ -273,44 +281,88 @@ export const loginUsuario = async (req, res) => {
 // Atualizar um usuário
 export const updateUsuario = async (req, res) => {
   try {
-    const usuarioId = req.params.id;
-    const usuario = await Usuario.findById(usuarioId);
-
-    if (!usuario) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    // Preparar dados para atualização
+    const { id } = req.params;
     const dadosAtualizacao = { ...req.body };
-
-    // Processar arquivos se existirem
+    
+    // Remover campos que não devem ser atualizados diretamente
+    delete dadosAtualizacao.senha;
+    delete dadosAtualizacao.id;
+    delete dadosAtualizacao.tipo_usuario;
+    delete dadosAtualizacao.data_criacao;
+    delete dadosAtualizacao.data_atualizacao;
+    
+    // Processar arquivos se houver upload
     if (req.files) {
       if (req.files.foto && req.files.foto[0]) {
-        dadosAtualizacao.foto = req.files.foto[0].path;
+        dadosAtualizacao.foto = `/uploads/usuarios/${req.files.foto[0].filename}`;
       }
       if (req.files.curriculo && req.files.curriculo[0]) {
-        dadosAtualizacao.curriculo = req.files.curriculo[0].path;
+        dadosAtualizacao.curriculo = `/uploads/usuarios/${req.files.curriculo[0].filename}`;
       }
       if (req.files.certificados && req.files.certificados[0]) {
-        dadosAtualizacao.certificados = req.files.certificados[0].path;
+        dadosAtualizacao.certificados = `/uploads/usuarios/${req.files.certificados[0].filename}`;
       }
     }
 
-    // Atualizar dados do usuário usando o método estático update
-    const dadosAtualizados = await Usuario.update(usuarioId, dadosAtualizacao);
-
-    // Se houve alteração no currículo, criar notificação
-    if (req.files && req.files.curriculo && req.files.curriculo[0]) {
-      await NotificacaoService.criarNotificacaoPerfilAtualizado(usuarioId, 0, false);
+    // Se curriculo for explicitamente null, remover o arquivo antigo
+    if (dadosAtualizacao.curriculo === null) {
+      console.log('Tentando remover currículo antigo...');
+      const usuario = await Usuario.findById(id);
+      if (usuario && usuario.curriculo) {
+        console.log('Currículo existente no DB:', usuario.curriculo);
+        const oldPath = path.join(__dirname, '..', '..', 'frontend', 'public', usuario.curriculo);
+        console.log('Caminho antigo do currículo (full):', oldPath);
+        if (fs.existsSync(oldPath)) {
+          console.log('Arquivo de currículo antigo encontrado. Excluindo...');
+          try {
+            fs.unlinkSync(oldPath);
+            console.log('Currículo antigo excluído com sucesso do disco.');
+          } catch (unlinkError) {
+            console.error('ERRO ao excluir currículo antigo do disco:', unlinkError);
+            // Não rethrow para não impedir a atualização do DB se o problema for apenas o arquivo
+          }
+        } else {
+          console.log('Arquivo de currículo antigo NÃO encontrado no caminho especificado:', oldPath);
+        }
+      } else {
+        console.log('Usuário ou currículo não encontrado para remoção.');
+      }
     }
 
-    res.json({
-      message: 'Usuário atualizado com sucesso',
-      usuario: dadosAtualizados
-    });
+    // Se foto for explicitamente null, remover o arquivo antigo
+    if (dadosAtualizacao.foto === null) {
+      const usuario = await Usuario.findById(id);
+      if (usuario && usuario.foto) {
+        const oldPath = path.join(__dirname, '..', '..', 'frontend', 'public', usuario.foto);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
+    // Se certificados for explicitamente null, remover o arquivo antigo
+    if (dadosAtualizacao.certificados === null) {
+      const usuario = await Usuario.findById(id);
+      if (usuario && usuario.certificados) {
+        const oldPath = path.join(__dirname, '..', '..', 'frontend', 'public', usuario.certificados);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+    
+    console.log('Dados a serem atualizados no DB:', dadosAtualizacao); // LOG para depuração
+    const usuario = await Usuario.update(id, dadosAtualizacao);
+    
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    
+    console.log('Objeto de usuário retornado pelo DB:', usuario); // LOG para depuração
+    res.json(usuario);
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
   }
 };
 

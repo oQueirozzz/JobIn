@@ -107,6 +107,7 @@ export default function Perfil() {
             const porcentagemCompletaPerfil = calcularPorcentagemPerfil(dadosUsuario, obrigatorios);
             console.log('Porcentagem Completa Calculada (perfil):', porcentagemCompletaPerfil);
             console.log('---------------------------------------');
+            console.log('authInfo.entity.curriculo on load:', authInfo.entity.curriculo);
         }
     }, [authInfo, isLoading, router]);
 
@@ -251,12 +252,72 @@ export default function Perfil() {
 
             // Para arquivos que não são imagens, apenas armazenar o arquivo
             if (field === 'curriculo') {
-                setFormData(prev => {
-                    const newData = { ...prev, [field]: file };
-                    verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
-                    return newData;
-                });
-                showMessage('Currículo selecionado com sucesso!', 'success');
+                setIsSaving(true);
+                try {
+                    const userId = authInfo?.entity?.id;
+                    if (!userId) {
+                        showMessage('ID do usuário não encontrado!', 'error');
+                        setIsSaving(false);
+                        return;
+                    }
+
+                    const token = localStorage.getItem('authToken');
+                    if (!token) {
+                        showMessage('Token de autenticação não encontrado', 'error');
+                        setIsSaving(false);
+                        return;
+                    }
+
+                    const formDataToSend = new FormData();
+                    formDataToSend.append('curriculo', file);
+                    // Se o seu backend espera outros campos mesmo para uploads de arquivo único,
+                    // você pode adicionar os campos necessários do formData aqui.
+                    // Exemplo: formDataToSend.append('nome', formData.nome);
+
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            // 'Content-Type': 'multipart/form-data' é automaticamente definido pelo navegador para FormData
+                        },
+                        body: formDataToSend
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Erro ao enviar currículo');
+                    }
+
+                    const data = await response.json();
+                    console.log('Resposta do backend após upload de currículo:', data);
+
+                    // Atualizar o estado local com o novo caminho do currículo retornado pelo backend
+                    setFormData(prev => {
+                        const newData = { ...prev, curriculo: data.curriculo || file }; // Use o caminho do backend se disponível
+                        verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
+                        return newData;
+                    });
+
+                    // Atualizar localStorage e contexto de autenticação
+                    const authEntity = JSON.parse(localStorage.getItem('authEntity'));
+                    const updatedEntity = {
+                        ...authEntity,
+                        curriculo: data.curriculo || null // Garante que o path do currículo seja salvo
+                    };
+                    localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
+
+                    if (authInfo && authInfo.entity) {
+                        authInfo.entity = updatedEntity;
+                    }
+                    refreshAuthInfo(); // Forçar atualização do authInfo para refletir os dados mais recentes
+
+                    showMessage('Currículo enviado com sucesso e perfil atualizado!', 'success');
+                } catch (error) {
+                    console.error('Erro no upload automático do currículo:', error);
+                    showMessage(error.message || 'Erro ao fazer upload do currículo. Tente novamente.', 'error');
+                } finally {
+                    setIsSaving(false);
+                }
                 return;
             }
 
@@ -299,7 +360,7 @@ export default function Perfil() {
                 return;
             }
 
-            // Se for um caminho de arquivo, baixa do servidor
+            // Se for um caminho relativo (começa com /)
             if (data?.startsWith?.('/')) {
                 window.open(`${process.env.NEXT_PUBLIC_API_URL}${data}`, '_blank');
                 return;
@@ -570,6 +631,37 @@ export default function Perfil() {
         }
     };
 
+    const [candidaturas, setcandidaturas] = useState([]);
+    const [loadingCandidaturas, setLoadingCandidaturas] = useState(true);
+
+    useEffect(() => {
+        async function fetchcandidaturas() {
+            if (!authInfo?.entity?.id) {
+                setLoadingCandidaturas(false);
+                return;
+            }
+            try {
+                setLoadingCandidaturas(true);
+                // Endpoint para buscar candidaturas do usuário logado
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/usuario/${authInfo.entity.id}`);
+                const data = await res.json();
+
+                const ordenadas = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                setcandidaturas(ordenadas);
+            } catch (err) {
+                console.error('Erro ao buscar candidaturas:', err);
+                // Opcional: mostrar mensagem de erro para o usuário
+            } finally {
+                setLoadingCandidaturas(false);
+            }
+        }
+
+        // Busca candidaturas apenas se o usuário for do tipo 'usuario' e não estiver carregando info de autenticação
+        if (!isLoading && authInfo?.entity?.id && authInfo.entity.tipo === 'usuario') {
+            fetchcandidaturas();
+        }
+    }, [authInfo, isLoading]);
+
     const formatarCPF = (cpf) => {
         if (!cpf) return '';
         // Remove tudo que não for número
@@ -838,8 +930,10 @@ export default function Perfil() {
                                             if (formData.curriculo instanceof File) {
                                                 const url = URL.createObjectURL(formData.curriculo);
                                                 window.open(url, '_blank');
-                                            } else {
+                                            } else if (formData.curriculo) {
                                                 downloadFile(formData.curriculo, 'curriculo');
+                                            } else {
+                                                showMessage('Nenhum currículo disponível para download', 'error');
                                             }
                                         }}
                                         className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm flex items-center transform hover:scale-105 font-medium"
@@ -880,13 +974,15 @@ export default function Perfil() {
                                                     throw new Error('Erro ao remover currículo');
                                                 }
 
+                                                const data = await response.json();
+
                                                 // Atualizar estado local
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     curriculo: null
                                                 }));
 
-                                                // Atualizar localStorage e contexto de autenticação
+                                                // Atualizar localStorage
                                                 const authEntity = JSON.parse(localStorage.getItem('authEntity'));
                                                 const updatedEntity = {
                                                     ...authEntity,
@@ -894,17 +990,15 @@ export default function Perfil() {
                                                 };
                                                 localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
 
+                                                // Atualizar o contexto de autenticação
                                                 if (authInfo && authInfo.entity) {
                                                     authInfo.entity = updatedEntity;
                                                 }
 
                                                 showMessage('Currículo removido com sucesso!', 'success');
                                                 
-                                                // Atualizar o estado local sem recarregar a página
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    curriculo: null
-                                                }));
+                                                // Forçar atualização do authInfo
+                                                refreshAuthInfo();
                                             } catch (error) {
                                                 console.error('Erro ao remover currículo:', error);
                                                 showMessage('Erro ao remover currículo. Tente novamente.', 'error');
@@ -929,7 +1023,10 @@ export default function Perfil() {
                             <input
                                 type="file"
                                 id="curriculo-input"
-                                onChange={(e) => handleFileChange(e, 'curriculo')}
+                                onChange={(e) => {
+                                    handleFileChange(e, 'curriculo');
+                                    e.target.value = null; // Clear the input value
+                                }}
                                 className="hidden"
                                 accept=".pdf,.doc,.docx"
                             />
@@ -1058,27 +1155,65 @@ export default function Perfil() {
                 </div>
             )}
 
-            {/* Candidaturas */}
-            <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 mb-8">
+              {/* Minhas candidaturas*/}
+              <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-between items-center mb-4">
                     <div>
-                        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Candidaturas</h2>
-                        <p className="text-gray-600 mt-1">Suas candidaturas ativas</p>
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Minhas candidaturas</h2>
                     </div>
                 </div>
-                <div className="space-y-3">
-                    {usuario.candidaturas && usuario.candidaturas.length > 0 ? (
-                        usuario.candidaturas.map((candidatura, index) => (
-                            <div key={index} className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-                                <h3 className="font-medium text-gray-800">{candidatura.vaga}</h3>
-                                <p className="text-gray-600 mt-1">{candidatura.empresa}</p>
-                                <p className="text-[#7B2D26] font-medium mt-2">{candidatura.status}</p>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm text-center">
-                            <p className="text-gray-600">Nenhuma candidatura encontrada.</p>
+
+                <div className='md:grid md:grid-cols-2 flex flex-col'>
+                    {loadingCandidaturas ? (
+                        <div className="text-center py-8 col-span-full">
+                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#7B2D26] mx-auto"></div>
+                            <p className="mt-4 text-gray-600">Carregando candidaturas...</p>
                         </div>
+                    ) : candidaturas.length > 0 ? (
+                        <>
+                            {candidaturas.map((candidatura) => (
+                                <div
+                                    key={candidatura.id}
+                                    className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col m-2"
+                                >
+                                    <div className='flex items-center justify-between mb-2'>
+                                        <div className='flex items-center'>
+                                            <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                            <h1 className='font-semibold text-lg'>
+                                                {candidatura.nome_vaga?.length > 30
+                                                    ? candidatura.nome_vaga.substring(0, 30) + '...'
+                                                    : candidatura.nome_vaga || 'Nome da Vaga Não Informado'}
+                                            </h1>
+                                        </div>
+                                        <div className=''>
+                                            <a href={`/vagas?vaga=${candidatura.id_vaga}`} className="text-[#7B2D26] hover:text-[#9B3D26] transition-colors duration-300">
+                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div className='flex flex-col space-y-1 text-sm text-gray-600'>
+                                        <div className='flex items-center'>
+                                            <svg className="w-4 h-4 mr-2 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            <span>Empresa: {candidatura.nome_empresa || 'Não informada'}</span>
+                                        </div>
+                                        <div className='flex items-center'>
+                                            <svg className="w-4 h-4 mr-2 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            </svg>
+                                            <span>Área: {candidatura.categoria || 'Não informada'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    ) : (
+                        <h1 className="text-gray-700 leading-relaxed col-span-full">Nenhuma candidatura feita!</h1>
                     )}
                 </div>
             </div>

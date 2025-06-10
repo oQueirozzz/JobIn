@@ -42,7 +42,7 @@ class Candidatura {
     let client;
     try {
       client = await pool.connect();
-      const query = `SELECT c.*, v.nome_vaga, v.nome_empresa 
+      const query = `SELECT c.*, v.nome_vaga, v.nome_empresa, v.categoria 
                      FROM candidaturas c 
                      JOIN vagas v ON c.id_vaga = v.id 
                      WHERE c.id_usuario = $1`;
