@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import ModalCandidatos from '../../components/ModalCandidatos';
 
 export default function Vagas() {
   const searchParams = useSearchParams();
@@ -23,6 +24,8 @@ export default function Vagas() {
   const [vagaToEdit, setVagaToEdit] = useState(null);
   const [showCandidatosModal, setShowCandidatosModal] = useState(false);
   const [candidatosList, setCandidatosList] = useState([]);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [candidatoAtualizando, setCandidatoAtualizando] = useState(null);
 
   const detalhesRef = useRef(null);
 
@@ -338,6 +341,51 @@ export default function Vagas() {
     }
   }
 
+  async function handleAtualizarStatus(candidaturaId, novoStatus) {
+    try {
+      setIsUpdatingStatus(true);
+      setCandidatoAtualizando(candidaturaId);
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        mostrarMensagem('Autenticação necessária para atualizar status.', 'error');
+        setTimeout(redirecionarParaLogin, 1500);
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/candidaturas/${candidaturaId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: novoStatus })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Erro ao atualizar status');
+      }
+
+      // Atualizar a lista de candidatos
+      const updatedCandidatos = candidatosList.map(candidato => {
+        if (candidato.id === candidaturaId) {
+          return { ...candidato, status: novoStatus };
+        }
+        return candidato;
+      });
+      setCandidatosList(updatedCandidatos);
+
+      mostrarMensagem('Status atualizado com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      mostrarMensagem(error.message || 'Erro ao atualizar status. Tente novamente.', 'error');
+    } finally {
+      setIsUpdatingStatus(false);
+      setCandidatoAtualizando(null);
+    }
+  }
+
   const vagasFiltradas = vagas.filter(vaga => {
     const filtraCategoria = categoria ? vaga.categoria === categoria : true;
     const filtraTipo = tipo ? vaga.tipo_vaga.trim().toLowerCase() === tipo.trim().toLowerCase() : true;
@@ -639,45 +687,14 @@ export default function Vagas() {
 
       {/* Modal de Visualização de Candidatos */}
       {showCandidatosModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-auto my-8 overflow-hidden transform transition-all duration-300 ease-in-out">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-2xl font-bold text-gray-900">Candidatos para a Vaga</h3>
-              <button
-                onClick={() => setShowCandidatosModal(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
-              {candidatosList.length === 0 ? (
-                <div className="text-center text-gray-600 py-8">
-                  <p>Nenhum candidato para esta vaga ainda.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {candidatosList.map((candidato) => (
-                    <div key={candidato.id} className="flex items-center bg-gray-50 p-4 rounded-lg shadow-sm">
-                      <img
-                        src={candidato.foto ? `${process.env.NEXT_PUBLIC_API_URL}${candidato.foto.startsWith('/') ? '' : '/'}${candidato.foto}` : '/placeholder-profile.png'}
-                        alt={candidato.nome_usuario}
-                        className="w-16 h-16 rounded-full object-cover mr-4 border-2 border-[#7B2D26]"
-                      />
-                      <div>
-                        <p className="font-semibold text-lg text-gray-900">{candidato.nome_usuario}</p>
-                        <p className="text-gray-600">{candidato.email}</p>
-                        <p className="text-gray-500 text-sm">Nascimento: {new Date(candidato.data_nascimento).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <ModalCandidatos
+          isOpen={showCandidatosModal}
+          onClose={() => setShowCandidatosModal(false)}
+          candidatos={candidatosList}
+          onAtualizarStatus={handleAtualizarStatus}
+          isUpdatingStatus={isUpdatingStatus}
+          candidatoAtualizando={candidatoAtualizando}
+        />
       )}
 
       {/* Header da página */}
