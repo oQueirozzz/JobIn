@@ -165,13 +165,16 @@ export default function Header() {
   };
 
   const getInitials = (name) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+    if (!name) return '';
+    const parts = name.split(' ').filter(p => p.length > 0);
+    let initials = '';
+    if (parts.length > 0) {
+        initials += parts[0][0]; // First initial of the first name
+        if (parts.length > 1) {
+            initials += parts[1][0]; // First initial of the first surname
+        }
+    }
+    return initials.toUpperCase();
   };
 
   const handleLogout = () => {
@@ -338,20 +341,10 @@ export default function Header() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
                   <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/10 hover:ring-white/30 transition-all duration-200">
-                    {authInfo?.entity?.foto ? (
-                      <Image
-                        src={authInfo.entity.foto}
-                        alt="Foto do perfil"
-                        layout="fill"
-                        className="object-cover"
-                        quality={100}
-                        priority
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
-                        {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
-                      </div>
-                    )}
+                    {/* Always display initials */}
+                    <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
+                      {authInfo?.entity ? getInitials(authInfo.entity.nome) : 'U'}
+                    </div>
                   </div>
                   <div className="text-xs mt-1 flex items-center">
                     Eu <ChevronDown className="h-3 w-3 ml-0.5" />
@@ -363,20 +356,10 @@ export default function Header() {
                     <div className="px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center space-x-3">
                         <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-100">
-                          {authInfo?.entity?.foto ? (
-                            <Image
-                              src={authInfo.entity.foto}
-                              alt={authInfo.entity.nome}
-                              layout="fill"
-                              className="object-cover"
-                              quality={100}
-                              priority
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
-                              {getInitials(authInfo?.entity?.nome || 'U')}
-                            </div>
-                          )}
+                          {/* Always display initials */}
+                          <div className="w-full h-full bg-[#7B2D26] text-white text-center text-lg font-bold leading-10">
+                            {getInitials(authInfo?.entity?.nome || 'U')}
+                          </div>
                         </div>
                         <div>
                           <p className="font-medium text-sm">{authInfo?.entity?.nome || 'Usuário'}</p>

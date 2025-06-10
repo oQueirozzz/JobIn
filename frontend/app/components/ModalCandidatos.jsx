@@ -16,7 +16,7 @@ export default function ModalCandidatos({
   const [candidatoSelecionado, setCandidatoSelecionado] = useState(null);
 
   const handleVerPerfil = (candidatoId) => {
-    setCandidatoSelecionado(candidatoId);
+    router.push(`/candidato/${candidatoId}`);
   };
 
   const handleFecharPerfil = () => {

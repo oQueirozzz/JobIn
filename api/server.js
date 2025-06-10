@@ -14,7 +14,7 @@ import notificacoesRoutes from './routes/notificacoesRoutes.js';
 import rotasRoutes from './routes/rotas.js';
 import pontosRotasRoutes from './routes/pontosRotas.js';
 import postsRoutes from './routes/posts.js';
-import './jobs/notificacaoTeste.js';
+
 
 dotenv.config();
 

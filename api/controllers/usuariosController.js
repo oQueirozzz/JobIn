@@ -31,8 +31,30 @@ export const getUsuarioById = async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     
-    console.log('Usuário encontrado:', usuario);
-    res.status(200).json(usuario);
+    // Robustly parse certificados to ensure it's an array before sending to frontend
+    let parsedCertificados = [];
+    if (usuario.certificados) {
+      try {
+        let tempCertificados = JSON.parse(usuario.certificados);
+        parsedCertificados = Array.isArray(tempCertificados)
+          ? tempCertificados
+          : JSON.parse(tempCertificados);
+      } catch (parseError) {
+        console.warn('Backend: Could not parse certificados as JSON. Treating as plain text or single item.', parseError);
+        parsedCertificados = [usuario.certificados];
+      }
+    }
+    if (!Array.isArray(parsedCertificados)) {
+      parsedCertificados = [];
+    }
+
+    const usuarioToSend = {
+      ...usuario,
+      certificados: parsedCertificados
+    };
+    
+    console.log('Usuário encontrado e certificados processados:', usuarioToSend);
+    res.status(200).json(usuarioToSend);
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
     res.status(500).json({ message: 'Erro ao buscar usuário', error: error.message });
@@ -130,7 +152,6 @@ export const registerUsuario = async (req, res) => {
       habilidades: usuario.habilidades || null,
       curriculo: usuario.curriculo || null,
       certificados: usuario.certificados || null,
-      foto: usuario.foto || null,
       tipo: usuario.tipo
     });
   } catch (error) {
@@ -219,7 +240,6 @@ export const loginUsuario = async (req, res) => {
       descricao: usuario.descricao || '',
       curriculo: usuario.curriculo || null,
       certificados: usuario.certificados || null,
-      foto: usuario.foto ? `/uploads/usuarios/${path.basename(usuario.foto)}` : null,
       tipo: 'usuario',
       autenticado: true
     };
@@ -263,9 +283,6 @@ export const updateUsuario = async (req, res) => {
 
     // Processar arquivos se existirem
     if (req.files) {
-      if (req.files.foto && req.files.foto[0]) {
-        dadosAtualizacao.foto = req.files.foto[0].path;
-      }
       if (req.files.curriculo && req.files.curriculo[0]) {
         dadosAtualizacao.curriculo = req.files.curriculo[0].path;
       }

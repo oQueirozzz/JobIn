@@ -26,7 +26,7 @@ class Notificacao {
   // Buscar notificações por usuário
   static async findByUsuario(usuarioId) {
     try {
-      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuario_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = $1 ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por usuário:', error);
@@ -37,7 +37,7 @@ class Notificacao {
   // Buscar notificações não lidas por usuário
   static async findNaoLidasByUsuario(usuarioId) {
     try {
-      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuario_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE usuarios_id = $1 AND lida = false ORDER BY data_notificacao DESC', [usuarioId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações não lidas:', error);
@@ -48,7 +48,7 @@ class Notificacao {
   // Buscar notificações por empresa
   static async findByEmpresa(empresaId) {
     try {
-      const { rows } = await pool.query('SELECT * FROM notificacao WHERE empresa_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
+      const { rows } = await pool.query('SELECT * FROM notificacao WHERE empresas_id = $1 ORDER BY data_notificacao DESC', [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar notificações por empresa:', error);
@@ -72,7 +72,7 @@ class Notificacao {
     const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
     
     const query = `
-      INSERT INTO notificacao (usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
+      INSERT INTO notificacao (usuarios_id, empresas_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
@@ -110,7 +110,7 @@ class Notificacao {
   static async marcarTodasComoLidas(usuarioId) {
     try {
       const { rows } = await pool.query(
-        'UPDATE notificacao SET lida = TRUE WHERE usuario_id = $1 RETURNING *',
+        'UPDATE notificacao SET lida = TRUE WHERE usuarios_id = $1 RETURNING *',
         [usuarioId]
       );
       return rows.length;
@@ -189,7 +189,7 @@ class Notificacao {
       FROM notificacao n
       LEFT JOIN usuarios u ON n.remetente_id = u.id AND n.remetente_tipo = 'user'
       LEFT JOIN empresas e ON n.remetente_id = e.id AND n.remetente_tipo = 'company'
-      WHERE n.usuario_id = $1 AND n.lida = false
+      WHERE n.usuarios_id = $1 AND n.lida = false
       ORDER BY n.data_notificacao DESC
     `;
 
@@ -204,7 +204,7 @@ class Notificacao {
 
   static async deleteByEmpresaId(empresaId) {
     try {
-      await pool.query('DELETE FROM notificacao WHERE empresa_id = $1', [empresaId]);
+      await pool.query('DELETE FROM notificacao WHERE empresas_id = $1', [empresaId]);
     } catch (error) {
       console.error('Erro ao excluir notificações da empresa:', error);
       throw error;

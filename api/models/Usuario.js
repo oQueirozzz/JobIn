@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 class Usuario {
   static async findAll() {
     try {
-      const { rows } = await pool.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados FROM usuarios');
+      const { rows } = await pool.query('SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, certificados, curriculo FROM usuarios');
       return rows;
     } catch (error) {
       throw error;
@@ -22,7 +22,7 @@ class Usuario {
         return null;
       }
 
-      let queryText = 'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, foto, certificados';
+      let queryText = 'SELECT id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, area_interesse, tipo, certificados, curriculo';
       if (includePassword) {
         queryText += ', senha'; // Adiciona a senha se solicitado
       }
@@ -43,7 +43,7 @@ class Usuario {
   static async findByEmail(email) {
     try {
       const { rows } = await pool.query(
-        'SELECT id, nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, foto, certificados FROM usuarios WHERE email = $1',
+        'SELECT id, nome, email, senha, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, certificados FROM usuarios WHERE email = $1',
         [email]
       );
       return rows[0];
@@ -92,7 +92,6 @@ class Usuario {
         formacao: userData.formacao || null,
         curriculo: userData.curriculo || null,
         area_interesse: userData.area_interesse || null,
-        foto: userData.foto || null,
         certificados: userData.certificados || null
       };
 
@@ -104,7 +103,7 @@ class Usuario {
       const query = `
         INSERT INTO usuarios (${campos.join(', ')})
         VALUES (${placeholders})
-        RETURNING id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, foto, certificados
+        RETURNING id, nome, email, cpf, data_nascimento, habilidades, descricao, formacao, curriculo, area_interesse, tipo, certificados
       `;
 
       console.log('Query de criação:', query);
@@ -190,16 +189,6 @@ class Usuario {
       if ('tipo' in userData) {
         updateFields.push(`tipo = $${paramCount}`);
         values.push(userData.tipo);
-        paramCount++;
-      }
-      if ('foto' in userData) {
-        updateFields.push(`foto = $${paramCount}`);
-        values.push(userData.foto);
-        paramCount++;
-      }
-      if ('certificados' in userData) {
-        updateFields.push(`certificados = $${paramCount}`);
-        values.push(userData.certificados);
         paramCount++;
       }
 
