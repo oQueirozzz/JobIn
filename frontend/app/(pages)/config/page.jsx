@@ -118,7 +118,7 @@ export default function Config() {
                     </svg>
                 </div>
 
-                <div className="p-8 space-y-8 flex-1">
+                <div className="p-8 space-y-6 flex-1">
                     {/* Seção de Segurança */}
                     <div className="bg-gray-50 border border-gray-100 p-6 rounded-2xl shadow-inner">
                         <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center">
@@ -146,59 +146,6 @@ export default function Config() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </Link>
-                    </div>
-
-                    {/* Seção de Preferências */}
-                    <div className="bg-gray-50 p-6 rounded-2xl shadow-inner border border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center">
-                            <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.331.83 2.802 2.604a1.724 1.724 0 000 2.575c.942 1.543-.83 3.331-2.604 2.802a1.724 1.724 0 00-1.066 2.573c.942 1.543-.83 3.331-2.604 2.802a1.724 1.724 0 00-2.575 0c-1.543.942-3.331-.83-2.802-2.604a1.724 1.724 0 000-2.575c-.942-1.543.83-3.331 2.604-2.802a1.724 1.724 0 001.066-2.573z"></path>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Preferências
-                        </h2>
-
-                        <div className="space-y-4">
-                            {/* Notificações */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
-                                <div className="flex items-center">
-                                    <svg className="w-6 h-6 mr-4 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                    </svg>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-lg">Notificações</h3>
-                                        <p className="text-sm text-gray-500 mt-1">Receba alertas sobre novas vagas, mensagens e atualizações importantes.</p>
-                                    </div>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" />
-                                    <div className="group peer bg-gray-200 rounded-full duration-300 w-14 h-7 outline-none
-                                        after:duration-300 after:bg-white after:rounded-full after:absolute after:h-5 after:w-5 after:top-1 after:left-1
-                                        peer-checked:after:translate-x-7 peer-checked:bg-[#7B2D26] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7B2D26]/50">
-                                    </div>
-                                </label>
-                            </div>
-
-                            {/* Modo Escuro */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
-                                <div className="flex items-center">
-                                    <svg className="w-6 h-6 mr-4 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                                    </svg>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800 text-lg">Modo Escuro</h3>
-                                        <p className="text-sm text-gray-500 mt-1">Alterne entre o tema claro e escuro para uma melhor experiência visual.</p>
-                                    </div>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" />
-                                    <div className="group peer bg-gray-200 rounded-full duration-300 w-14 h-7 outline-none
-                                        after:duration-300 after:bg-white after:rounded-full after:absolute after:h-5 after:w-5 after:top-1 after:left-1
-                                        peer-checked:after:translate-x-7 peer-checked:bg-[#7B2D26] peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7B2D26]/50">
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Seção de Gerenciamento da Conta */}

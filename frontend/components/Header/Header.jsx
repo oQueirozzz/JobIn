@@ -252,12 +252,6 @@ export default function Header() {
                 label="Vagas"
                 href="/vagas"
               />
-              <NavItem
-                icon={<MessageSquare className="h-5 w-5 mt-1" />}
-                label="Mensagens"
-                href="/chat"
-              />
-
               {/* Notificações */}
               <div className="relative">
                 <div
@@ -396,14 +390,7 @@ export default function Header() {
           } overflow-hidden`}
       >
         <div className="px-4 py-2 space-y-2">
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-300" />
-            <input
-              type="text"
-              placeholder="Pesquisar..."
-              className="w-full bg-white/10 text-white placeholder-gray-300 rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 focus:bg-white/20 transition-all duration-200"
-            />
-          </div>
+       
           <div className="space-y-1">
             <Link
               href="/dashboard"
@@ -418,13 +405,6 @@ export default function Header() {
             >
               <Briefcase className="h-5 w-5 mr-3" />
               Vagas
-            </Link>
-            <Link
-              href="/chat"
-              className="flex items-center px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
-            >
-              <MessageSquare className="h-5 w-5 mr-3" />
-              Mensagens
             </Link>
             <Link
               href="/notificacoes"

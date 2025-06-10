@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
 import Image from 'next/image';
+import { Link } from 'lucide-react';
 
 export default function PerfilEmpresa() {
     const router = useRouter();
@@ -29,6 +30,7 @@ export default function PerfilEmpresa() {
     const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+
     // Função utilitária para calcular a porcentagem do perfil
     const calcularPorcentagemPerfil = (dados, camposObrigatorios) => {
         const totalCampos = Object.keys(camposObrigatorios).length;
@@ -44,6 +46,27 @@ export default function PerfilEmpresa() {
         return Math.round((camposPreenchidos / totalCampos) * 100);
     };
 
+    const [vagas, setVagas] = useState([]);
+
+
+
+    useEffect(() => {
+        async function fetchVagas() {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`);
+                const data = await res.json();
+
+                // Ordenar por data de criação, se quiser
+                const ordenadas = data.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
+                setVagas(ordenadas);
+            } catch (err) {
+                console.error('Erro ao buscar vagas:', err);
+            }
+        }
+
+        fetchVagas();
+    }, []);
+
     useEffect(() => {
         if (!isLoading && !authInfo?.entity) {
             router.push('/login');
@@ -52,7 +75,7 @@ export default function PerfilEmpresa() {
 
         if (authInfo?.entity) {
             const dadosEmpresa = authInfo.entity;
-            
+
             // Verificar se é realmente uma empresa
             if (dadosEmpresa.tipo !== 'empresa') {
                 router.push('/perfil');
@@ -92,7 +115,7 @@ export default function PerfilEmpresa() {
             console.log('--- Depuração da Porcentagem Perfil Empresa ---');
             console.log('Empresa (authInfo.entity):', dadosEmpresa);
             console.log('Campos Obrigatórios Definidos (perfil-empresa):', obrigatorios);
-            
+
             const porcentagemCompletaPerfilEmpresa = calcularPorcentagemPerfil(dadosEmpresa, obrigatorios);
             console.log('Porcentagem Completa Calculada (perfil-empresa):', porcentagemCompletaPerfilEmpresa);
             console.log('---------------------------------------');
@@ -180,11 +203,11 @@ export default function PerfilEmpresa() {
                 for (let offset = 0; offset < byteCharacters.length; offset += 512) {
                     const slice = byteCharacters.slice(offset, offset + 512);
                     const byteNumbers = new Array(slice.length);
-                    
+
                     for (let i = 0; i < slice.length; i++) {
                         byteNumbers[i] = slice.charCodeAt(i);
                     }
-                    
+
                     const byteArray = new Uint8Array(byteNumbers);
                     byteArrays.push(byteArray);
                 }
@@ -201,15 +224,15 @@ export default function PerfilEmpresa() {
     const compressImage = (base64String, maxWidth = 800) => {
         return new Promise((resolve, reject) => {
             const img = typeof window !== 'undefined' ? new window.Image() : null;
-            
+
             if (!img) {
                 console.warn("Image constructor not available, skipping image compression.");
-                resolve(base64String); 
+                resolve(base64String);
                 return;
             }
 
             img.src = base64String;
-            
+
             img.onload = () => {
                 try {
                     const canvas = document.createElement('canvas');
@@ -232,10 +255,10 @@ export default function PerfilEmpresa() {
 
                     const quality = width > 400 ? 0.7 : 0.8;
                     const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-                    
+
                     const originalSize = base64String.length;
                     const compressedSize = compressedBase64.length;
-                    
+
                     resolve(compressedSize >= originalSize ? base64String : compressedBase64);
                 } catch (error) {
                     console.error('Erro ao comprimir imagem:', error);
@@ -316,7 +339,7 @@ export default function PerfilEmpresa() {
             }
 
             console.log('FormData preparado para envio', formDataToSend);
-            
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${authInfo.entity.id}`, {
                 method: 'PUT',
                 headers: {
@@ -423,11 +446,11 @@ export default function PerfilEmpresa() {
     const getInitials = (name) => {
         if (!name) return 'E';
         return name
-          .split(' ')
-          .map(part => part[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2);
+            .split(' ')
+            .map(part => part[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
     };
 
     if (isLoading) {
@@ -495,8 +518,8 @@ export default function PerfilEmpresa() {
                         </span>
                     </div>
                     <div className="w-full bg-amber-300 rounded-full h-3 shadow-inner">
-                        <div 
-                            className="bg-gradient-to-r from-amber-500 to-amber-600 h-3 rounded-full transition-all duration-500 ease-out shadow-md" 
+                        <div
+                            className="bg-gradient-to-r from-amber-500 to-amber-600 h-3 rounded-full transition-all duration-500 ease-out shadow-md"
                             style={{ width: `${Math.round(Math.max(0, (Object.keys(camposObrigatoriosDefinidos).length - camposFaltantes.length) / Object.keys(camposObrigatoriosDefinidos).length * 100))}%` }}
                         ></div>
                     </div>
@@ -514,9 +537,9 @@ export default function PerfilEmpresa() {
                 <div className="flex justify-center items-center">
                     <div className="relative group">
                         {formData.logo ? (
-                            <img 
-                                src={formData?.logo?.startsWith('data:image') 
-                                    ? formData.logo 
+                            <img
+                                src={formData?.logo?.startsWith('data:image')
+                                    ? formData.logo
                                     : (formData?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${formData.logo}` : '')
                                 }
                                 alt="Logo da empresa"
@@ -531,7 +554,7 @@ export default function PerfilEmpresa() {
                                 </span>
                             </div>
                         )}
-                        <button 
+                        <button
                             onClick={() => setIsModalOpen(true)}
                             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
                         >
@@ -540,7 +563,7 @@ export default function PerfilEmpresa() {
                             </svg>
                         </button>
                         {formData.logo && (
-                            <button 
+                            <button
                                 onClick={handleRemoveLogo}
                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-10"
                             >
@@ -583,7 +606,7 @@ export default function PerfilEmpresa() {
                         </div>
                     </div>
                     <div className="mt-6 md:mt-0 md:self-end">
-                        <button 
+                        <button
                             onClick={() => setIsModalOpen(true)}
                             className="cursor-pointer bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] hover:from-[#9B3D26] hover:to-[#7B2D26] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center transform hover:scale-105 font-medium"
                         >
@@ -679,6 +702,39 @@ export default function PerfilEmpresa() {
                 </div>
             </div>
 
+            {/* Minhas vagas*/}
+            <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl p-6 transform hover:scale-[1.01] transition-all duration-300">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#7B2D26] to-[#9B3D26] bg-clip-text text-transparent">Minhas vagas</h2>
+                    </div>
+                </div>
+
+                <div className='md:grid md:grid-cols-2 flex flex-col'>
+                    {vagas.map((vaga) => (
+                        <div
+                            key={vaga.id}
+                            className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex m-2 items-center justify-between"
+                        >
+                            <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <h1 className='mr-5 font-semibold'>
+                                {vaga.nome_vaga.length > 30
+                                    ? vaga.nome_vaga.substring(0, 30) + '...'
+                                    : vaga.nome_vaga}
+                            </h1>
+                            <h2 className='mr-5 text-gray-600'>Área - {vaga.categoria}</h2>
+                            <div className='w-1/3'>
+                                <a href={`/vagas?vaga=${vaga.id}`}> <svg className="w-10 h-6 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                </svg></a>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* Modal de Edição */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -686,7 +742,7 @@ export default function PerfilEmpresa() {
                         <div className="p-8">
                             <div className="flex justify-between items-center mb-8 border-b pb-4">
                                 <h2 className="text-2xl font-bold text-gray-800">Editar Perfil da Empresa</h2>
-                                <button 
+                                <button
                                     onClick={() => setIsModalOpen(false)}
                                     className="text-gray-500 hover:text-gray-700 transition-colors duration-300"
                                 >
@@ -761,12 +817,12 @@ export default function PerfilEmpresa() {
                                         <div className="flex items-center space-x-4">
                                             <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
                                                 {formData.logo ? (
-                                                    <img 
-                                                        src={formData?.logo?.startsWith('data:image') 
-                                                            ? formData.logo 
+                                                    <img
+                                                        src={formData?.logo?.startsWith('data:image')
+                                                            ? formData.logo
                                                             : (formData?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${formData.logo}` : '')
                                                         }
-                                                        alt="Logo Preview" 
+                                                        alt="Logo Preview"
                                                         className="w-full h-full object-contain"
                                                     />
                                                 ) : (
@@ -800,7 +856,7 @@ export default function PerfilEmpresa() {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Campos de Redes Sociais no Modal */}
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>

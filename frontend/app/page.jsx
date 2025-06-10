@@ -417,7 +417,7 @@ export default function Feed() {
                 {news.slice(0, showMoreNews ? news.length : 3).map(item => (
                   <Link href={`/noticias/${item.id}`} key={item.id}>
                     <NewsItem
-                      title={notifications.nome}
+                      title={item.title}
                       info={item.info}
                       trending={item.trending}
                     />
