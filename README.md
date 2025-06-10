@@ -40,7 +40,7 @@ npm run dev
 
 ```bash
 
-Atenção verifique na documentação, e adicione os seguintes arquivos na raiz das seguintes pastas
+Atenção verifique na documentação, e adicione os seguintes arquivos na raiz das pastas:
 backend -> .env 
 frontend -> .env.local
 ```
