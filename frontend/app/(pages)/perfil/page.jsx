@@ -685,7 +685,7 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl flex flex-col md:flex-row p-6 space-y-4 md:space-y-0 md:space-x-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
-                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-gray-700 border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-[#7B2D26] border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
                             {getInitials(formData.nome)}
                         </div>
                     </div>

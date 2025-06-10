@@ -28,6 +28,7 @@ export const getUsuarioById = async (req, res) => {
     
     const usuario = await Usuario.findById(id);
     if (!usuario) {
+      console.log(`Usuário com ID ${id} não encontrado.`);
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
     

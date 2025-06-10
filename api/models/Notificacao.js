@@ -69,7 +69,7 @@ class Notificacao {
 
   // Criar nova notificação
   static async create(notificacaoData) {
-    const { usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
+    const { usuarios_id, empresas_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida } = notificacaoData;
     
     const query = `
       INSERT INTO notificacao (usuarios_id, empresas_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida)
@@ -77,7 +77,7 @@ class Notificacao {
       RETURNING *
     `;
     
-    const values = [usuario_id, empresa_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
+    const values = [usuarios_id, empresas_id, candidaturas_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura, lida];
     
     try {
       const { rows } = await pool.query(query, values);

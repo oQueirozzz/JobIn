@@ -518,11 +518,9 @@ export default function PerfilEmpresa() {
                                 className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-contain bg-white p-2 shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl"
                             />
                         ) : (
-                            <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-white p-2 shadow-xl flex items-center justify-center">
-                                <span className="text-4xl font-bold text-[#7B2D26]">
-                                    {getInitials(formData.nome)}
-                                </span>
-                            </div>
+                            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-[#7B2D26] border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                            {getInitials(formData.nome)}
+                        </div>
                         )}
                         
                         {formData.logo && (

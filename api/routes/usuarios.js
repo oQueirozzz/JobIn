@@ -198,105 +198,84 @@ router.put('/redefinir-senha', async (req, res) => {
   console.log('Método:', req.method);
   console.log('Body completo:', req.body);
   console.log('Headers:', req.headers);
-  
-  const { email, novaSenha } = req.body;
-  const authHeader = req.headers.authorization;
-  const token = authHeader ? authHeader.split(' ')[1] : null;
-
-  console.log('Dados recebidos para redefinição:', { 
-    email, 
-    token: !!token,
-    novaSenha: !!novaSenha 
-  });
 
   try {
-    // Verificar se o email e token existem
-    if (!email || !token || !novaSenha) {
-      console.log('Dados faltando:', { 
-        email: !!email, 
-        token: !!token, 
-        novaSenha: !!novaSenha 
-      });
-      return res.status(400).json({ 
-        message: 'Email, token e nova senha são obrigatórios' 
-      });
+    const { email, newPassword, token } = req.body;
+    
+    if (!email || !newPassword || !token) {
+      return res.status(400).json({ message: 'Email, nova senha e token são obrigatórios.' });
     }
 
     const emailNormalizado = email.trim().toLowerCase();
-    console.log('Email normalizado:', emailNormalizado);
-
-    // Verificar se o usuário existe
-    const userResult = await db.query('SELECT id FROM usuarios WHERE email = $1', [emailNormalizado]);
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ 
-        message: 'Usuário não encontrado' 
-      });
-    }
-
-    // Verificar token de redefinição
+    
+    // 1. Buscar o token no banco de dados e verificar a validade
     const tokenResult = await db.query(
-      'SELECT * FROM password_reset_tokens WHERE email = $1 AND token = $2 AND expires_at > NOW()',
-      [emailNormalizado, token]
+      'SELECT * FROM password_reset_tokens WHERE email = $1 AND expires_at > NOW() ORDER BY expires_at DESC LIMIT 1',
+      [emailNormalizado]
     );
+    const storedTokenData = tokenResult.rows[0];
 
-    if (tokenResult.rows.length === 0) {
-      console.log('Token inválido ou expirado para:', emailNormalizado);
-      return res.status(400).json({ 
-        message: 'Token de redefinição inválido ou expirado. Por favor, solicite um novo código.' 
-      });
+    if (!storedTokenData) {
+      return res.status(400).json({ message: 'Token de redefinição inválido ou expirado.' });
     }
+
+    // 2. Comparar o token fornecido com o token armazenado (que já é um hash)
+    const isTokenMatch = await bcrypt.compare(token, storedTokenData.token);
     
-    // Hash da nova senha
-    console.log('Hashando nova senha...');
+    if (!isTokenMatch) {
+      return res.status(400).json({ message: 'Token de redefinição inválido.' });
+    }
+
+    // 3. Buscar o usuário pelo email
+    const userResult = await db.query('SELECT * FROM usuarios WHERE email = $1', [emailNormalizado]);
+    const usuario = userResult.rows[0];
+
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // 4. Hashar a nova senha
     const salt = await bcrypt.genSalt(10);
-    const senhaHash = await bcrypt.hash(novaSenha, salt);
-    console.log('Senha hashada.');
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // Atualizar senha no banco
-    console.log('Atualizando senha no DB para user ID:', userResult.rows[0].id);
-    const resultUpdate = await db.query(
+    // 5. Atualizar a senha do usuário
+    await db.query(
       'UPDATE usuarios SET senha = $1 WHERE id = $2',
-      [senhaHash, userResult.rows[0].id]
+      [hashedPassword, usuario.id]
     );
 
-    if (resultUpdate.rowCount === 0) {
-      console.log('Erro ao atualizar senha no DB para user ID:', userResult.rows[0].id);
-      return res.status(404).json({ 
-        message: 'Erro ao atualizar senha.' 
-      });
-    }
-
-    // Remover o token usado
+    // 6. Invalidar (deletar) o token de redefinição após o uso
     await db.query('DELETE FROM password_reset_tokens WHERE email = $1', [emailNormalizado]);
-    console.log('Token usado removido do DB');
-    
-    // Criar notificação de senha alterada
-    await NotificacaoService.criarNotificacaoSenhaAlterada(userResult.rows[0].id, 0, false);
-    console.log('Notificação de senha alterada criada.');
 
-    return res.json({ 
-      message: 'Senha atualizada com sucesso!' 
-    });
+    // Criar notificação de senha alterada
+    await NotificacaoService.criarNotificacaoSenhaAlterada(usuario.id, null, false);
+
+    return res.status(200).json({ message: 'Senha redefinida com sucesso!' });
+
   } catch (error) {
-    console.error('Erro completo:', error);
-    return res.status(500).json({ 
-      message: 'Erro no servidor',
-      errorDetails: error.message
+    console.error('Erro ao redefinir senha:', error);
+    return res.status(500).json({
+      message: 'Erro no servidor ao redefinir senha.',
+      error: error.message
     });
   }
 });
 
-// Nova rota para alterar senha quando o usuário está autenticado
-router.put('/alterar-senha-autenticado/:id', protect, usuariosController.updateSenha);
+// Rotas protegidas (exigem JWT)
+router.use(protect);
 
-// Rotas protegidas
-router.get('/perfil', protect, usuariosController.getPerfil);
-router.put('/:id', protect, upload.fields([
-  { name: 'foto', maxCount: 1 },
+// Rotas protegidas de Usuário
+router.get('/:id', usuariosController.getUsuarioById);
+router.put('/:id', upload.fields([
   { name: 'curriculo', maxCount: 1 },
-  { name: 'certificados', maxCount: 1 }
+  { name: 'certificados', maxCount: 10 }
 ]), usuariosController.updateUsuario);
-router.delete('/:id', protect, usuariosController.deleteUsuario);
+router.delete('/:id', usuariosController.deleteUsuario);
+
+// Rota para obter perfil completo do usuário autenticado (JWT)
+router.get('/perfil', usuariosController.getPerfil);
+
+router.put('/senha/:id', usuariosController.updateSenha);
 
 // Rota para notificar atualização de perfil
 router.post('/:id/notificar-perfil-atualizado', async (req, res) => {

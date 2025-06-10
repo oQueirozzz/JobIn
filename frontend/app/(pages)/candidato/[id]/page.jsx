@@ -20,15 +20,26 @@ export default function PerfilCandidatoView({ params }) {
                 console.log('Iniciando busca do candidato:', { id, authInfo });
 
                 // Verificar se é uma empresa
-                if (!authInfo?.entity || authInfo.entity.tipo !== 'empresa') {
-                    console.log('Usuário não é uma empresa:', authInfo?.entity);
+                if (!isLoading && (!authInfo || !authInfo.entity || authInfo.entity.tipo !== 'empresa')) {
+                    console.log('Usuário não é uma empresa ou authInfo não disponível. Redirecionando para login:', authInfo);
                     router.push('/login');
                     return;
                 }
 
-                console.log('Fazendo requisição para:', `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`);
+                const token = authInfo?.token;
+                if (!token) {
+                    console.log('Token de autenticação não encontrado. Redirecionando para login.');
+                    router.push('/login'); // Redirecionar para login se não houver token
+                    return;
+                }
+
+                console.log('Fazendo requisição para:', `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`, 'com token:', !!token);
                 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
 
                 console.log('Resposta recebida:', { status: response.status, ok: response.ok });
 
