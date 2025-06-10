@@ -35,7 +35,6 @@ cd frontend
 npm i
 npm run dev
 ```
-- 🚨 Configurar .env & .env.local
 
 ### 📋 Estrutura do Projeto
 
