@@ -37,16 +37,6 @@ npm run dev
 ```
 - 🚨 Configurar .env & .env.local
 
-
-```bash
-
-Atenção verifique na documentação, e adicione os seguintes arquivos na raiz das pastas:
-backend -> .env 
-frontend -> .env.local
-```
-
-
-
 ### 📋 Estrutura do Projeto
 
 - **Backend** – API desenvolvida com **Node.js** e **Express**  
