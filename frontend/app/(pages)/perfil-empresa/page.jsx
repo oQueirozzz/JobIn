@@ -265,7 +265,7 @@ export default function PerfilEmpresa() {
         });
     };
 
-   
+
 
     const showMessage = (message, type) => {
         if (type === 'error') {
@@ -524,7 +524,7 @@ export default function PerfilEmpresa() {
                                 </span>
                             </div>
                         )}
-                        
+
                         {formData.logo && (
                             <button
                                 onClick={handleRemoveLogo}
@@ -674,29 +674,33 @@ export default function PerfilEmpresa() {
                 </div>
 
                 <div className='md:grid md:grid-cols-2 flex flex-col'>
-                    {vagas.map((vaga) => (
-                        <div
-                            key={vaga.id}
-                            className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex m-2 items-center justify-between"
-                        >
-                            <div className='flex'>
-                                <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <h1 className='mr-5 font-semibold'>
-                                    {vaga.nome_vaga.length > 30
-                                        ? vaga.nome_vaga.substring(0, 30) + '...'
-                                        : vaga.nome_vaga}
-                                </h1>
-                                <h2 className='mr-5 text-gray-600'>Área - {vaga.categoria}</h2>
-                            </div>
-                            <div className=''>
-                                <a href={`/vagas?vaga=${vaga.id}`}> <svg className="w-10 h-6 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                                </svg></a>
-                            </div>
-                        </div>
-                    ))}
+                    {vagas.length > 0 ? (
+                        
+                            vagas.map((vaga) => (
+                                <div
+                                    key={vaga.id}
+                                    className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex m-2 items-center justify-between"
+                                >
+                                    <div className='flex'>
+                                        <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <h1 className='mr-5 font-semibold'>
+                                            {vaga.nome_vaga.length > 30
+                                                ? vaga.nome_vaga.substring(0, 30) + '...'
+                                                : vaga.nome_vaga}
+                                        </h1>
+                                        <h2 className='mr-5 text-gray-600'>Área - {vaga.categoria}</h2>
+                                    </div>
+                                    <div className=''>
+                                        <a href={`/vagas?vaga=${vaga.id}`}> <svg className="w-10 h-6 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                        </svg></a>
+                                    </div>
+                                </div>
+                            ))
+                        
+                    ): (<h1 className="text-gray-700 leading-relaxed">Nenhuma vaga criada!</h1>) }
                 </div>
             </div>
 
@@ -776,7 +780,7 @@ export default function PerfilEmpresa() {
                                     ></textarea>
                                 </div>
 
-                               
+
 
                                 {/* Campos de Redes Sociais no Modal */}
                                 <div className="grid md:grid-cols-2 gap-6">
