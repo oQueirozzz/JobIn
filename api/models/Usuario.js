@@ -192,11 +192,13 @@ class Usuario {
         paramCount++;
       }
 
-      console.log('Campos a serem atualizados:', updateFields);
-      console.log('Valores a serem atualizados:', values);
-
+      if ('certificados' in userData) {
+        updateFields.push(`certificados = $${paramCount}`);
+        values.push(userData.certificados);
+        paramCount++;
+      }
+      
       if (updateFields.length === 0) {
-        console.log('Nenhum campo para atualizar');
         return { message: 'Nenhum campo para atualizar' };
       }
 
@@ -204,39 +206,31 @@ class Usuario {
       query += ` WHERE id = $${paramCount} RETURNING *`;
       values.push(id);
 
-      console.log('Query final:', query);
-      console.log('Valores finais:', values);
-
       const { rows } = await pool.query(query, values);
-      console.log('Resultado da query:', rows);
-      
       return rows[0];
     } catch (error) {
-      console.error('Erro detalhado na atualização:', error);
+      console.error('Erro ao atualizar usuário:', error);
       throw error;
     }
   }
 
   static async delete(id) {
     try {
-      // Primeiro, excluir todas as notificações associadas a este usuário
-      console.log(`Excluindo notificações para o usuário ID: ${id}`);
-      await pool.query('DELETE FROM notificacao WHERE usuario_id = $1', [id]);
-      console.log(`Notificações do usuário ID: ${id} excluídas.`);
-
-      // Em seguida, excluir o usuário
-      console.log(`Excluindo usuário ID: ${id}`);
       const { rows } = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
-      console.log(`Usuário ID: ${id} excluído.`, rows[0]);
       return rows[0];
     } catch (error) {
-      console.error(`Erro ao excluir usuário ID: ${id}:`, error);
+      console.error('Erro ao deletar usuário:', error);
       throw error;
     }
   }
 
   static async comparePassword(password, hashedPassword) {
-    return await bcrypt.compare(password, hashedPassword);
+    try {
+      return await bcrypt.compare(password, hashedPassword);
+    } catch (error) {
+      console.error('Erro ao comparar senha:', error);
+      throw error;
+    }
   }
 }
 

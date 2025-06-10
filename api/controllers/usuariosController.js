@@ -240,6 +240,7 @@ export const loginUsuario = async (req, res) => {
       descricao: usuario.descricao || '',
       curriculo: usuario.curriculo || null,
       certificados: usuario.certificados || null,
+      foto: usuario.foto || null,
       tipo: 'usuario',
       autenticado: true
     };
@@ -283,6 +284,9 @@ export const updateUsuario = async (req, res) => {
 
     // Processar arquivos se existirem
     if (req.files) {
+      if (req.files.foto && req.files.foto[0]) {
+        dadosAtualizacao.foto = req.files.foto[0].path;
+      }
       if (req.files.curriculo && req.files.curriculo[0]) {
         dadosAtualizacao.curriculo = req.files.curriculo[0].path;
       }

@@ -12,7 +12,6 @@ export default function PerfilEmpresa() {
     const [formData, setFormData] = useState({
         nome: '',
         email: '',
-        logo: null,
         descricao: '',
         cnpj: '',
         local: '',
@@ -87,15 +86,13 @@ export default function PerfilEmpresa() {
                 email: 'Email Corporativo',
                 cnpj: 'CNPJ',
                 local: 'Localização',
-                descricao: 'Descrição da Empresa',
-                logo: 'Logo da Empresa'
+                descricao: 'Descrição da Empresa'
             };
             setCamposObrigatoriosDefinidos(obrigatorios);
 
             const dadosIniciais = {
                 nome: dadosEmpresa.nome || '',
                 email: dadosEmpresa.email || '',
-                logo: dadosEmpresa.logo || null,
                 descricao: dadosEmpresa.descricao || '',
                 cnpj: dadosEmpresa.cnpj ? formatarCNPJ(dadosEmpresa.cnpj) : '',
                 local: dadosEmpresa.local || '',
@@ -109,7 +106,6 @@ export default function PerfilEmpresa() {
             console.log('[DEPURACAO LOCALIZACAO] dadosEmpresa.local ANTES de setFormData:', dadosEmpresa.local);
             setFormData(dadosIniciais);
             console.log('[DEPURACAO LOCALIZACAO] formData.local DEPOIS de setFormData (sincrono):', dadosIniciais.local);
-            console.log('[DEBUG] formData.logo ao carregar:', dadosIniciais.logo);
             verificarCamposObrigatorios(dadosIniciais, obrigatorios);
 
             console.log('--- Depuração da Porcentagem Perfil Empresa ---');
@@ -269,33 +265,7 @@ export default function PerfilEmpresa() {
         });
     };
 
-    const handleFileChange = async (e, field) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (field === 'logo') {
-            if (!file.type.startsWith('image/')) {
-                showMessage('Por favor, selecione uma imagem válida.', 'error');
-                return;
-            }
-
-            try {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const base64String = event.target.result;
-                    const processedFile = await compressImage(base64String); // Compress the image
-                    setFormData(prev => ({
-                        ...prev,
-                        logo: processedFile // Store the processed base64 string
-                    }));
-                };
-                reader.readAsDataURL(file);
-            } catch (error) {
-                console.error('Erro ao processar imagem:', error);
-                showMessage('Erro ao processar a imagem. Tente novamente.', 'error');
-            }
-        }
-    };
+   
 
     const showMessage = (message, type) => {
         if (type === 'error') {
@@ -554,14 +524,7 @@ export default function PerfilEmpresa() {
                                 </span>
                             </div>
                         )}
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
-                        >
-                            <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
+                        
                         {formData.logo && (
                             <button
                                 onClick={handleRemoveLogo}
@@ -813,51 +776,7 @@ export default function PerfilEmpresa() {
                                     ></textarea>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
-                                                {formData.logo ? (
-                                                    <img
-                                                        src={formData?.logo?.startsWith('data:image')
-                                                            ? formData.logo
-                                                            : (formData?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${formData.logo}` : '')
-                                                        }
-                                                        alt="Logo Preview"
-                                                        className="w-full h-full object-contain"
-                                                    />
-                                                ) : (
-                                                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="relative">
-                                                    <input
-                                                        type="file"
-                                                        name="logo"
-                                                        onChange={(e) => handleFileChange(e, 'logo')}
-                                                        className="hidden"
-                                                        id="logo-input"
-                                                        accept="image/*"
-                                                    />
-                                                    <label
-                                                        htmlFor="logo-input"
-                                                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                    >
-                                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {formData.logo ? 'Atualizar Logo' : 'Escolher Logo'}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG, GIF</p>
-                                        </div>
-                                    </div>
-                                </div>
+                               
 
                                 {/* Campos de Redes Sociais no Modal */}
                                 <div className="grid md:grid-cols-2 gap-6">

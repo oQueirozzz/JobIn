@@ -66,7 +66,6 @@ export default function Feed() {
       cnpj: 'CNPJ',
       local: 'Localização',
       descricao: 'Descrição da Empresa',
-      foto: 'Logo da Empresa'
     } : {
       nome: 'Nome',
       email: 'Email',
@@ -76,7 +75,6 @@ export default function Feed() {
       descricao: 'Resumo Profissional',
       curriculo: 'Currículo',
       certificados: 'Certificados',
-      foto: 'Foto',
       cpf: 'CPF',
       data_nascimento: 'Data de Nascimento'
     };
@@ -279,8 +277,7 @@ export default function Feed() {
       email: 'Email Corporativo',
       cnpj: 'CNPJ',
       local: 'Localização',
-      descricao: 'Descrição da Empresa',
-      foto: 'Logo da Empresa'
+      descricao: 'Descrição da Empresa'
     } : {
       nome: 'Nome',
       email: 'Email',
@@ -290,7 +287,6 @@ export default function Feed() {
       descricao: 'Resumo Profissional',
       curriculo: 'Currículo',
       certificados: 'Certificados',
-      foto: 'Foto',
       cpf: 'CPF',
       data_nascimento: 'Data de Nascimento'
     };

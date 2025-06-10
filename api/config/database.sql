@@ -116,6 +116,17 @@ CREATE TABLE candidaturas_removidas (
     data_remocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE notificacao ALTER COLUMN candidaturas_id DROP NOT NULL;
+ALTER TABLE notificacao DROP CONSTRAINT notificacao_tipo_check;
+ALTER TABLE notificacao ADD CONSTRAINT notificacao_tipo_check CHECK (
+    tipo IN (
+        'LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA',
+        'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO',
+        'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO',
+        'CONTA_CRIADA'
+    )
+);
+
 
 -- Funções
 

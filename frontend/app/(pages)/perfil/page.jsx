@@ -1,22 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function Perfil() {
     const [perfilCompleto, setPerfilCompleto] = useState(false);
     const [camposFaltantes, setCamposFaltantes] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [isFormDirty, setIsFormDirty] = useState(false);
     const router = useRouter();
     const { authInfo, isLoading, refreshAuthInfo } = useAuth();
 
-    // Novo estado para armazenar os campos obrigatórios
-    const [camposObrigatoriosDefinidos, setCamposObrigatoriosDefinidos] = useState({});
+    // Definindo os campos obrigatórios dinamicamente
+    const camposObrigatoriosDefinidos = useMemo(() => ({
+        nome: 'Nome',
+        email: 'Email',
+        formacao: 'Formação Acadêmica',
+        area_interesse: 'Área de Interesse',
+        habilidades: 'Habilidades',
+        descricao: 'Resumo Profissional',
+        curriculo: 'Currículo',
+        certificados: 'Certificados',
+        cpf: 'CPF',
+        data_nascimento: 'Data de Nascimento'
+    }), []);
 
     // Função utilitária para calcular a porcentagem do perfil
     const calcularPorcentagemPerfil = (dados, camposObrigatorios) => {
@@ -61,17 +74,14 @@ export default function Perfil() {
                 descricao: 'Resumo Profissional',
                 curriculo: 'Currículo',
                 certificados: 'Certificados',
-                foto: 'Foto',
                 cpf: 'CPF',
                 data_nascimento: 'Data de Nascimento'
             };
-            setCamposObrigatoriosDefinidos(obrigatorios);
 
             // Garantir que todos os campos necessários existam
             const dadosIniciais = {
                 nome: dadosUsuario.nome || '',
                 email: dadosUsuario.email || '',
-                foto: dadosUsuario.foto || null,
                 descricao: dadosUsuario.descricao || '',
                 formacao: dadosUsuario.formacao || '',
                 area_interesse: dadosUsuario.area_interesse || '',
@@ -82,7 +92,7 @@ export default function Perfil() {
                 local: '', // Removido, mas mantido vazio para evitar erro de desestruturação se a API ainda retornar
                 cpf: dadosUsuario.cpf ? formatarCPF(dadosUsuario.cpf) : '',
                 cnpj: '', // Removido, mas mantido vazio
-                data_nascimento: dadosUsuario.data_nascimento || ''
+                data_nascimento: dadosUsuario.data_nascimento || '',
             };
             console.log('Dados iniciais formatados:', dadosIniciais);
             setFormData(dadosIniciais);
@@ -220,114 +230,11 @@ export default function Perfil() {
         }
     };
 
-    // Função para converter base64 em File
-    const base64ToFile = (base64String, filename) => {
-        return new Promise((resolve, reject) => {
-            try {
-                // Extrair o tipo MIME e os dados base64
-                const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-                if (!matches || matches.length !== 3) {
-                    reject(new Error('Formato inválido de base64'));
-                    return;
-                }
-
-                const mimeType = matches[1];
-                const base64Data = matches[2];
-
-                // Converter base64 para blob
-                const byteCharacters = atob(base64Data);
-                const byteArrays = [];
-
-                for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                    const slice = byteCharacters.slice(offset, offset + 512);
-                    const byteNumbers = new Array(slice.length);
-                    
-                    for (let i = 0; i < slice.length; i++) {
-                        byteNumbers[i] = slice.charCodeAt(i);
-                    }
-                    
-                    const byteArray = new Uint8Array(byteNumbers);
-                    byteArrays.push(byteArray);
-                }
-
-                const blob = new Blob(byteArrays, { type: mimeType });
-                const file = new File([blob], filename, { type: mimeType });
-                resolve(file);
-            } catch (error) {
-                reject(error);
-            }
-        });
-    };
-
-    // Função para comprimir imagem
-    const compressImage = (base64String, maxWidth = 800) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = base64String;
-            
-            img.onload = () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    // Calcular as novas dimensões mantendo a proporção
-                    if (width > maxWidth) {
-                        height = (maxWidth * height) / width;
-                        width = maxWidth;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-
-                    // Melhorar a qualidade da imagem
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-
-                    // Desenhar a imagem com fundo branco para imagens PNG com transparência
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, width, height);
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Comprimir a imagem com qualidade ajustada
-                    const quality = width > 400 ? 0.7 : 0.8; // Qualidade maior para imagens menores
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-                    
-                    // Verificar se a compressão reduziu o tamanho
-                    const originalSize = base64String.length;
-                    const compressedSize = compressedBase64.length;
-                    
-                    // Se a compressão não reduziu o tamanho, retorna a imagem original
-                    if (compressedSize >= originalSize) {
-                        resolve(base64String);
-                    } else {
-                        resolve(compressedBase64);
-                    }
-                } catch (error) {
-                    console.error('Erro ao comprimir imagem:', error);
-                    resolve(base64String); // Em caso de erro, retorna a imagem original
-                }
-            };
-
-            img.onerror = () => {
-                console.error('Erro ao carregar imagem');
-                resolve(base64String); // Em caso de erro, retorna a string original
-            };
-        });
-    };
-
     // Função para atualizar o estado local quando o arquivo é carregado
     const handleFileChange = async (e, field) => {
         try {
             const file = e.target.files[0];
             if (!file) return;
-
-            // Validar tipo de arquivo
-            if (field === 'foto' && !file.type.startsWith('image/')) {
-                showMessage('Por favor, selecione uma imagem válida.', 'error');
-                return;
-            }
 
             // Validar tipo de arquivo para currículo e certificados
             if ((field === 'curriculo' || field === 'certificados') && 
@@ -721,7 +628,7 @@ export default function Perfil() {
     const usuario = authInfo.entity;
 
     return (
-        <section className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 px-4 py-8 space-y-6">
+        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 px-4 py-8 space-y-6">
             {/* Mensagens de Erro/Sucesso */}
             {error && (
                 <div className="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 animate-fade-in backdrop-blur-sm">
@@ -778,19 +685,9 @@ export default function Perfil() {
             <div className="w-full max-w-5xl bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl flex flex-col md:flex-row p-6 space-y-4 md:space-y-0 md:space-x-6 transform hover:scale-[1.01] transition-all duration-300">
                 <div className="flex justify-center items-center">
                     <div className="relative group">
-                        <img 
-                            className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                            src={formData.foto && formData.foto.startsWith('data:') ? formData.foto : formData.foto}
-                            alt="Preview" 
-                        />
-                        <button 
-                            onClick={() => setIsModalOpen(true)}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 rounded-full bg-white shadow-lg hover:shadow-xl hover:scale-110"
-                        >
-                            <svg className="w-6 h-6 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
+                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-gray-700 border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                            {getInitials(formData.nome)}
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-col justify-between flex-1">
@@ -1216,7 +1113,6 @@ export default function Perfil() {
                                 </div>
 
                                 {authInfo?.type !== 'company' ? (
-                                    // Campos editáveis para alunos
                                     <>
                                         <div className="mb-6">
                                             <label htmlFor="formacao" className="block text-sm font-medium text-gray-700 mb-2">
@@ -1303,258 +1199,8 @@ export default function Perfil() {
                                                 className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
                                             />
                                         </div>
-
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                                                        {formData.foto ? (
-                                                            <img 
-                                                                src={formData.foto.startsWith('data:') ? formData.foto : formData.foto}
-                                                                alt="Preview" 
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full bg-[#7B2D26] text-white text-center text-2xl font-bold flex items-center justify-center">
-                                                                {getInitials(formData.nome || 'U')}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex flex-col space-y-2">
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="file"
-                                                                    name="foto"
-                                                                    onChange={(e) => handleFileChange(e, 'foto')}
-                                                                    className="hidden"
-                                                                    id="foto-input"
-                                                                    accept="image/*"
-                                                                />
-                                                                <label
-                                                                    htmlFor="foto-input"
-                                                                    className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                                >
-                                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                                    </svg>
-                                                                    {formData.foto ? 'Alterar Foto' : 'Escolher Foto'}
-                                                                </label>
-                                                            </div>
-                                                            {formData.foto && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            const userId = authInfo?.entity?.id;
-                                                                            if (!userId) {
-                                                                                showMessage('ID do usuário não encontrado!', 'error');
-                                                                                return;
-                                                                            }
-
-                                                                            const isEmpresa = authInfo?.type === 'company';
-                                                                            const apiUrl = isEmpresa 
-                                                                                ? `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${userId}`
-                                                                                : `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${userId}`;
-
-                                                                            // Preparar dados para envio
-                                                                            const dadosParaEnviar = {
-                                                                                ...formData,
-                                                                                foto: null
-                                                                            };
-
-                                                                            const token = localStorage.getItem('authToken');
-                                                                            if (!token) {
-                                                                                showMessage('Token de autenticação não encontrado', 'error');
-                                                                                return;
-                                                                            }
-
-                                                                            const response = await fetch(apiUrl, {
-                                                                                method: 'PUT',
-                                                                                headers: {
-                                                                                    'Content-Type': 'application/json',
-                                                                                    'Authorization': `Bearer ${token}`
-                                                                                },
-                                                                                body: JSON.stringify(dadosParaEnviar)
-                                                                            });
-
-                                                                            if (!response.ok) {
-                                                                                throw new Error('Erro ao remover foto');
-                                                                            }
-
-                                                                            // Atualizar estado local
-                                                                            setFormData(prev => {
-                                                                                const newData = { ...prev, foto: null };
-                                                                                verificarCamposObrigatorios(newData, camposObrigatoriosDefinidos);
-                                                                                return newData;
-                                                                            });
-
-                                                                            // Atualizar localStorage e contexto de autenticação
-                                                                            const authEntity = JSON.parse(localStorage.getItem('authEntity'));
-                                                                            const updatedEntity = {
-                                                                                ...authEntity,
-                                                                                foto: null
-                                                                            };
-                                                                            localStorage.setItem('authEntity', JSON.stringify(updatedEntity));
-
-                                                                            if (authInfo && authInfo.entity) {
-                                                                                authInfo.entity = updatedEntity;
-                                                                            }
-
-                                                                            showMessage('Foto removida com sucesso!', 'success');
-                                                                            
-                                                                            // Forçar atualização da página após 1.5 segundos
-                                                                            setTimeout(() => {
-                                                                                window.location.reload();
-                                                                            }, 1500);
-                                                                        } catch (error) {
-                                                                            console.error('Erro ao remover foto:', error);
-                                                                            showMessage('Erro ao remover foto. Tente novamente.', 'error');
-                                                                        }
-                                                                    }}
-                                                                    className="cursor-pointer bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg border border-red-300 flex items-center justify-center transition-all duration-300"
-                                                                >
-                                                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                    </svg>
-                                                                    Remover Foto
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG, GIF</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Currículo</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="file"
-                                                        name="curriculo"
-                                                        onChange={(e) => handleFileChange(e, 'curriculo')}
-                                                        className="hidden"
-                                                        id="curriculo-input"
-                                                        accept=".pdf,.doc,.docx"
-                                                    />
-                                                    <label
-                                                        htmlFor="curriculo-input"
-                                                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                    >
-                                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {formData.curriculo ? 'Atualizar Currículo' : 'Enviar Currículo'}
-                                                    </label>
-                                                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, DOC, DOCX</p>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Certificados</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="file"
-                                                        name="certificados"
-                                                        onChange={(e) => handleFileChange(e, 'certificados')}
-                                                        className="hidden"
-                                                        id="certificados-input"
-                                                        accept=".pdf,.doc,.docx"
-                                                    />
-                                                    <label
-                                                        htmlFor="certificados-input"
-                                                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                    >
-                                                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {formData.certificados ? 'Atualizar Certificados' : 'Enviar Certificados'}
-                                                    </label>
-                                                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, DOC, DOCX</p>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </>
-                                ) : (
-                                    // Campos editáveis para empresas
-                                    <>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição da Empresa</label>
-                                            <textarea
-                                                name="descricao"
-                                                value={formData.descricao || ''}
-                                                onChange={handleInputChange}
-                                                rows="4"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
-                                            ></textarea>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
-                                            <input
-                                                type="text"
-                                                name="local"
-                                                value={formData.local || ''}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B2D26] focus:border-transparent transition-all duration-300"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center">
-                                                    {formData.logo ? (
-                                                        <img 
-                                                            src={formData.logo} 
-                                                            alt="Logo Preview" 
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                    ) : (
-                                                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="relative">
-                                                        <input
-                                                            type="file"
-                                                            name="logo"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files[0];
-                                                                if (file) {
-                                                                    const reader = new FileReader();
-                                                                    reader.onloadend = () => {
-                                                                        setFormData(prev => ({
-                                                                            ...prev,
-                                                                            logo: reader.result
-                                                                        }));
-                                                                    };
-                                                                    reader.readAsDataURL(file);
-                                                                }
-                                                            }}
-                                                            className="hidden"
-                                                            id="logo-input"
-                                                            accept="image/*"
-                                                        />
-                                                        <label
-                                                            htmlFor="logo-input"
-                                                            className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 flex items-center justify-center transition-all duration-300"
-                                                        >
-                                                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                            </svg>
-                                                            {formData.logo ? 'Atualizar Logo' : 'Escolher Logo'}
-                                                        </label>
-                                                    </div>
-                                                    <p className="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG, GIF</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
+                                ) : null}
 
                                 <div className="flex justify-end space-x-4 pt-6 border-t">
                                     <button
@@ -1585,6 +1231,6 @@ export default function Perfil() {
                     </div>
                 </div>
             )}
-        </section>
+        </div>
     );
 }

@@ -73,16 +73,6 @@ export default function Vagas() {
                 } else {
                   setVagaSelecionada(vagasOrdenadas.length > 0 ? vagasOrdenadas[0] : null);
                 }
-              } else {
-                setIsCandidato(false);
-                setVagas(vagasOrdenadas);
-                // Se houver um ID de vaga na URL, seleciona essa vaga
-                if (vagaId) {
-                  const vagaSelecionada = vagasOrdenadas.find(v => v.id === parseInt(vagaId));
-                  setVagaSelecionada(vagaSelecionada || vagasOrdenadas[0]);
-                } else {
-                  setVagaSelecionada(vagasOrdenadas.length > 0 ? vagasOrdenadas[0] : null);
-                }
               }
             }
           } catch (error) {

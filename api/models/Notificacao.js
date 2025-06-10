@@ -181,11 +181,7 @@ class Notificacao {
              CASE 
                  WHEN n.remetente_tipo = 'user' THEN u.nome
                  WHEN n.remetente_tipo = 'company' THEN e.nome
-             END as remetente_nome,
-             CASE 
-                 WHEN n.remetente_tipo = 'user' THEN u.foto
-                 WHEN n.remetente_tipo = 'company' THEN e.logo
-             END as remetente_imagem
+             END as remetente_nome
       FROM notificacao n
       LEFT JOIN usuarios u ON n.remetente_id = u.id AND n.remetente_tipo = 'user'
       LEFT JOIN empresas e ON n.remetente_id = e.id AND n.remetente_tipo = 'company'
@@ -197,7 +193,7 @@ class Notificacao {
       const { rows } = await pool.query(query, [usuarioId]);
       return rows;
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
+      console.error('Erro ao buscar notificações não lidas:', error);
       throw error;
     }
   }

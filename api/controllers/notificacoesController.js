@@ -64,7 +64,7 @@ export const getNotificacoesNaoLidas = async (req, res) => {
     res.json(notificacoes);
   } catch (error) {
     console.error('Erro ao buscar notificações não lidas:', error);
-    res.status(500).json({ message: 'Erro ao buscar notificações não lidas' });
+    res.status(500).json({ message: 'Erro ao buscar notificações não lidas', error: error.message });
   }
 };
 
@@ -95,9 +95,9 @@ export const createNotificacao = async (req, res) => {
   try {
     const { candidaturas_id, empresas_id, usuarios_id, mensagem_usuario, mensagem_empresa, tipo, status_candidatura } = req.body;
     
-    // Validação básica
-    if (!usuarios_id || !empresas_id || !candidaturas_id || !mensagem_usuario || !mensagem_empresa || !tipo) {
-      return res.status(400).json({ message: 'Dados incompletos para criar notificação' });
+    // Validação aprimorada: deve ter um ID de usuário OU de empresa, e uma mensagem de usuário OU de empresa
+    if ((!usuarios_id && !empresas_id) || (!mensagem_usuario && !mensagem_empresa) || !tipo) {
+      return res.status(400).json({ message: 'Dados incompletos ou inválidos para criar notificação' });
     }
     
     const notificacao = await Notificacao.create({
@@ -123,7 +123,7 @@ export const createNotificacao = async (req, res) => {
     res.status(201).json(notificacao);
   } catch (error) {
     console.error('Erro ao criar notificação:', error);
-    res.status(500).json({ message: 'Erro ao criar notificação' });
+    res.status(500).json({ message: 'Erro ao criar notificação', error: error.message });
   }
 };
 
