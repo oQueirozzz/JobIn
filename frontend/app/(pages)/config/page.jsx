@@ -96,7 +96,7 @@ export default function Config() {
     };
 
     return (
-        <section className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 flex justify-center items-center px-4 py-10 md:p-20">
+        <section className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 flex justify-center items-center px-4 py-6 md:p-20">
             <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-4xl h-full flex flex-col transform transition-all duration-300">
 
                 {/*Header */}
@@ -133,7 +133,7 @@ export default function Config() {
                             className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01] group"
                         >
                             <div className="flex items-center">
-                                <svg className="w-6 h-6 mr-4 text-[#7B2D26] group-hover:text-[#9B3D26] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="w-6 h-6 mr-4 text-[#7B2D26] hidden md:block group-hover:text-[#9B3D26] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2v5a2 2 0 01-2 2h-5a2 2 0 01-2-2V9a2 2 0 012-2h5z"></path>
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 10v-3a2 2 0 00-2-2H9a2 2 0 00-2 2v3"></path>
                                 </svg>
@@ -142,7 +142,7 @@ export default function Config() {
                                     <p className="text-sm text-gray-500 mt-1">Altere sua senha de acesso periodicamente para manter sua conta segura.</p>
                                 </div>
                             </div>
-                            <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </Link>
@@ -151,16 +151,16 @@ export default function Config() {
                     {/* Seção de Gerenciamento da Conta */}
                     <div className="bg-gray-50 p-6 rounded-2xl shadow-inner border border-gray-100">
                         <h2 className="text-xl font-bold text-gray-800 mb-5 flex items-center">
-                            <svg className="w-6 h-6 mr-3 text-[#7B2D26]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <svg className="w-6 h-6 mr-3 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                             </svg>
                             Gerenciamento da Conta
                         </h2>
                         
                         {/* Excluir Conta */}
-                        <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
+                        <div className=" md:flex   justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
                             <div className="flex items-center">
-                                <svg className="w-6 h-6 mr-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="w-6 h-6 mr-4 text-red-500 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
                                 <div>
@@ -171,7 +171,7 @@ export default function Config() {
                             <button
                                 type="button"
                                 onClick={handleExcluirContaClick}
-                                className="px-5 py-2 bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105"
+                                className="px-5 py-2 mt-5 md:mt-0 bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105 w-full md:w-25"
                             >
                                 Excluir
                             </button>

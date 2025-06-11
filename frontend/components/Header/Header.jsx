@@ -528,7 +528,7 @@ export default function Header() {
               Perfil
             </Link>
             <Link
-              href="/configuracoes"
+              href="/config"
               className="flex items-center px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
             >
               <Settings className="h-5 w-5 mr-3" />
