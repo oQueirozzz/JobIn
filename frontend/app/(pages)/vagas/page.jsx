@@ -767,10 +767,10 @@ export default function Vagas() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-12 lg:px-24 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-12 lg:px-24 py-8 ">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Lista de vagas */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 order-2 md:order-1">
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7B2D26]"></div>
