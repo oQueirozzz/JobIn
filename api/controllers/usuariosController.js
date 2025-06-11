@@ -420,19 +420,15 @@ export const updateSenha = async (req, res) => {
     const { id } = req.params;
     const { senha_atual, nova_senha } = req.body;
 
+    if (!senha_atual || !nova_senha) {
+      return res.status(400).json({ message: 'Senha atual e nova senha são obrigatórias' });
+    }
+
     // Buscar o usuário, incluindo a senha
     const usuario = await Usuario.findById(id, true); // Passar true para incluir a senha
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
-
-    // Log para depuração
-    console.log('Dados do usuário para comparação de senha:', {
-      id: usuario.id,
-      email: usuario.email,
-      senhaHashada: usuario.senha ? '[PRESENTE]' : '[AUSENTE]',
-      senhaAtualRecebida: senha_atual ? '[PRESENTE]' : '[AUSENTE]'
-    });
 
     // Verificar senha atual
     const senhaCorreta = await bcrypt.compare(senha_atual, usuario.senha);
@@ -443,9 +439,6 @@ export const updateSenha = async (req, res) => {
     // Criptografar nova senha
     const senhaCriptografada = await bcrypt.hash(nova_senha, 10);
 
-    // Log para depuração
-    console.log('Nova senha criptografada (updateSenha):', senhaCriptografada ? '[PRESENTE]' : '[AUSENTE]');
-
     // Atualizar senha
     const resultado = await Usuario.update(id, { senha: senhaCriptografada });
     
@@ -454,7 +447,7 @@ export const updateSenha = async (req, res) => {
     }
 
     // Criar notificação
-    await NotificacaoService.criarNotificacaoSenhaAlterada(id);
+    await NotificacaoService.criarNotificacaoSenhaAlterada(id, null, false);
 
     res.status(200).json({ message: 'Senha atualizada com sucesso' });
   } catch (error) {

@@ -74,43 +74,51 @@ class AuthController {
 
   static async login(req, res) {
     try {
+      console.log('[AuthController] Iniciando processo de login');
       const { email, senha } = req.body;
       
       if (!email || !senha) {
+        console.log('[AuthController] Email ou senha não fornecidos');
         return res.status(400).json({ error: 'Email e senha são obrigatórios' });
       }
 
+      console.log('[AuthController] Buscando usuário por email:', email);
       const usuario = await Usuario.findByEmail(email);
       
       if (!usuario) {
+        console.log('[AuthController] Usuário não encontrado');
         return res.status(401).json({ error: 'Usuário não encontrado' });
       }
 
+      console.log('[AuthController] Verificando senha');
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       
       if (!senhaValida) {
+        console.log('[AuthController] Senha inválida');
         return res.status(401).json({ error: 'Senha incorreta' });
       }
 
+      console.log('[AuthController] Gerando token JWT');
       const token = jwt.sign(
         { 
           id: usuario.id,
           email: usuario.email,
-          tipo: usuario.tipo
+          type: usuario.tipo === 'empresa' ? 'company' : 'user'
         },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || 'sua-chave-secreta',
         { expiresIn: '24h' }
       );
 
       // Remove a senha do objeto antes de enviar
       const { senha: _, ...usuarioSemSenha } = usuario;
 
+      console.log('[AuthController] Login bem-sucedido para usuário:', usuario.id);
       res.json({
         usuario: usuarioSemSenha,
         token
       });
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('[AuthController] Erro no login:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
