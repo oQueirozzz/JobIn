@@ -1087,7 +1087,7 @@ export default function Perfil() {
                                                         <p className="text-base text-gray-700 font-medium">
                                                         {formData.certificados instanceof File ? 
                                                             formData.certificados.name : 
-                                                            'Certificado carregado'}
+                                                            'Nenhum certificado'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1103,7 +1103,7 @@ export default function Perfil() {
                                                         <p className="text-base text-gray-700 font-medium">
                                                         {formData.certificados instanceof File ? 
                                                             `${(formData.certificados.size / 1024 / 1024).toFixed(2)} MB` : 
-                                                                'Disponível para download'}
+                                                                '0.00mb'}
                                                         </p>
                                                     </div>
                                                 </div>
