@@ -158,7 +158,7 @@ export default function Config() {
                         </h2>
                         
                         {/* Excluir Conta */}
-                        <div className="md:flex flex flex-col md:items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
+                        <div className=" md:flex   justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 transform hover:scale-[1.01]">
                             <div className="flex items-center">
                                 <svg className="w-6 h-6 mr-4 text-red-500 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -171,7 +171,7 @@ export default function Config() {
                             <button
                                 type="button"
                                 onClick={handleExcluirContaClick}
-                                className="px-5 py-2 mt-5 md:mt-0 bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105"
+                                className="px-5 py-2 mt-5 md:mt-0 bg-red-600 text-white rounded-lg font-medium shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-300 transform hover:scale-105 w-full md:w-25"
                             >
                                 Excluir
                             </button>
