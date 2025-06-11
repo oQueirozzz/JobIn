@@ -121,7 +121,7 @@ ALTER TABLE notificacao DROP CONSTRAINT notificacao_tipo_check;
 ALTER TABLE notificacao ADD CONSTRAINT notificacao_tipo_check CHECK (
     tipo IN (
         'LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA',
-        'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO',
+        'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'CANDIDATURA_ATUALIZADA', 'PERFIL_ATUALIZADO',
         'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO',
         'CONTA_CRIADA'
     )
@@ -172,7 +172,8 @@ BEGIN
 
         INSERT INTO notificacao (
             candidaturas_id, empresas_id, usuarios_id,
-            mensagem_usuario, mensagem_empresa, status_candidatura
+            mensagem_usuario, mensagem_empresa, status_candidatura,
+            tipo
         )
         VALUES (
             NEW.id,
@@ -190,7 +191,13 @@ BEGIN
                 WHEN 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
                 ELSE 'Você atualizou o status de uma candidatura.'
             END,
-            NEW.status
+            NEW.status,
+            CASE NEW.status
+                WHEN 'APROVADO' THEN 'CANDIDATURA_APROVADA'
+                WHEN 'REJEITADO' THEN 'CANDIDATURA_REJEITADA'
+                WHEN 'EM_ESPERA' THEN 'CANDIDATURA_EM_ESPERA'
+                ELSE 'CANDIDATURA_ATUALIZADA'
+            END
         );
     END IF;
     RETURN NEW;
@@ -228,6 +235,15 @@ CREATE TABLE password_reset_tokens (
     token VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela para likes de posts
+CREATE TABLE post_likes (
+    id SERIAL PRIMARY KEY,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, usuario_id) -- Garante que um usuário só pode dar like uma vez em um post
 );
 
 select table_name from information_schema.tables where table_schema = 'public';

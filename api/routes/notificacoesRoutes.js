@@ -7,8 +7,10 @@ import {
     marcarComoLida,
     marcarTodasComoLidas,
     createNotificacao,
-    deleteNotificacao
+    deleteNotificacao,
+    criarNotificacaoPerfilVisitado
 } from '../controllers/notificacoesController.js';
+import { verificarToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -23,5 +25,8 @@ router.post('/', createNotificacao);
 router.post('/:id/read', marcarComoLida);
 router.post('/read-all', marcarTodasComoLidas);
 router.delete('/:id', deleteNotificacao);
+
+// Criar notificação de perfil visitado
+router.post('/perfil-visitado', verificarToken, criarNotificacaoPerfilVisitado);
 
 export default router; 
