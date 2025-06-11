@@ -206,25 +206,6 @@ class Notificacao {
       throw error;
     }
   }
-
-  static async findLastPerfilVisitadoNotification(usuarioId, empresaId, withinHours = 24) {
-    try {
-      const query = `
-        SELECT * FROM notificacao
-        WHERE usuarios_id = $1
-        AND empresas_id = $2
-        AND tipo = 'PERFIL_VISITADO'
-        AND data_notificacao >= NOW() - INTERVAL '${withinHours} hours'
-        ORDER BY data_notificacao DESC
-        LIMIT 1
-      `;
-      const { rows } = await pool.query(query, [usuarioId, empresaId]);
-      return rows[0];
-    } catch (error) {
-      console.error('Erro ao buscar última notificação de perfil visitado:', error);
-      throw error;
-    }
-  }
 }
 
 export default Notificacao;

@@ -80,7 +80,7 @@ export default function ModalCandidatos({
                         <div className="mt-2 flex items-center space-x-2">
                           <span className="text-xs text-gray-500">Candidatura em:</span>
                           <span className="text-xs font-medium text-gray-700">
-                            {new Date(candidato.data_atualizacao).toLocaleDateString('pt-BR')}
+                            {new Date(candidato.created_at).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                         <div className="mt-2">

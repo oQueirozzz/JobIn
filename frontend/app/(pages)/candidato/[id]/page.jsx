@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useRef } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../../hooks/useAuth';
 
@@ -10,38 +10,30 @@ export default function PerfilCandidatoView({ params }) {
     const [candidato, setCandidato] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const notificationSentRef = useRef(false); // Ref para controlar se a notificação foi enviada no ciclo de renderização atual
     
     // Unwrap params using React.use()
     const { id } = use(params);
 
     useEffect(() => {
-        const fetchCandidatoData = async () => {
+        const fetchCandidato = async () => {
             try {
-                // TEMPORARIO PARA DEBUG: Limpar sessionStorage para garantir teste limpo
-                if (authInfo?.entity?.tipo === 'empresa' && authInfo.entity.id) {
-                    const sessionNotificationKey = `notified_profile_visit_${id}_${authInfo.entity.id}`;
-                    sessionStorage.removeItem(sessionNotificationKey);
-                    console.log(`[DEBUG_TEMP] sessionStorage limpo para a chave: ${sessionNotificationKey}`);
-                }
-
-                console.log('[DEBUG] Iniciando busca do candidato:', { id, authInfo });
+                console.log('Iniciando busca do candidato:', { id, authInfo });
 
                 // Verificar se é uma empresa
                 if (!isLoading && (!authInfo || !authInfo.entity || authInfo.entity.tipo !== 'empresa')) {
-                    console.log('[DEBUG] Usuário não é uma empresa ou authInfo não disponível. Redirecionando para login:', authInfo);
+                    console.log('Usuário não é uma empresa ou authInfo não disponível. Redirecionando para login:', authInfo);
                     router.push('/login');
                     return;
                 }
 
                 const token = authInfo?.token;
                 if (!token) {
-                    console.log('[DEBUG] Token de autenticação não encontrado. Redirecionando para login.');
+                    console.log('Token de autenticação não encontrado. Redirecionando para login.');
                     router.push('/login'); // Redirecionar para login se não houver token
                     return;
                 }
 
-                console.log('[DEBUG] Fazendo requisição para:', `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`, 'com token:', !!token);
+                console.log('Fazendo requisição para:', `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`, 'com token:', !!token);
                 
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${id}`, {
                     headers: {
@@ -49,11 +41,11 @@ export default function PerfilCandidatoView({ params }) {
                     },
                 });
 
-                console.log('[DEBUG] Resposta recebida:', { status: response.status, ok: response.ok });
+                console.log('Resposta recebida:', { status: response.status, ok: response.ok });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => null);
-                    console.error('[DEBUG] Erro na resposta:', errorData);
+                    console.error('Erro na resposta:', errorData);
                     
                     if (response.status === 401) {
                         // Token inválido ou expirado
@@ -68,50 +60,8 @@ export default function PerfilCandidatoView({ params }) {
                 }
 
                 const data = await response.json();
-                console.log('[DEBUG] Dados do candidato recebidos (RAW):', data);
-
-                // Lógica de notificação de perfil visitado com sessionStorage e useRef
-                if (authInfo?.entity?.tipo === 'empresa' && authInfo.entity.id) {
-                    const sessionNotificationKey = `notified_profile_visit_${id}_${authInfo.entity.id}`;
-                    const hasNotifiedInSession = sessionStorage.getItem(sessionNotificationKey) === 'true';
-
-                    console.log(`[DEBUG] NOTIFICACAO CHECK (antes do envio) - notificationSentRef.current: ${notificationSentRef.current}, hasNotifiedInSession: ${hasNotifiedInSession}`);
-
-                    if (!notificationSentRef.current && !hasNotifiedInSession) {
-                        console.log(`[DEBUG] NOTIFICACAO: id do candidato: ${id}, id da empresa: ${authInfo.entity.id}, token presente: ${!!token} - ENVIANDO NOTIFICAÇÃO`);
-                        try {
-                            const notificationResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes/perfil-visitado`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`,
-                                },
-                                body: JSON.stringify({
-                                    usuarioId: id,
-                                    empresaId: authInfo.entity.id
-                                })
-                            });
-
-                            if (notificationResponse.ok) {
-                                console.log('[DEBUG] Notificação enviada com sucesso. Status:', notificationResponse.status);
-                                notificationSentRef.current = true; // Define o ref como true para o ciclo de vida do componente atual
-                                sessionStorage.setItem(sessionNotificationKey, 'true'); // Persiste no session storage
-                                console.log(`[DEBUG] Notificação enviada e flags atualizadas. notificationSentRef: ${notificationSentRef.current}, sessionStorage: ${sessionStorage.getItem(sessionNotificationKey)}`);
-                            } else {
-                                const errorText = await notificationResponse.text();
-                                console.error('[DEBUG] Erro ao enviar notificação. Status:', notificationResponse.status, 'Erro:', errorText);
-                            }
-                        } catch (error) {
-                            console.error('[DEBUG] Erro ao criar notificação:', error);
-                        }
-                    } else {
-                        console.log(`[DEBUG] NOTIFICACAO: Condição de envio não atendida. notificationSentRef.current: ${notificationSentRef.current}, hasNotifiedInSession: ${hasNotifiedInSession}`);
-                    }
-                } else {
-                    console.log('[DEBUG] Condições para notificação NÃO atendidas. Tipo:', authInfo?.entity?.tipo, 'ID:', authInfo?.entity?.id);
-                }
-
-                console.log('[DEBUG] Tipo de data.certificados (RAW):', typeof data.certificados, data.certificados);
+                console.log('Dados do candidato recebidos (RAW):', data);
+                console.log('Tipo de data.certificados (RAW):', typeof data.certificados, data.certificados);
 
                 // Robustly parse certificados to ensure it's an array
                 let parsedCertificados = [];
@@ -124,7 +74,7 @@ export default function PerfilCandidatoView({ params }) {
                             ? tempCertificados 
                             : JSON.parse(tempCertificados);
                     } catch (parseError) {
-                        console.warn('[DEBUG] Could not parse certificados as JSON. Treating as plain text or single item.', parseError);
+                        console.warn('Could not parse certificados as JSON. Treating as plain text or single item.', parseError);
                         // If parsing fails, treat as a single string item in an array
                         parsedCertificados = [data.certificados];
                     }
@@ -133,26 +83,23 @@ export default function PerfilCandidatoView({ params }) {
                 if (!Array.isArray(parsedCertificados)) {
                     parsedCertificados = [];
                 }
-                console.log('[DEBUG] Parsed certificados (after frontend parsing):', parsedCertificados);
-                console.log('[DEBUG] Tipo de parsedCertificados (after frontend parsing):', typeof parsedCertificados, Array.isArray(parsedCertificados));
+                console.log('Parsed certificados (after frontend parsing):', parsedCertificados);
+                console.log('Tipo de parsedCertificados (after frontend parsing):', typeof parsedCertificados, Array.isArray(parsedCertificados));
 
                 setCandidato({
                     ...data,
                     certificados: parsedCertificados
                 });
             } catch (err) {
-                console.error('[DEBUG] Erro detalhado:', err);
+                console.error('Erro detalhado:', err);
                 setError(err.message || 'Erro ao carregar dados do candidato');
             } finally {
                 setLoading(false);
             }
         };
 
-        if (!isLoading && authInfo && authInfo.entity && authInfo.entity.tipo === 'empresa') {
-            console.log('[DEBUG] Condições para buscar dados atendidas. Chamando fetchCandidatoData...');
-            fetchCandidatoData();
-        } else {
-            console.log('[DEBUG] Condições para buscar dados NÃO atendidas:', { isLoading, authInfo });
+        if (!isLoading) {
+            fetchCandidato();
         }
     }, [id, authInfo, isLoading, router]);
 
@@ -228,7 +175,7 @@ export default function PerfilCandidatoView({ params }) {
                 <div className="flex justify-center items-center">
                     <div className="relative">
                         {/* Always display initials instead of photo */}
-                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-[#7B2D26] border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
+                        <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-[#7B2D26] bg-[#7B2D26] text-white flex items-center justify-center text-4xl font-bold shadow-xl">
                                 {getInitials(currentCandidato.nome)}
                             </div>
                     </div>
@@ -372,27 +319,43 @@ export default function PerfilCandidatoView({ params }) {
 
 // Função auxiliar para obter iniciais
 function getInitials(name) {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    if (!name) return '';
+    const parts = name.split(' ').filter(p => p.length > 0);
+    let initials = '';
+    if (parts.length > 0) {
+        initials += parts[0][0]; // First initial of the first name
+        if (parts.length > 1) {
+            initials += parts[1][0]; // First initial of the first surname
+        }
+    }
+    return initials.toUpperCase();
 }
 
 // Função auxiliar para formatar CPF
 function formatarCPF(cpf) {
-    if (!cpf) return '';
-    const cleaned = cpf.replace(/\D/g, '');
-    if (cleaned.length <= 11) {
-        return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return cpf; // Retorna o original se não for um CPF válido
+    if (!cpf) return 'CPF não informado';
+    const cpfLimpo = cpf.replace(/\D/g, ''); // Remove tudo que não é dígito
+    if (cpfLimpo.length !== 11) return cpf; // Retorna o original se não tiver 11 dígitos
+    return cpfLimpo.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 }
 
 // Função auxiliar para formatar data
 function formatarData(data) {
-    if (!data) return 'Não informada';
-    try {
-        return new Date(data).toLocaleDateString('pt-BR');
-    } catch (e) {
-        console.error('Erro ao formatar data:', e);
-        return 'Data inválida';
+    if (!data) return 'Data não informada';
+    const date = new Date(data);
+    if (isNaN(date.getTime())) {
+        // Tentar formatar se for um string no formato DD/MM/YYYY
+        const parts = data.split('/');
+        if (parts.length === 3) {
+            const d = parseInt(parts[0]);
+            const m = parseInt(parts[1]) - 1; // Mês é 0-indexed
+            const y = parseInt(parts[2]);
+            const reSlashedDate = new Date(y, m, d);
+            if (!isNaN(reSlashedDate.getTime())) {
+                return reSlashedDate.toLocaleDateString('pt-BR');
+            }
+        }
+        return data; // Retorna o dado original se não for uma data válida nem um formato DD/MM/YYYY
     }
+    return date.toLocaleDateString('pt-BR');
 } 
