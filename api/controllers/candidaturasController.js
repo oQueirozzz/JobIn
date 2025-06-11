@@ -4,6 +4,7 @@ import Usuario from '../models/Usuario.js';
 import Notificacao from '../models/Notificacao.js';
 import * as logsController from './logsController.js';
 import NotificacaoService from '../services/notificacaoService.js';
+import Empresa from '../models/Empresa.js';
 
 // Obter todas as candidaturas
 export const getCandidaturas = async (req, res) => {
@@ -127,66 +128,42 @@ export const createCandidatura = async (req, res) => {
 
 // Atualizar status da candidatura
 export const updateStatusCandidatura = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+  const { id } = req.params;
+  const { status } = req.body;
 
+  try {
     // Validar status
     const statusValidos = ['PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'];
     if (!statusValidos.includes(status)) {
-      return res.status(400).json({ 
-        message: 'Status inválido. Os status válidos são: PENDENTE, APROVADO, REJEITADO, EM_ESPERA',
-        error: 'STATUS_INVALIDO'
-      });
+      return res.status(400).json({ message: 'Status inválido' });
     }
 
-    // Buscar a candidatura
+    // Buscar candidatura e vaga
     const candidatura = await Candidatura.findById(id);
     if (!candidatura) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
 
-    // Atualizar o status
-    const resultado = await Candidatura.update(id, { status });
-    if (resultado.affectedRows === 0) {
-      return res.status(404).json({ message: 'Candidatura não encontrada' });
+    const vaga = await Vaga.findById(candidatura.id_vaga);
+    if (!vaga) {
+      return res.status(404).json({ message: 'Vaga não encontrada' });
     }
 
-    // Criar notificação baseada no status
-    switch (status) {
-      case 'APROVADO':
-        await NotificacaoService.criarNotificacaoCandidaturaAprovada(
-          candidatura.id_usuario,
-          candidatura.empresa_id,
-          candidatura.id_vaga,
-          candidatura.id
-        );
-        break;
-      case 'REJEITADO':
-        await NotificacaoService.criarNotificacaoCandidaturaRejeitada(
-          candidatura.id_usuario,
-          candidatura.empresa_id,
-          candidatura.id_vaga,
-          candidatura.id
-        );
-        break;
-      case 'EM_ESPERA':
-        await NotificacaoService.criarNotificacaoCandidaturaEmEspera(
-          candidatura.id_usuario,
-          candidatura.empresa_id,
-          candidatura.id_vaga,
-          candidatura.id
-        );
-        break;
+    const empresa = await Empresa.findById(vaga.empresa_id);
+    if (!empresa) {
+      return res.status(404).json({ message: 'Empresa não encontrada' });
     }
 
-    res.status(200).json({ message: 'Status da candidatura atualizado com sucesso' });
+    // Atualizar status
+    const candidaturaAtualizada = await Candidatura.update(id, { status });
+    if (!candidaturaAtualizada) {
+      return res.status(500).json({ message: 'Erro ao atualizar status da candidatura' });
+    }
+
+    res.json({ message: 'Status atualizado com sucesso', candidatura: candidaturaAtualizada });
   } catch (error) {
     console.error('Erro ao atualizar status da candidatura:', error);
-    res.status(500).json({ 
-      message: 'Erro ao atualizar status da candidatura',
-      error: 'ERRO_INTERNO'
-    });
+    res.status(500).json({ message: 'Erro ao atualizar status da candidatura' });
   }
 };
 

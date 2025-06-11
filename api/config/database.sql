@@ -80,24 +80,21 @@ CREATE TABLE logs (
 
 CREATE TABLE notificacao (
     id SERIAL PRIMARY KEY,
-    candidaturas_id INT REFERENCES candidaturas(id) ON DELETE CASCADE,
-    empresa_id INT REFERENCES empresas(id),
-    usuario_id INT REFERENCES usuarios(id),
+    candidaturas_id INT NOT NULL REFERENCES candidaturas(id) ON DELETE CASCADE,
+    empresas_id INT REFERENCES empresas(id),
+    usuarios_id INT REFERENCES usuarios(id),
     mensagem_usuario VARCHAR(255),
     mensagem_empresa VARCHAR(255),
     tipo VARCHAR(50) NOT NULL CHECK (
         tipo IN (
             'LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA',
             'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'PERFIL_ATUALIZADO',
-            'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO',
-            'CONTA_CRIADA'
+            'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO'
         )
     ),
     status_candidatura VARCHAR(20) CHECK (status_candidatura IN ('PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA')),
     data_notificacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    lida BOOLEAN DEFAULT FALSE,
-    remetente_id INTEGER,
-    remetente_tipo VARCHAR(50)
+    lida BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE posts (
@@ -116,17 +113,15 @@ CREATE TABLE candidaturas_removidas (
     data_remocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE notificacao ALTER COLUMN candidaturas_id DROP NOT NULL;
-ALTER TABLE notificacao DROP CONSTRAINT notificacao_tipo_check;
-ALTER TABLE notificacao ADD CONSTRAINT notificacao_tipo_check CHECK (
-    tipo IN (
-        'LOGIN', 'CANDIDATURA_CRIADA', 'CANDIDATURA_REMOVIDA', 'CANDIDATURA_APROVADA',
-        'CANDIDATURA_REJEITADA', 'CANDIDATURA_EM_ESPERA', 'CANDIDATURA_ATUALIZADA', 'PERFIL_ATUALIZADO',
-        'SENHA_ALTERADA', 'VAGA_CRIADA', 'VAGA_ATUALIZADA', 'VAGA_EXCLUIDA', 'PERFIL_VISITADO',
-        'CONTA_CRIADA'
-    )
-);
 
+-- Tabela para likes de posts
+CREATE TABLE post_likes (
+    id SERIAL PRIMARY KEY,
+    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, usuario_id) -- Garante que um usuário só pode dar like uma vez em um post
+);
 
 -- Funções
 
@@ -163,12 +158,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing trigger and function
+DROP TRIGGER IF EXISTS trg_notificar_status_candidatura ON candidaturas;
+DROP FUNCTION IF EXISTS notificar_status_candidatura();
+
+-- Create the updated function
 CREATE OR REPLACE FUNCTION notificar_status_candidatura() RETURNS TRIGGER AS $$
 DECLARE
     empresa INT;
+    vaga_nome VARCHAR(255);
+    empresa_nome VARCHAR(255);
 BEGIN
     IF OLD.status <> NEW.status THEN
-        SELECT empresa_id INTO empresa FROM vagas WHERE id = NEW.id_vaga;
+        -- Get vaga info using nome_vaga instead of nome
+        SELECT empresa_id, nome_vaga FROM vagas WHERE id = NEW.id_vaga INTO empresa, vaga_nome;
+        -- Get empresa info
+        SELECT nome FROM empresas WHERE id = empresa INTO empresa_nome;
 
         INSERT INTO notificacao (
             candidaturas_id, empresas_id, usuarios_id,
@@ -180,30 +185,29 @@ BEGIN
             empresa,
             NEW.id_usuario,
             CASE NEW.status
-                WHEN 'APROVADO' THEN 'Parabéns! Sua candidatura foi aprovada.'
-                WHEN 'REJEITADO' THEN 'Sua candidatura não foi aprovada desta vez.'
-                WHEN 'EM_ESPERA' THEN 'Sua candidatura está em análise.'
-                ELSE 'O status da sua candidatura foi atualizado.'
+                WHEN 'APROVADO' THEN 'Sua candidatura para a vaga "' || vaga_nome || '" na empresa ' || empresa_nome || ' foi aprovada!'
+                WHEN 'REJEITADO' THEN 'Sua candidatura para a vaga "' || vaga_nome || '" na empresa ' || empresa_nome || ' foi rejeitada.'
+                WHEN 'EM_ESPERA' THEN 'Sua candidatura para a vaga "' || vaga_nome || '" na empresa ' || empresa_nome || ' está em análise.'
+                ELSE 'O status da sua candidatura para a vaga "' || vaga_nome || '" foi atualizado.'
             END,
             CASE NEW.status
-                WHEN 'APROVADO' THEN 'Você aprovou uma candidatura.'
-                WHEN 'REJEITADO' THEN 'Você rejeitou uma candidatura.'
-                WHEN 'EM_ESPERA' THEN 'Você colocou uma candidatura em espera.'
-                ELSE 'Você atualizou o status de uma candidatura.'
+                WHEN 'APROVADO' THEN 'Você aprovou a candidatura para a vaga "' || vaga_nome || '".'
+                WHEN 'REJEITADO' THEN 'Você rejeitou a candidatura para a vaga "' || vaga_nome || '".'
+                WHEN 'EM_ESPERA' THEN 'Você colocou a candidatura para a vaga "' || vaga_nome || '" em espera.'
+                ELSE 'Você atualizou o status de uma candidatura para a vaga "' || vaga_nome || '".'
             END,
             NEW.status,
             CASE NEW.status
                 WHEN 'APROVADO' THEN 'CANDIDATURA_APROVADA'
                 WHEN 'REJEITADO' THEN 'CANDIDATURA_REJEITADA'
                 WHEN 'EM_ESPERA' THEN 'CANDIDATURA_EM_ESPERA'
-                ELSE 'CANDIDATURA_ATUALIZADA'
+                ELSE 'CANDIDATURA_CRIADA'
             END
         );
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Triggers
 
 CREATE TRIGGER trg_delete_usuario_dependencias
@@ -226,64 +230,8 @@ CREATE TRIGGER trg_notificar_status_candidatura
 AFTER UPDATE ON candidaturas
 FOR EACH ROW EXECUTE FUNCTION notificar_status_candidatura();
 
+TRUNCATE TABLE usuarios RESTART IDENTITY CASCADE;
+TRUNCATE TABLE empresas RESTART IDENTITY CASCADE;
 
--- Tabela para tokens de redefinição de senha
-CREATE TABLE password_reset_tokens (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    token VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela para likes de posts
-CREATE TABLE post_likes (
-    id SERIAL PRIMARY KEY,
-    post_id INT REFERENCES posts(id) ON DELETE CASCADE,
-    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(post_id, usuario_id) -- Garante que um usuário só pode dar like uma vez em um post
-);
 
 select table_name from information_schema.tables where table_schema = 'public';
-
-
-
--- -- Drop existing notifications table if it exists
--- DROP TABLE IF EXISTS notificacoes;
-
--- -- Create notifications table with updated structure
--- CREATE TABLE notificacoes (
---     id SERIAL PRIMARY KEY,
---     usuario_id INTEGER NOT NULL,
---     tipo VARCHAR(50) NOT NULL,
---     mensagem TEXT NOT NULL,
---     remetente_id INTEGER,
---     remetente_tipo VARCHAR(50),
---     vaga_id INTEGER,
---     lida BOOLEAN DEFAULT FALSE,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
---     FOREIGN KEY (vaga_id) REFERENCES vagas(id) ON DELETE SET NULL
--- );
-
--- -- Create indexes for better performance
--- CREATE INDEX idx_notificacoes_usuario_id ON notificacoes(usuario_id);
--- CREATE INDEX idx_notificacoes_tipo ON notificacoes(tipo);
--- CREATE INDEX idx_notificacoes_lida ON notificacoes(lida);
-
--- -- Create trigger to update updated_at timestamp
--- CREATE OR REPLACE FUNCTION update_updated_at_column()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     NEW.updated_at = CURRENT_TIMESTAMP;
---     RETURN NEW;
--- END;
--- $$ language 'plpgsql';
-
--- CREATE TRIGGER update_notificacoes_updated_at
---     BEFORE UPDATE ON notificacoes
---     FOR EACH ROW
---     EXECUTE FUNCTION update_updated_at_column();
