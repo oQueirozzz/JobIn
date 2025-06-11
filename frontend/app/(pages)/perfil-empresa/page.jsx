@@ -55,9 +55,24 @@ export default function PerfilEmpresa() {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas`);
                 const data = await res.json();
 
-                // Ordenar por data de criação, se quiser
-                const ordenadas = data.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
-                setVagas(ordenadas);
+                const vagasOrdenadas = data.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
+
+                const authData = localStorage.getItem('authEntity');
+
+                if (authData) {
+                    try {
+                        const parsed = JSON.parse(authData);
+
+                        if (parsed?.tipo === 'empresa' && parsed?.id) {
+                            // Filtra vagas da empresa logada
+                            const vagasDaEmpresa = vagasOrdenadas.filter(vaga => vaga.empresa_id === parsed.id);
+                            setVagas(vagasDaEmpresa);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Erro ao interpretar authEntity do localStorage:', error);
+                    }
+                }
             } catch (err) {
                 console.error('Erro ao buscar vagas:', err);
             }
@@ -519,8 +534,8 @@ export default function PerfilEmpresa() {
                             />
                         ) : (
                             <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-100 flex items-center justify-center text-5xl font-bold text-[#7B2D26] border-4 border-[#7B2D26] object-cover shadow-xl transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl">
-                            {getInitials(formData.nome)}
-                        </div>
+                                {getInitials(formData.nome)}
+                            </div>
                         )}
 
                         {formData.logo && (
@@ -673,32 +688,32 @@ export default function PerfilEmpresa() {
 
                 <div className='md:grid md:grid-cols-2 flex flex-col'>
                     {vagas.length > 0 ? (
-                        
-                            vagas.map((vaga) => (
-                                <div
-                                    key={vaga.id}
-                                    className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex m-2 items-center justify-between"
-                                >
-                                    <div className='flex'>
-                                        <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <h1 className='mr-5 font-semibold'>
-                                            {vaga.nome_vaga.length > 30
-                                                ? vaga.nome_vaga.substring(0, 30) + '...'
-                                                : vaga.nome_vaga}
-                                        </h1>
-                                        <h2 className='mr-5 text-gray-600'>Área - {vaga.categoria}</h2>
-                                    </div>
-                                    <div className=''>
-                                        <a href={`/vagas?vaga=${vaga.id}`}> <svg className="w-10 h-6 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                                        </svg></a>
-                                    </div>
+
+                        vagas.map((vaga) => (
+                            <div
+                                key={vaga.id}
+                                className="bg-gradient-to-br from-gray-100 to-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex m-2 items-center justify-between"
+                            >
+                                <div className='flex'>
+                                    <svg className="w-6 h-6 text-[#7B2D26] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <h1 className='mr-5 font-semibold'>
+                                        {vaga.nome_vaga.length > 30
+                                            ? vaga.nome_vaga.substring(0, 30) + '...'
+                                            : vaga.nome_vaga}
+                                    </h1>
+                                    <h2 className='mr-5 text-gray-600'>Área - {vaga.categoria}</h2>
                                 </div>
-                            ))
-                        
-                    ): (<h1 className="text-gray-700 leading-relaxed">Nenhuma vaga criada!</h1>) }
+                                <div className=''>
+                                    <a href={`/vagas?vaga=${vaga.id}`}> <svg className="w-10 h-6 text-[#7B2D26] " fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                                    </svg></a>
+                                </div>
+                            </div>
+                        ))
+
+                    ) : (<h1 className="text-gray-700 leading-relaxed">Nenhuma vaga criada!</h1>)}
                 </div>
             </div>
 
