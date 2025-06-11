@@ -164,8 +164,10 @@ export default function Feed() {
     const carregarPosts = async () => {
       try {
         console.log('[DEBUG POSTS] Carregando posts...');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`);
-
+        const usuario_id = authInfo?.entity?.id;
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/posts${usuario_id ? `?usuario_id=${usuario_id}` : ''}`;
+        
+        const response = await fetch(url);
         console.log('[DEBUG POSTS] Resposta:', response.status);
 
         if (response.ok) {
@@ -186,7 +188,7 @@ export default function Feed() {
     };
 
     carregarPosts();
-  }, []);
+  }, [authInfo?.entity?.id]);
 
   // NOVO useEffect para carregar notificações
   useEffect(() => {
@@ -229,8 +231,54 @@ export default function Feed() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  const handleLikePost = (postId) => {
-    setLikedPosts(prev => ({ ...prev, [postId]: !prev[postId] }));
+  const handleLikePost = async (postId) => {
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      const isLiked = post.liked_by_user;
+      const method = isLiked ? 'DELETE' : 'POST';
+      
+      console.log('[DEBUG LIKE] Enviando requisição:', {
+        postId,
+        method,
+        isLiked,
+        usuario_id: authInfo?.entity?.id
+      });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/like`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ usuario_id: authInfo?.entity?.id })
+      });
+
+      console.log('[DEBUG LIKE] Resposta:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[DEBUG LIKE] Dados retornados:', data);
+        
+        // Atualiza a lista de posts com o novo estado de like
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === postId 
+              ? { 
+                  ...post, 
+                  liked_by_user: !isLiked,
+                  likes_count: data.likes_count
+                }
+              : post
+          )
+        );
+      } else {
+        const errorData = await response.json();
+        console.error('[DEBUG LIKE] Erro na resposta:', errorData);
+      }
+    } catch (error) {
+      console.error('[DEBUG LIKE] Erro ao dar like no post:', error);
+    }
   };
 
   const handleCloseCompleteProfile = () => {
@@ -584,16 +632,15 @@ export default function Feed() {
                           />
                         </div>
                       )}
-                      <div className="flex items-center">
+                      <div className="flex items-center space-x-4">
                         <button
                           onClick={() => handleLikePost(post.id)}
-                          className={`flex cursor-pointer items-center transition-all duration-300 ${likedPosts[post.id]
-                            ? 'text-[#7B2D26] transform scale-110'
-                            : 'text-gray-500 hover:text-[#7B2D26]'
-                            }`}
+                          className={`flex items-center space-x-1 ${
+                            post.liked_by_user ? 'text-[#7B2D26]' : 'text-gray-500'
+                          } hover:text-[#7B2D26] transition-colors`}
                         >
-                          <ThumbsUp className={`w-5 h-5 mr-1 ${likedPosts[post.id] ? 'fill-[#7B2D26]' : ''}`} />
-                          <span>{likedPosts[post.id] ? '1' : '0'}</span>
+                          <ThumbsUp className={`h-5 w-5 ${post.liked_by_user ? 'fill-current' : ''}`} />
+                          <span>{post.likes_count || 0}</span>
                         </button>
                       </div>
                     </div>

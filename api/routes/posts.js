@@ -82,13 +82,21 @@ router.post('/', upload.single('imagem'), async (req, res) => {
 // Buscar todos os posts
 router.get('/', async (req, res) => {
   try {
+    const { usuario_id } = req.query; // Pegar o ID do usuário da query string
+
     const query = `
       SELECT 
           p.*, 
           e.nome as nome_empresa, 
           e.logo as logo_empresa,
           COUNT(pl.id) AS likes_count,
-          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao
+          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao,
+          EXISTS(
+            SELECT 1 
+            FROM post_likes pl2 
+            WHERE pl2.post_id = p.id 
+            AND pl2.usuario_id = $1
+          ) as liked_by_user
       FROM posts p
       JOIN empresas e ON p.empresa_id = e.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
@@ -96,7 +104,7 @@ router.get('/', async (req, res) => {
       ORDER BY p.data_publicacao DESC
     `;
 
-    const result = await db.query(query);
+    const result = await db.query(query, [usuario_id]);
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar posts:', error);
@@ -108,6 +116,7 @@ router.get('/', async (req, res) => {
 router.get('/empresa/:empresa_id', async (req, res) => {
   try {
     const { empresa_id } = req.params;
+    const { usuario_id } = req.query; // Pegar o ID do usuário da query string
 
     const query = `
       SELECT 
@@ -115,16 +124,22 @@ router.get('/empresa/:empresa_id', async (req, res) => {
           e.nome as nome_empresa, 
           e.logo as logo_empresa,
           COUNT(pl.id) AS likes_count,
-          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao
+          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao,
+          EXISTS(
+            SELECT 1 
+            FROM post_likes pl2 
+            WHERE pl2.post_id = p.id 
+            AND pl2.usuario_id = $1
+          ) as liked_by_user
       FROM posts p
       JOIN empresas e ON p.empresa_id = e.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
-      WHERE p.empresa_id = $1
+      WHERE p.empresa_id = $2
       GROUP BY p.id, e.id
       ORDER BY p.data_publicacao DESC
     `;
 
-    const result = await db.query(query, [empresa_id]);
+    const result = await db.query(query, [usuario_id, empresa_id]);
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar posts da empresa:', error);
