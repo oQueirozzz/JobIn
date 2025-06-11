@@ -1,5 +1,6 @@
 import Notificacao from '../models/Notificacao.js';
 import Log from '../models/Log.js';
+import NotificacaoService from '../services/notificacaoService.js';
 
 // Obter todas as notificações
 export const getNotificacoes = async (req, res) => {
@@ -179,4 +180,26 @@ export const deleteNotificacao = async (req, res) => {
     console.error('Erro ao excluir notificação:', error);
     res.status(500).json({ message: 'Erro ao excluir notificação' });
   }
+};
+
+// Criar notificação de perfil visitado
+export const criarNotificacaoPerfilVisitado = async (req, res) => {
+    try {
+        const { usuarioId, empresaId } = req.body;
+
+        if (!usuarioId || !empresaId) {
+            return res.status(400).json({
+                message: 'ID do usuário e ID da empresa são obrigatórios'
+            });
+        }
+
+        const notificacao = await NotificacaoService.criarNotificacaoPerfilVisitadoPorEmpresa(usuarioId, empresaId);
+        res.status(201).json(notificacao);
+    } catch (error) {
+        console.error('Erro ao criar notificação de perfil visitado:', error);
+        res.status(500).json({
+            message: 'Erro ao criar notificação de perfil visitado',
+            error: error.message
+        });
+    }
 };

@@ -132,8 +132,12 @@ export const updateStatusCandidatura = async (req, res) => {
     const { status } = req.body;
 
     // Validar status
-    if (!['PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'].includes(status)) {
-      return res.status(400).json({ message: 'Status inválido' });
+    const statusValidos = ['PENDENTE', 'APROVADO', 'REJEITADO', 'EM_ESPERA'];
+    if (!statusValidos.includes(status)) {
+      return res.status(400).json({ 
+        message: 'Status inválido. Os status válidos são: PENDENTE, APROVADO, REJEITADO, EM_ESPERA',
+        error: 'STATUS_INVALIDO'
+      });
     }
 
     // Buscar a candidatura
@@ -143,7 +147,7 @@ export const updateStatusCandidatura = async (req, res) => {
     }
 
     // Atualizar o status
-    const resultado = await Candidatura.updateStatus(id, status);
+    const resultado = await Candidatura.update(id, { status });
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ message: 'Candidatura não encontrada' });
     }
@@ -179,7 +183,10 @@ export const updateStatusCandidatura = async (req, res) => {
     res.status(200).json({ message: 'Status da candidatura atualizado com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar status da candidatura:', error);
-    res.status(500).json({ message: 'Erro ao atualizar status da candidatura' });
+    res.status(500).json({ 
+      message: 'Erro ao atualizar status da candidatura',
+      error: 'ERRO_INTERNO'
+    });
   }
 };
 

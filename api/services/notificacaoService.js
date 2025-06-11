@@ -32,6 +32,33 @@ class NotificacaoService {
     }
   }
 
+  // Notificação de perfil visitado por empresa
+  static async criarNotificacaoPerfilVisitadoPorEmpresa(usuarioId, empresaId) {
+    console.log('[NotificacaoService] Disparando: criarNotificacaoPerfilVisitadoPorEmpresa', { usuarioId, empresaId });
+    try {
+      const empresa = await Empresa.findById(empresaId);
+      if (!empresa) {
+        throw new Error('Empresa não encontrada');
+      }
+      
+      const mensagem = `${empresa.nome} visitou seu perfil`;
+      
+      return await Notificacao.create({
+        usuarios_id: usuarioId,
+        empresas_id: null, // A notificação é para o usuário, não para a empresa
+        candidaturas_id: null,
+        mensagem_usuario: mensagem,
+        mensagem_empresa: null,
+        status_candidatura: null,
+        tipo: 'PERFIL_VISITADO',
+        lida: false
+      });
+    } catch (error) {
+      console.error('Erro ao criar notificação de perfil visitado por empresa:', error);
+      throw error;
+    }
+  }
+
   // Notificação de candidatura criada
   static async criarNotificacaoCandidaturaCriada(usuarioId, empresaId, vagaId, candidaturaId) {
     console.log('[NotificacaoService] Disparando: criarNotificacaoCandidaturaCriada', { usuarioId, empresaId, vagaId, candidaturaId });
