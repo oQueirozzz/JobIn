@@ -580,7 +580,7 @@ export default function Feed() {
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-full md:w-[280px] flex-shrink-0">
+          <div className="w-full md:w-[280px] flex-shrink-0 ">
             <div className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden border border-gray-100">
               <div className="text-center px-4 pt-8 pb-4">
                 <div className="inline-block rounded-full bg-white p-1 shadow-md mx-auto mb-4">

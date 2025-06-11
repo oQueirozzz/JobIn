@@ -787,7 +787,7 @@ export default function Vagas() {
               vagasFiltradas.map((vaga) => (
                 <div
                   key={vaga.id}
-                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-all duration-300 ${vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26] ring-2 ring-[#7B2D26] ring-opacity-50' : ''
+                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer hover:shadow-md transition-all duration-300 ${vagaSelecionada?.id === vaga.id ? 'border-[#7B2D26] ring-2 ring-[#7B2D26] ring-opacity-50 order-2 md:order-1"' : ''
                     }`}
                   onClick={() => setVagaSelecionada(vaga)}
                 >
@@ -858,7 +858,7 @@ export default function Vagas() {
           {/* Detalhes da vaga */}
           <div
             ref={detalhesRef}
-            className="lg:sticky lg:top-24 h-fit"
+            className="lg:sticky lg:top-24 h-fit order-1 md:order-2"
           >
             {vagaSelecionada ? (
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">

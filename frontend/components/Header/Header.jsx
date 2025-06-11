@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../hooks/useAuth';
+
 import {
   Search,
   Home,
@@ -16,7 +17,8 @@ import {
   ChevronDown,
   Settings,
   Trash2,
-  Check
+  Check,
+  X
 } from "lucide-react";
 
 // Componente NavItem
@@ -47,7 +49,7 @@ export default function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-
+  const [showModal, setShowModal] = useState(false);
   console.log('[Header] authInfo:', authInfo);
 
   // Função para buscar notificações
@@ -169,10 +171,10 @@ export default function Header() {
     const parts = name.split(' ').filter(p => p.length > 0);
     let initials = '';
     if (parts.length > 0) {
-        initials += parts[0][0]; // First initial of the first name
-        if (parts.length > 1) {
-            initials += parts[1][0]; // First initial of the first surname
-        }
+      initials += parts[0][0]; // First initial of the first name
+      if (parts.length > 1) {
+        initials += parts[1][0]; // First initial of the first surname
+      }
     }
     return initials.toUpperCase();
   };
@@ -187,8 +189,8 @@ export default function Header() {
       const notificationDate = new Date(timestamp);
       // Subtract 3 hours as requested
       notificationDate.setHours(notificationDate.getHours() - 3);
-      const formattedDate = notificationDate.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
-      const formattedTime = notificationDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit', hour12: false});
+      const formattedDate = notificationDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const formattedTime = notificationDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
       return `${formattedDate} ${formattedTime}`;
     } catch (error) {
       console.error('[Header] Error formatting timestamp:', error, timestamp);
@@ -221,7 +223,7 @@ export default function Header() {
 
               </div>
             </Link>
-           
+
           </div>
 
           {/* Menu Mobile Button */}
@@ -287,16 +289,15 @@ export default function Header() {
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex items-start flex-1">
-                                <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${
-                                  notification.tipo === 'PERFIL_VISITADO' ? 'bg-purple-500' :
-                                  notification.tipo === 'CANDIDATURA_CRIADA' ? 'bg-blue-500' :
-                                  notification.tipo === 'CANDIDATURA_REMOVIDA' ? 'bg-red-500' :
-                                  notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
-                                  notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
-                                  notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
-                                  notification.tipo === 'VAGA_CRIADA' ? 'bg-green-500' :
-                                  'bg-gray-500'
-                                }`} />
+                                <div className={`w-2 h-2 rounded-full mt-2 mr-3 ${notification.tipo === 'PERFIL_VISITADO' ? 'bg-purple-500' :
+                                    notification.tipo === 'CANDIDATURA_CRIADA' ? 'bg-blue-500' :
+                                      notification.tipo === 'CANDIDATURA_REMOVIDA' ? 'bg-red-500' :
+                                        notification.tipo === 'CANDIDATURA_APROVADA' ? 'bg-green-500' :
+                                          notification.tipo === 'VAGA_EXCLUIDA' ? 'bg-red-500' :
+                                            notification.tipo === 'VAGA_ATUALIZADA' ? 'bg-yellow-500' :
+                                              notification.tipo === 'VAGA_CRIADA' ? 'bg-green-500' :
+                                                'bg-gray-500'
+                                  }`} />
                                 <div className="flex-1">
                                   <p className="text-sm">
                                     {authInfo?.entity?.tipo === 'empresa'
@@ -361,8 +362,8 @@ export default function Header() {
                         </div>
                       </div>
                     </div>
-                    <Link 
-                      href={authInfo?.entity?.tipo === 'empresa' ? "/perfil-empresa" : "/perfil"} 
+                    <Link
+                      href={authInfo?.entity?.tipo === 'empresa' ? "/perfil-empresa" : "/perfil"}
                       className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
                     >
                       <User className="h-4 w-4 mr-2" /> Ver perfil
@@ -390,7 +391,7 @@ export default function Header() {
           } overflow-hidden`}
       >
         <div className="px-4 py-2 space-y-2">
-       
+
           <div className="space-y-1">
             <Link
               href="/dashboard"
@@ -406,16 +407,92 @@ export default function Header() {
               <Briefcase className="h-5 w-5 mr-3" />
               Vagas
             </Link>
-            <Link
-              href="/notificacoes"
-              className="flex items-center px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center px-4 py-3 w-full text-white hover:bg-white/10 rounded-lg transition-colors duration-200 cursor-pointer"
             >
               <Bell className="h-5 w-5 mr-3" />
               Notificações
               <span className="ml-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
+                {notifications.length}
               </span>
-            </Link>
+            </button>
+
+            {/* Modal */}
+            {showModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden">
+                  {/* Header do Modal */}
+                  <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
+                    <h3 className="text-sm font-semibold">Notificações</h3>
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Lista de notificações */}
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-gray-500 text-center">
+                        Nenhuma notificação
+                      </div>
+                    ) : (
+                      notifications.map(notification => (
+                        <div
+                          key={notification.id}
+                          className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start flex-1">
+                              <div
+                                className={`w-2 h-2 rounded-full mt-2 mr-3 ${notification.tipo === 'PERFIL_VISITADO'
+                                    ? 'bg-purple-500'
+                                    : notification.tipo === 'CANDIDATURA_CRIADA'
+                                      ? 'bg-blue-500'
+                                      : notification.tipo === 'CANDIDATURA_REMOVIDA'
+                                        ? 'bg-red-500'
+                                        : notification.tipo === 'CANDIDATURA_APROVADA'
+                                          ? 'bg-green-500'
+                                          : notification.tipo === 'VAGA_EXCLUIDA'
+                                            ? 'bg-red-500'
+                                            : notification.tipo === 'VAGA_ATUALIZADA'
+                                              ? 'bg-yellow-500'
+                                              : notification.tipo === 'VAGA_CRIADA'
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-500'
+                                  }`}
+                              />
+                              <div className="flex-1">
+                                <p className="text-sm">
+                                  {authInfo?.entity?.tipo === 'empresa'
+                                    ? notification.mensagem_empresa
+                                    : notification.mensagem_usuario}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {formatNotificationTimestamp(notification.data_notificacao)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 ml-2">
+                              <button
+                                onClick={e => handleDeleteNotification(notification.id, e)}
+                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Excluir notificação"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <Link
               href={authInfo?.entity?.tipo === 'empresa' ? "/perfil-empresa" : "/perfil"}
               className="flex items-center px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
