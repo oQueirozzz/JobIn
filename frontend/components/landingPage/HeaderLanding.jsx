@@ -36,7 +36,7 @@ export default function HeaderLanding() {
 
     return (
         <header className={`fixed w-full z-50 transition-all duration-300 ${isScrolled
-                ? 'bg-[#7B2D26] shadow-lg py-2'
+                ? 'bg-[#7B2D26] shadow-lg py-1'
                 : 'bg-[#7B2D26]/95 backdrop-blur-sm py-4'
             }`}>
             <div className="container mx-auto px-4">
@@ -124,7 +124,7 @@ export default function HeaderLanding() {
                             </Link>
                             <Link
                                 href="/cadEmpresas"
-                                className="block w-full bg-white text-[#7B2D26] px-6 py-2.5 rounded-full hover:bg-white/90 transition-all duration-300 text-center font-medium shadow-sm hover:shadow-md"
+                                className="block text-white/90 hover:text-white font-medium transition-colors duration-300"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 Sou Empresa
