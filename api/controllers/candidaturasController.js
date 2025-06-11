@@ -160,41 +160,6 @@ export const updateStatusCandidatura = async (req, res) => {
       return res.status(500).json({ message: 'Erro ao atualizar status da candidatura' });
     }
 
-    // Criar notificação
-    const mensagemUsuario = status === 'APROVADO' 
-      ? `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} foi aprovada!`
-      : status === 'REJEITADO'
-      ? `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} foi rejeitada.`
-      : status === 'EM_ESPERA'
-      ? `Sua candidatura para a vaga "${vaga.nome_vaga}" na empresa ${empresa.nome} está em análise.`
-      : `O status da sua candidatura para a vaga "${vaga.nome_vaga}" foi atualizado.`;
-
-    const mensagemEmpresa = status === 'APROVADO'
-      ? `Você aprovou a candidatura para a vaga "${vaga.nome_vaga}".`
-      : status === 'REJEITADO'
-      ? `Você rejeitou a candidatura para a vaga "${vaga.nome_vaga}".`
-      : status === 'EM_ESPERA'
-      ? `Você colocou a candidatura para a vaga "${vaga.nome_vaga}" em espera.`
-      : `Você atualizou o status de uma candidatura para a vaga "${vaga.nome_vaga}".`;
-
-    const tipo = status === 'APROVADO'
-      ? 'CANDIDATURA_APROVADA'
-      : status === 'REJEITADO'
-      ? 'CANDIDATURA_REJEITADA'
-      : status === 'EM_ESPERA'
-      ? 'CANDIDATURA_EM_ESPERA'
-      : 'CANDIDATURA_CRIADA';
-
-    await Notificacao.create({
-      candidaturas_id: id,
-      empresas_id: vaga.empresa_id,
-      usuarios_id: candidatura.id_usuario,
-      mensagem_usuario: mensagemUsuario,
-      mensagem_empresa: mensagemEmpresa,
-      status_candidatura: status,
-      tipo
-    });
-
     res.json({ message: 'Status atualizado com sucesso', candidatura: candidaturaAtualizada });
   } catch (error) {
     console.error('Erro ao atualizar status da candidatura:', error);
