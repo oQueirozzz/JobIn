@@ -410,15 +410,6 @@ export default function NovaSenha() {
     async function alterarSenhaAutenticado(event) {
         event.preventDefault();
 
-        console.log('Debug: Chamado alterarSenhaAutenticado (fluxo autenticado)');
-
-        console.log('Debug: Iniciando alteração de senha autenticada:', {
-            email: authInfo?.entity?.email,
-            senhaAtual: senhaAtual ? '***' : null,
-            novaSenha: novaSenha ? '***' : null,
-            confirmarSenha: confirmarSenha ? '***' : null
-        });
-
         if (!senhaAtual) {
             setTipoMensagem('erro');
             setMensagem('Por favor, informe sua senha atual.');
@@ -449,16 +440,9 @@ export default function NovaSenha() {
             return;
         }
 
-        console.log('Debug: Verificando authInfo antes da validação:', authInfo);
-        console.log('Debug: authInfo.token:', authInfo?.token);
-        console.log('Debug: authInfo.entity.id:', authInfo?.entity?.id);
-
         if (!authInfo?.entity?.id || !authInfo?.token) {
-            console.error('Debug: Dados de autenticação ausentes para alterar senha autenticada. authInfo:', authInfo);
             setTipoMensagem('erro');
             setMensagem('Erro de autenticação. Por favor, faça login novamente.');
-            // Comentado temporariamente para depuração:
-            // setTimeout(() => { window.location.href = '/login'; }, 3000);
             return;
         }
 
@@ -471,12 +455,6 @@ export default function NovaSenha() {
                 nova_senha: novaSenha
             };
 
-            console.log('Debug: Enviando dados para alteração de senha autenticada:', {
-                ...dadosRequisicao,
-                senha_atual: '***',
-                nova_senha: '***'
-            });
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/alterar-senha-autenticado/${authInfo.entity.id}`, {
                 method: 'PUT',
                 headers: {
@@ -487,7 +465,6 @@ export default function NovaSenha() {
             });
 
             const data = await response.json();
-            console.log('Debug: Resposta da API (alterar senha autenticada):', data);
 
             if (response.ok) {
                 setTipoMensagem('sucesso');
@@ -496,14 +473,13 @@ export default function NovaSenha() {
                     window.location.href = '/config';
                 }, 2000);
             } else {
-                console.error('Debug: Erro na resposta da API (alterar senha autenticada):', data);
                 setTipoMensagem('erro');
                 setMensagem(data.message || 'Erro ao atualizar senha.');
             }
         } catch (error) {
-            console.error('Debug: Erro ao alterar senha autenticada:', error);
+            console.error('Erro ao alterar senha autenticada:', error);
             setTipoMensagem('erro');
-            setMensagem(error.message || 'Erro ao atualizar senha.');
+            setMensagem('Erro ao atualizar senha. Tente novamente mais tarde.');
         } finally {
             setCarregando(false);
         }

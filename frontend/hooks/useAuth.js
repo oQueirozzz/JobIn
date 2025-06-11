@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { useLoading } from '../app/ClientLayout';
@@ -45,8 +45,18 @@ function getInitialAuthInfo() {
       return null;
     }
 
+    // Verificar se o token é válido
+    if (token.length < 10) {
+      console.log('[useAuth] getInitialAuthInfo: Token inválido');
+      return null;
+    }
+
     const authInfo = { type: authType, entity, token };
-    console.log('[useAuth] getInitialAuthInfo: AuthInfo válido retornado:', authInfo);
+    console.log('[useAuth] getInitialAuthInfo: AuthInfo válido retornado:', {
+      type: authInfo.type,
+      entityId: authInfo.entity.id,
+      tokenLength: authInfo.token.length
+    });
     return authInfo;
   } catch (error) {
     console.error('[useAuth] getInitialAuthInfo: Erro ao ler localStorage:', error);
@@ -88,6 +98,16 @@ export function AuthProvider({ children }) {
     };
 
     checkAuth();
+
+    // Adicionar listener para mudanças no localStorage
+    const handleStorageChange = (e) => {
+      if (e.key === 'authToken' || e.key === 'authEntity' || e.key === 'authType') {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (email, senha, authType = 'user') => {
@@ -157,17 +177,12 @@ export function AuthProvider({ children }) {
     setGlobalIsLoading(false);
   };
 
-  const refreshAuthInfo = () => {
-    try {
-      const updatedAuth = getInitialAuthInfo();
-      setAuthInfo(updatedAuth);
-    } catch (error) {
-      console.error('Erro ao refrescar autenticação:', error);
-      setAuthInfo(null);
-    } finally {
-      setIsAuthLoading(false);
-    }
-  };
+  const refreshAuthInfo = useCallback(() => {
+    console.log('[useAuth] Atualizando informações de autenticação');
+    const updatedAuth = getInitialAuthInfo();
+    setAuthInfo(updatedAuth);
+    return updatedAuth;
+  }, []);
 
   const isAuthenticated = !!authInfo;
 

@@ -276,6 +276,7 @@ router.delete('/:id', usuariosController.deleteUsuario);
 router.get('/perfil', usuariosController.getPerfil);
 
 router.put('/senha/:id', usuariosController.updateSenha);
+router.put('/alterar-senha-autenticado/:id', usuariosController.updateSenha);
 
 // Rota para notificar atualização de perfil
 router.post('/:id/notificar-perfil-atualizado', async (req, res) => {

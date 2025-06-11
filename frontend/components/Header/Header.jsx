@@ -54,66 +54,93 @@ export default function Header() {
 
   // Função para buscar notificações
   const fetchNotifications = async () => {
+    if (!authInfo?.token) {
+      console.log('[Header] Token não disponível para buscar notificações');
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     try {
+      console.log('[Header] Buscando notificações com token:', authInfo.token.substring(0, 10) + '...');
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notificacoes`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${authInfo.token}`
         }
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         console.error('[Header] Erro ao buscar notificações:', response.status, errorData);
-        // Set notifications to an empty array to prevent render errors
-        setNotifications([]);
-        setUnreadCount(0);
-        return; // Stop further processing
+        
+        if (response.status === 401) {
+          console.log('[Header] Token inválido, tentando atualizar autenticação');
+          // Limpar dados de autenticação
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authEntity');
+          localStorage.removeItem('authType');
+          // Atualizar estado
+          setNotifications([]);
+          setUnreadCount(0);
+          // Redirecionar para login
+          window.location.href = '/login';
+          return;
+        }
+        
+        throw new Error(errorData.message || 'Erro ao buscar notificações');
       }
 
       const data = await response.json();
-      console.log('[Header] Fetched notifications data:', data);
+      console.log('[Header] Notificações recebidas:', data.length);
 
-      // Ensure data is an array before using filter
       if (Array.isArray(data)) {
         setNotifications(data);
-        // Conta apenas as notificações não lidas para o contador
         setUnreadCount(data.filter(notification => !notification.lida).length);
       } else {
-        console.error('[Header] Fetched data is not an array:', data);
-        // Set notifications to an empty array to prevent render errors
+        console.error('[Header] Dados recebidos não são um array:', data);
         setNotifications([]);
         setUnreadCount(0);
       }
 
     } catch (error) {
       console.error('[Header] Erro na requisição de notificações:', error);
-      // Set notifications to an empty array in case of network errors etc.
       setNotifications([]);
       setUnreadCount(0);
     }
   };
 
+  // Efeito para buscar notificações
   useEffect(() => {
-    if (authInfo?.entity?.id) {
-      // Busca inicial
+    let intervalId;
+
+    const setupNotifications = async () => {
+      if (authInfo?.token) {
+        await fetchNotifications();
+        intervalId = setInterval(fetchNotifications, 5 * 1000);
+      } else {
+        console.log('[Header] Usuário não autenticado, não buscando notificações');
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    setupNotifications();
+
+    // Adiciona listener para o evento personalizado
+    const handleNotificationUpdate = () => {
       fetchNotifications();
+    };
 
-      // Atualiza a cada 5 segundos
-      const interval = setInterval(fetchNotifications, 5 * 1000);
+    window.addEventListener('notificationUpdate', handleNotificationUpdate);
 
-      // Adiciona listener para o evento personalizado
-      const handleNotificationUpdate = () => {
-        fetchNotifications();
-      };
-
-      window.addEventListener('notificationUpdate', handleNotificationUpdate);
-
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener('notificationUpdate', handleNotificationUpdate);
-      };
-    }
-  }, [authInfo?.entity?.id]);
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      window.removeEventListener('notificationUpdate', handleNotificationUpdate);
+    };
+  }, [authInfo?.token]); // Dependência apenas no token
 
   // Função para disparar evento de atualização
   const triggerNotificationUpdate = () => {
@@ -126,7 +153,7 @@ export default function Header() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${authInfo?.token}`
         },
       });
       fetchNotifications();
@@ -142,7 +169,7 @@ export default function Header() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${authInfo?.token}`
         },
       });
       fetchNotifications();
@@ -157,7 +184,7 @@ export default function Header() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${authInfo?.token}`
         },
       });
       fetchNotifications();
