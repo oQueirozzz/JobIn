@@ -5,7 +5,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { verificarToken } from '../middleware/auth.js'; // Importar o middleware de autenticação
 
 // Configuração do __dirname para ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -39,14 +38,9 @@ const upload = multer({
 });
 
 // Criar um novo post
-router.post('/', verificarToken, upload.single('imagem'), async (req, res) => {
+router.post('/', upload.single('imagem'), async (req, res) => {
   try {
-    // Apenas empresas podem criar posts
-    if (req.usuario.type !== 'company') {
-      return res.status(403).json({ error: 'Apenas empresas podem criar posts.' });
-    }
-    const empresa_id = req.usuario.id; // Pega o ID da empresa do token
-    const { titulo, conteudo } = req.body;
+    const { empresa_id, titulo, conteudo } = req.body;
     const imagem = req.file ? `/uploads/posts/${req.file.filename}` : null;
 
     const query = `
@@ -62,13 +56,22 @@ router.post('/', verificarToken, upload.single('imagem'), async (req, res) => {
     
     console.log('[DEBUG POST] Resultado da query de inserção:', result);
 
+    // Buscar o nome da empresa
+    const empresaQuery = 'SELECT nome FROM empresas WHERE id = $1';
+    const empresaResult = await db.query(empresaQuery, [empresa_id]);
+
+    // Ajustar o horário para o fuso do Brasil (UTC-3)
+    const dataAtual = new Date();
+    dataAtual.setHours(dataAtual.getHours() + 3);
+
     res.status(201).json({
-      id: result.rows[0].id, // PostgreSQL retorna o ID em rows[0] se usar RETURNING
+      id: result.rows[0].id,
       empresa_id,
       titulo,
       conteudo,
       imagem,
-      data_publicacao: new Date()
+      nome_empresa: empresaResult.rows[0].nome,
+      data_publicacao: dataAtual
     });
   } catch (error) {
     console.error('Erro ao criar post (detalhes):', error);
@@ -77,17 +80,15 @@ router.post('/', verificarToken, upload.single('imagem'), async (req, res) => {
 });
 
 // Buscar todos os posts
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const usuarioId = req.usuario.id; // ID do usuário autenticado
-
     const query = `
       SELECT 
           p.*, 
           e.nome as nome_empresa, 
           e.logo as logo_empresa,
-          COUNT(pl.id) AS likes_count, -- Contagem total de likes
-          EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND usuario_id = $1) AS liked_by_user -- Verifica se o usuário atual curtiu
+          COUNT(pl.id) AS likes_count,
+          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao
       FROM posts p
       JOIN empresas e ON p.empresa_id = e.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
@@ -95,7 +96,7 @@ router.get('/', verificarToken, async (req, res) => {
       ORDER BY p.data_publicacao DESC
     `;
 
-    const result = await db.query(query, [usuarioId]);
+    const result = await db.query(query);
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar posts:', error);
@@ -104,27 +105,26 @@ router.get('/', verificarToken, async (req, res) => {
 });
 
 // Buscar posts de uma empresa específica
-router.get('/empresa/:empresa_id', verificarToken, async (req, res) => {
+router.get('/empresa/:empresa_id', async (req, res) => {
   try {
     const { empresa_id } = req.params;
-    const usuarioId = req.usuario.id; // ID do usuário autenticado
 
     const query = `
       SELECT 
           p.*, 
           e.nome as nome_empresa, 
           e.logo as logo_empresa,
-          COUNT(pl.id) AS likes_count, -- Contagem total de likes
-          EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND usuario_id = $1) AS liked_by_user -- Verifica se o usuário atual curtiu
+          COUNT(pl.id) AS likes_count,
+          (p.data_publicacao AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo') as data_publicacao
       FROM posts p
       JOIN empresas e ON p.empresa_id = e.id
       LEFT JOIN post_likes pl ON p.id = pl.post_id
-      WHERE p.empresa_id = $2
+      WHERE p.empresa_id = $1
       GROUP BY p.id, e.id
       ORDER BY p.data_publicacao DESC
     `;
 
-    const result = await db.query(query, [usuarioId, empresa_id]);
+    const result = await db.query(query, [empresa_id]);
     res.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar posts da empresa:', error);
@@ -133,24 +133,27 @@ router.get('/empresa/:empresa_id', verificarToken, async (req, res) => {
 });
 
 // Dar like em um post
-router.post('/:id/like', verificarToken, async (req, res) => {
+router.post('/:id/like', async (req, res) => {
   try {
     const { id: postId } = req.params;
-    const usuarioId = req.usuario.id; // ID do usuário do token
-
-    // Verifica se o usuário é uma empresa e impede de dar like
-    if (req.usuario.type === 'company') {
-      return res.status(403).json({ error: 'Empresas não podem dar like em posts.' });
-    }
+    const { usuario_id } = req.body;
 
     const query = `
       INSERT INTO post_likes (post_id, usuario_id)
       VALUES ($1, $2)
-      ON CONFLICT (post_id, usuario_id) DO NOTHING; -- Evita likes duplicados
+      ON CONFLICT (post_id, usuario_id) DO NOTHING;
     `;
-    await db.query(query, [postId, usuarioId]);
+    await db.query(query, [postId, usuario_id]);
 
-    res.status(200).json({ message: 'Like registrado com sucesso.' });
+    // Buscar a contagem atualizada de likes
+    const countQuery = `
+      SELECT COUNT(*) as likes_count
+      FROM post_likes
+      WHERE post_id = $1
+    `;
+    const countResult = await db.query(countQuery, [postId]);
+
+    res.json({ likes_count: parseInt(countResult.rows[0].likes_count) });
   } catch (error) {
     console.error('Erro ao dar like no post:', error);
     res.status(500).json({ error: 'Erro ao dar like no post' });
@@ -158,20 +161,23 @@ router.post('/:id/like', verificarToken, async (req, res) => {
 });
 
 // Remover like de um post
-router.delete('/:id/like', verificarToken, async (req, res) => {
+router.delete('/:id/like', async (req, res) => {
   try {
     const { id: postId } = req.params;
-    const usuarioId = req.usuario.id; // ID do usuário do token
-
-    // Verifica se o usuário é uma empresa e impede de dar unlike
-    if (req.usuario.type === 'company') {
-      return res.status(403).json({ error: 'Empresas não podem remover like de posts.' });
-    }
+    const { usuario_id } = req.body;
 
     const query = 'DELETE FROM post_likes WHERE post_id = $1 AND usuario_id = $2';
-    await db.query(query, [postId, usuarioId]);
+    await db.query(query, [postId, usuario_id]);
 
-    res.status(200).json({ message: 'Like removido com sucesso.' });
+    // Buscar a contagem atualizada de likes
+    const countQuery = `
+      SELECT COUNT(*) as likes_count
+      FROM post_likes
+      WHERE post_id = $1
+    `;
+    const countResult = await db.query(countQuery, [postId]);
+
+    res.json({ likes_count: parseInt(countResult.rows[0].likes_count) });
   } catch (error) {
     console.error('Erro ao remover like do post:', error);
     res.status(500).json({ error: 'Erro ao remover like do post' });
@@ -179,12 +185,10 @@ router.delete('/:id/like', verificarToken, async (req, res) => {
 });
 
 // Deletar um post
-router.delete('/:id', verificarToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // Apenas a empresa que criou o post ou um admin pode deletar
-    // req.usuario.id é o ID da empresa do token
-    // req.usuario.type é o tipo de usuário (company/user)
+    const { empresa_id } = req.body;
     
     // Primeiro, verifique se o post pertence à empresa
     const checkQuery = 'SELECT empresa_id FROM posts WHERE id = $1';
@@ -196,14 +200,13 @@ router.delete('/:id', verificarToken, async (req, res) => {
 
     const postEmpresaId = checkResult.rows[0].empresa_id;
 
-    if (req.usuario.type === 'company' && req.usuario.id === postEmpresaId) {
+    if (empresa_id === postEmpresaId) {
       const query = 'DELETE FROM posts WHERE id = $1';
       await db.query(query, [id]);
-      res.status(200).json({ message: 'Post deletado com sucesso' });
+      res.json({ message: 'Post deletado com sucesso.' });
     } else {
-      return res.status(403).json({ error: 'Você não tem permissão para deletar este post.' });
+      res.status(403).json({ error: 'Você não tem permissão para deletar este post.' });
     }
-
   } catch (error) {
     console.error('Erro ao deletar post:', error);
     res.status(500).json({ error: 'Erro ao deletar post' });

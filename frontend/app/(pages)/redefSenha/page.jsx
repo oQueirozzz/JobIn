@@ -131,17 +131,13 @@ export default function NovaSenha() {
 
         try {
             const codigoDigitado = codigoVerificacao.toUpperCase().trim();
-            const codigoCorreto = codigoGerado.toUpperCase().trim();
+            console.log('Verificando código:', {
+                email: email.trim().toLowerCase(),
+                codigoDigitado,
+                codigoGerado
+            });
 
-            // Primeiro verificar se o código está correto localmente
-            if (codigoDigitado !== codigoCorreto) {
-                setTipoMensagem('erro');
-                setMensagem('Código inválido. Por favor, verifique e tente novamente.');
-                setCarregando(false);
-                return;
-            }
-
-            // Se o código estiver correto localmente, prosseguir com a verificação no backend
+            // Enviar o código para verificação no backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/verificar-codigo`, {
                 method: 'POST',
                 headers: {
@@ -149,12 +145,12 @@ export default function NovaSenha() {
                 },
                 body: JSON.stringify({
                     email: email.trim().toLowerCase(),
-                    codigo: codigoDigitado,
-                    codigoGerado: codigoCorreto // Enviando o código gerado para comparação no backend
+                    codigo: codigoDigitado
                 }),
             });
 
             const data = await response.json();
+            console.log('Resposta do servidor:', data);
 
             if (response.ok) {
                 setTipoMensagem('sucesso');
@@ -203,24 +199,23 @@ export default function NovaSenha() {
                 clearInterval(intervaloId);
             }
 
-            // Verificar se o email existe na API - apenas verificação
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/login`, {
+            // Verificar se o email existe na API
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/verificar-email`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    email: email.trim().toLowerCase(),
-                    senha: 'verificacao-apenas' // Senha fictícia apenas para verificação
+                    email: email.trim().toLowerCase()
                 })
             });
 
             const data = await response.json();
+            console.log('Resposta da verificação de email:', data);
 
-            // Se a resposta contém uma mensagem específica de email não encontrado
-            if (data.message && (data.message.includes('não encontrado') || data.message.includes('não cadastrado'))) {
+            if (!response.ok) {
                 setTipoMensagem('erro');
-                setMensagem('Este e-mail não está cadastrado em nossa base.');
+                setMensagem(data.message || 'Este e-mail não está cadastrado em nossa base.');
                 setCarregando(false);
                 return;
             }
@@ -228,6 +223,7 @@ export default function NovaSenha() {
             // Gerar código de verificação
             const codigo = gerarCodigoVerificacao();
             setCodigoGerado(codigo);
+            console.log('Código gerado:', codigo);
 
             // Enviar o código para o backend para armazenamento
             const solicitarCodigoResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/solicitar-codigo`, {
@@ -237,12 +233,13 @@ export default function NovaSenha() {
                 },
                 body: JSON.stringify({
                     email: email.trim().toLowerCase(),
-                    codigo: codigo // Enviar o código gerado para o backend
+                    codigo: codigo
                 }),
             });
 
             // Verificar se o código foi armazenado com sucesso no backend
             const solicitarCodigoData = await solicitarCodigoResponse.json();
+            console.log('Resposta do armazenamento do código:', solicitarCodigoData);
 
             if (!solicitarCodigoResponse.ok) {
                 setTipoMensagem('erro');
@@ -357,12 +354,13 @@ export default function NovaSenha() {
             const dadosRequisicao = {
                 email: authEntity.email.trim().toLowerCase(),
                 token: token,
-                novaSenha: novaSenha
+                newPassword: novaSenha
             };
 
             console.log('Debug: Enviando dados para redefinição (redefinirSenha):', {
-                ...dadosRequisicao,
-                novaSenha: '***'
+                email: dadosRequisicao.email,
+                token: dadosRequisicao.token,
+                newPassword: '***'
             });
 
             // Chamar a API para atualizar a senha no backend

@@ -163,11 +163,22 @@ export default function Feed() {
   useEffect(() => {
     const carregarPosts = async () => {
       try {
+        console.log('[DEBUG POSTS] Carregando posts...');
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`);
-        const data = await response.json();
-        setPosts(Array.isArray(data) ? data : []);
+
+        console.log('[DEBUG POSTS] Resposta:', response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[DEBUG POSTS] Posts carregados:', data);
+          setPosts(Array.isArray(data) ? data : []);
+        } else {
+          const errorData = await response.json();
+          console.error('[DEBUG POSTS] Erro na resposta:', errorData);
+          setPosts([]);
+        }
       } catch (error) {
-        console.error('Erro ao carregar posts:', error);
+        console.error('[DEBUG POSTS] Erro ao carregar posts:', error);
         setPosts([]);
       } finally {
         setIsLoadingPosts(false);
@@ -242,21 +253,34 @@ export default function Feed() {
         formData.append('imagem', selectedImage);
       }
 
+      console.log('[DEBUG POST] Enviando requisição:', {
+        empresa_id: authInfo.entity.id,
+        titulo: postTitle,
+        conteudo: postContent,
+        temImagem: !!selectedImage
+      });
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`, {
         method: 'POST',
         body: formData,
       });
 
+      console.log('[DEBUG POST] Resposta:', response.status);
+
       if (response.ok) {
         const newPost = await response.json();
+        console.log('[DEBUG POST] Post criado:', newPost);
         setPosts([newPost, ...posts]);
         setShowCreatePost(false);
         setPostContent('');
         setPostTitle('');
         setSelectedImage(null);
+      } else {
+        const errorData = await response.json();
+        console.error('[DEBUG POST] Erro na resposta:', errorData);
       }
     } catch (error) {
-      console.error('Erro ao criar post:', error);
+      console.error('[DEBUG POST] Erro ao criar post:', error);
     }
   };
 

@@ -123,6 +123,13 @@ CREATE TABLE post_likes (
     UNIQUE(post_id, usuario_id) -- Garante que um usuário só pode dar like uma vez em um post
 );
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() + INTERVAL '15 minutes')
+);
 -- Funções
 
 CREATE OR REPLACE FUNCTION delete_usuario_dependencias() RETURNS TRIGGER AS $$
@@ -158,11 +165,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Drop existing trigger and function
-DROP TRIGGER IF EXISTS trg_notificar_status_candidatura ON candidaturas;
-DROP FUNCTION IF EXISTS notificar_status_candidatura();
 
--- Create the updated function
 CREATE OR REPLACE FUNCTION notificar_status_candidatura() RETURNS TRIGGER AS $$
 DECLARE
     empresa INT;
@@ -225,6 +228,10 @@ FOR EACH ROW EXECUTE FUNCTION delete_vaga_dependencias();
 CREATE TRIGGER trg_delete_candidatura_dependencias
 BEFORE DELETE ON candidaturas
 FOR EACH ROW EXECUTE FUNCTION delete_candidatura_dependencias();
+
+CREATE TRIGGER trg_notificar_status_candidatura
+AFTER UPDATE ON candidaturas
+FOR EACH ROW EXECUTE FUNCTION notificar_status_candidatura();
 
 CREATE TRIGGER trg_notificar_status_candidatura
 AFTER UPDATE ON candidaturas

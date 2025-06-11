@@ -111,6 +111,7 @@ export default function NovaSenha() {
                 setTipoMensagem('sucesso');
                 setMensagem('Código verificado com sucesso');
                 setTokenRedefinicao(data.token); // Salvar o token para usar na redefinição
+                console.log('Token de redefinição salvo após verificação:', data.token);
                 setEtapa(3); // Avançar para a etapa de definição de nova senha
 
                 // Limpar o intervalo quando o código for verificado com sucesso
@@ -278,7 +279,9 @@ export default function NovaSenha() {
             return;
         }
 
-        if (!tokenRedefinicao) {
+        // Sempre use o token mais recente salvo no estado
+        const tokenParaUsar = tokenRedefinicao;
+        if (!tokenParaUsar) {
             setTipoMensagem('erro');
             setMensagem('Token de redefinição inválido. Por favor, solicite um novo código.');
             return;
@@ -290,11 +293,15 @@ export default function NovaSenha() {
         try {
             const dadosRequisicao = {
                 email: email.trim().toLowerCase(),
-                token: tokenRedefinicao,
-                novaSenha: novaSenha
+                token: tokenParaUsar,
+                newPassword: novaSenha
             };
 
-            console.log('Enviando dados para redefinição:', dadosRequisicao);
+            console.log('Enviando dados para redefinição:', {
+                email: dadosRequisicao.email,
+                token: dadosRequisicao.token,
+                newPassword: '***'
+            });
 
             // Chamar a API para atualizar a senha no backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/redefinir-senha`, {
