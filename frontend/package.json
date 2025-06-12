@@ -24,6 +24,7 @@
     "lucide-react": "^0.511.0",
     "mysql2": "^3.6.5",
     "next": "15.3.2",
+    "next-auth": "^4.24.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2"
