@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../hooks/useAuth';
 import Cookies from 'js-cookie';
+import Alert from '../../../components/Alert';
 
 export default function CadastroEmpresas() {
     const [formData, setFormData] = useState({
@@ -18,6 +19,8 @@ export default function CadastroEmpresas() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [mensagem, setMensagem] = useState('');
+    const [tipoMensagem, setTipoMensagem] = useState('');
     const router = useRouter();
     const { login, refreshAuthInfo } = useAuth();
 
@@ -109,11 +112,18 @@ export default function CadastroEmpresas() {
         }
     };
 
+    const handleCloseAlert = () => {
+        setMensagem('');
+        setTipoMensagem('');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
         setSuccess('');
+        setMensagem('');
+        setTipoMensagem('');
 
         if (formData.senha !== formData.confirmarSenha) {
             setError('As senhas não coincidem');
@@ -176,7 +186,8 @@ export default function CadastroEmpresas() {
                 throw new Error(data.error || 'Erro ao cadastrar empresa');
             }
 
-            setSuccess('Cadastro realizado com sucesso! Redirecionando...');
+            setTipoMensagem('success');
+            setMensagem('Cadastro realizado com sucesso! Redirecionando para login...');
 
             // Usar os dados retornados do registro para login automático
             const { token, empresa } = data;
@@ -197,7 +208,7 @@ export default function CadastroEmpresas() {
                 }, 1500);
             } else {
                 console.error('Dados de autenticação incompletos na resposta de registro:', data);
-                setSuccess('Cadastro realizado com sucesso! Redirecionando para o login...');
+                setMensagem('Cadastro realizado com sucesso! Redirecionando para o login...');
                 setTimeout(() => {
                     router.push('/login');
                 }, 2000);
@@ -205,6 +216,8 @@ export default function CadastroEmpresas() {
         } catch (error) {
             console.error('Erro detalhado:', error);
             setError(error.message || 'Erro ao cadastrar empresa');
+            setTipoMensagem('error');
+            setMensagem(error.message || 'Erro ao cadastrar empresa. Tente novamente mais tarde.');
         } finally {
             setIsLoading(false);
         }
@@ -212,6 +225,12 @@ export default function CadastroEmpresas() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+            <Alert
+                message={mensagem}
+                type={tipoMensagem}
+                onClose={handleCloseAlert}
+                duration={5000}
+            />
             <div className="w-full max-w-4xl mb-10 mt-20">
                 {/* Logo e Título */}
                 <div className="flex flex-col items-center mb-8">
@@ -401,12 +420,6 @@ export default function CadastroEmpresas() {
                         {error && (
                             <div className="mt-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-center">
                                 {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="mt-6 p-4 bg-green-50 text-green-700 border border-green-200 rounded-xl text-center">
-                                {success}
                             </div>
                         )}
 

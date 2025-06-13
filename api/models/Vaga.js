@@ -173,7 +173,7 @@ class Vaga {
       client = await pool.connect();
       const query = 'DELETE FROM vagas WHERE id = $1';
       const result = await client.query(query, [id]);
-      return { affectedRows: result.rowCount }; // Return rowCount for affected rows
+      return { affectedRows: result.rowCount };
     } catch (error) {
       console.error('Erro ao excluir vaga:', error);
       throw error;

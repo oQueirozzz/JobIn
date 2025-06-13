@@ -215,12 +215,28 @@ class Usuario {
   }
 
   static async delete(id) {
+    const client = await pool.connect();
     try {
-      const { rows } = await pool.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
+      await client.query('BEGIN');
+      
+      // Primeiro verifica se o usuário existe
+      const checkResult = await client.query('SELECT id FROM usuarios WHERE id = $1', [id]);
+      if (checkResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      // Executa a exclusão
+      const { rows } = await client.query('DELETE FROM usuarios WHERE id = $1 RETURNING *', [id]);
+      
+      await client.query('COMMIT');
       return rows[0];
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error('Erro ao deletar usuário:', error);
       throw error;
+    } finally {
+      client.release();
     }
   }
 

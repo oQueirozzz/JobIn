@@ -29,6 +29,18 @@ export default function Config() {
                 throw new Error('Usuário não autenticado ou ID ausente.');
             }
 
+            // Verifica se o token ainda é válido
+            const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/verify-token`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (!tokenResponse.ok) {
+                throw new Error('Sessão expirada. Por favor, faça login novamente.');
+            }
+
             let endpoint;
             if (authEntity.tipo === 'empresa') {
                 endpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/empresas/${authEntity.id}`;
@@ -47,26 +59,17 @@ export default function Config() {
             if (!response.ok) {
                 const errorData = await response.json();
                 
-                if (response.status === 401 && authEntity.tipo === 'empresa') {
-                    console.warn('Falha ao excluir como empresa (401), tentando como usuário...');
-                    const fallbackEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/api/usuarios/${authEntity.id}`;
-                    response = await fetch(fallbackEndpoint, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                    });
-
-                    if (!response.ok) {
-                        const fallbackError = await response.json();
-                        throw new Error(fallbackError.message || 'Erro ao excluir a conta (fallback).');
-                    }
+                if (response.status === 401) {
+                    throw new Error('Sessão expirada. Por favor, faça login novamente.');
+                } else if (response.status === 403) {
+                    throw new Error('Você não tem permissão para excluir esta conta.');
                 } else {
                     throw new Error(errorData.message || 'Erro ao excluir a conta.');
                 }
             }
 
+            // Limpa os dados de autenticação
+            localStorage.removeItem('authToken');
             localStorage.removeItem('authEntity');
             setMensagem('Conta excluída com sucesso!');
             setTipoMensagem('sucesso');

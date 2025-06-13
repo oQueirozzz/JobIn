@@ -132,10 +132,20 @@ export const deleteVaga = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Verificar se o usuário está autenticado
+    if (!req.usuario) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+
     // Buscar a vaga antes de excluir
     const vaga = await Vaga.findById(id);
     if (!vaga) {
       return res.status(404).json({ message: 'Vaga não encontrada' });
+    }
+
+    // Verificar se o usuário é o dono da vaga
+    if (vaga.empresa_id !== req.usuario.id) {
+      return res.status(403).json({ message: 'Você não tem permissão para excluir esta vaga' });
     }
 
     // Buscar todas as candidaturas para esta vaga
@@ -164,6 +174,6 @@ export const deleteVaga = async (req, res) => {
     res.status(200).json({ message: 'Vaga excluída com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir vaga:', error);
-    res.status(500).json({ message: 'Erro ao excluir vaga' });
+    res.status(500).json({ message: 'Erro ao excluir vaga. Por favor, tente novamente.' });
   }
 };

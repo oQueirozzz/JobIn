@@ -372,6 +372,12 @@ export const deleteUsuario = async (req, res) => {
     const userIdToDelete = req.params.id;
     console.log(`[DELETE USUARIO] Tentando excluir usuário com ID: ${userIdToDelete}`);
 
+    // Verifica se o usuário está tentando excluir sua própria conta
+    if (req.usuario.id !== parseInt(userIdToDelete)) {
+      console.log(`[DELETE USUARIO] Tentativa de excluir conta de outro usuário. Usuário autenticado: ${req.usuario.id}, Tentativa de excluir: ${userIdToDelete}`);
+      return res.status(403).json({ message: 'Você não tem permissão para excluir esta conta' });
+    }
+
     const usuario = await Usuario.findById(userIdToDelete);
     if (!usuario) {
       console.log(`[DELETE USUARIO] Usuário com ID ${userIdToDelete} não encontrado.`);

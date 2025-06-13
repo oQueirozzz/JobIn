@@ -134,9 +134,27 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 
 CREATE OR REPLACE FUNCTION delete_usuario_dependencias() RETURNS TRIGGER AS $$
 BEGIN
+    -- Primeiro excluir candidaturas_removidas
+    DELETE FROM candidaturas_removidas WHERE id_usuario = OLD.id;
+    
+    -- Depois excluir candidaturas
     DELETE FROM candidaturas WHERE id_usuario = OLD.id;
+    
+    -- Excluir notificações
+    DELETE FROM notificacao WHERE usuarios_id = OLD.id;
+    
+    -- Excluir chat
     DELETE FROM chat WHERE usuario_id = OLD.id;
+    
+    -- Excluir logs
     DELETE FROM logs WHERE usuario_id = OLD.id;
+    
+    -- Excluir likes de posts
+    DELETE FROM post_likes WHERE usuario_id = OLD.id;
+    
+    -- Excluir tokens de reset de senha
+    DELETE FROM password_reset_tokens WHERE user_id = OLD.id;
+    
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -151,7 +169,14 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION delete_vaga_dependencias() RETURNS TRIGGER AS $$
 BEGIN
+    -- Primeiro excluir candidaturas_removidas
+    DELETE FROM candidaturas_removidas WHERE id_vaga = OLD.id;
+    -- Depois excluir candidaturas
     DELETE FROM candidaturas WHERE id_vaga = OLD.id;
+    -- Por fim, excluir notificações relacionadas
+    DELETE FROM notificacao WHERE candidaturas_id IN (
+        SELECT id FROM candidaturas WHERE id_vaga = OLD.id
+    );
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
