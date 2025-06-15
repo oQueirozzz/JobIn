@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import Alert from '../../../components/Alert';
 
 export default function Login() {
   const [mensagem, setMensagem] = useState('');
@@ -12,11 +11,6 @@ export default function Login() {
   const [authType, setAuthType] = useState('user');
   const { login } = useAuth();
   const router = useRouter();
-
-  const handleCloseAlert = () => {
-    setMensagem('');
-    setTipoMensagem('');
-  };
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -49,14 +43,14 @@ export default function Login() {
         }));
       }
 
-      setTipoMensagem('success');
+      setTipoMensagem('sucesso');
       setMensagem(`Login de ${authType === 'user' ? 'usuário' : 'empresa'} realizado com sucesso!`);
 
       setTimeout(() => {
         router.push('/');
       }, 1500);
     } catch (error) {
-      setTipoMensagem('error');
+      setTipoMensagem('erro');
       setMensagem(error.message || 'Erro ao fazer login. Tente novamente.');
     } finally {
       setCarregando(false);
@@ -65,13 +59,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <Alert
-        message={mensagem}
-        type={tipoMensagem}
-        onClose={handleCloseAlert}
-        duration={5000}
-        className="z-50"
-      />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -123,6 +110,15 @@ export default function Login() {
               </div>
             </button>
           </div>
+
+          {mensagem && (
+            <div className={`mb-6 p-4 rounded-xl text-center ${tipoMensagem === 'sucesso'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+              {mensagem}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>

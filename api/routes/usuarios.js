@@ -424,7 +424,7 @@ router.put('/:id', upload.fields([
   { name: 'curriculo', maxCount: 1 },
   { name: 'certificados', maxCount: 10 }
 ]), usuariosController.updateUsuario);
-router.delete('/:id', protect, usuariosController.deleteUsuario);
+router.delete('/:id', usuariosController.deleteUsuario);
 
 // Rota para obter perfil completo do usuário autenticado (JWT)
 router.get('/perfil', usuariosController.getPerfil);
@@ -484,11 +484,6 @@ router.post('/verificar-email', async (req, res) => {
       error: error.message
     });
   }
-});
-
-// Rota para verificar token
-router.get('/verify-token', protect, (req, res) => {
-  res.status(200).json({ message: 'Token válido' });
 });
 
 // Remover o objeto em memória, pois não é mais usado

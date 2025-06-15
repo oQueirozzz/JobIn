@@ -306,27 +306,19 @@ export default function Vagas() {
         return;
       }
 
-      console.log('Token de autenticação:', token); // Debug
-
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vagas/${vagaToDelete}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+          'Authorization': `Bearer ${token}`
+        },
       });
 
-      console.log('Resposta do servidor:', res.status); // Debug
+      const data = await res.json();
 
       if (!res.ok) {
-        const errorData = await res.json();
-        console.error('Erro detalhado:', errorData); // Debug
-        throw new Error(errorData.message || 'Erro ao excluir vaga');
+        throw new Error(data.message || 'Erro ao excluir vaga');
       }
-
-      const data = await res.json();
-      console.log('Dados da resposta:', data); // Debug
 
       mostrarMensagem('Vaga excluída com sucesso!', 'success');
       setVagas(prevVagas => prevVagas.filter(vaga => vaga.id !== vagaToDelete));
